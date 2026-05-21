@@ -28,7 +28,7 @@
 - [ ] **AGT-02**: Agent can modify an existing `*.gohtml` template file and the change is visible on the next browser request without restart.
 - [ ] **AGT-03**: Before committing, agent runs Go HTML template dry-run validation on modified templates.
 - [ ] **AGT-04**: Before committing, agent runs an HTML structure linter on modified templates.
-- [ ] **AGT-05**: On validation failure, agent performs `git checkout -- .` to restore the last stable workspace state.
+- [x] **AGT-05**: On validation failure, agent performs `git checkout -- .` to restore the last stable workspace state.
 - [ ] **AGT-06**: All agent file mutations are committed to git with descriptive commit messages.
 
 ### Inline Contextual Editing
@@ -100,7 +100,7 @@
 | AGT-02 | Phase 2 | Pending |
 | AGT-03 | Phase 2 | Pending |
 | AGT-04 | Phase 2 | Pending |
-| AGT-05 | Phase 2 | Pending |
+| AGT-05 | Phase 2 | Complete |
 | AGT-06 | Phase 2 | Pending |
 | ICE-01 | Phase 3 | Pending |
 | ICE-02 | Phase 3 | Pending |

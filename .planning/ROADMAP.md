@@ -53,14 +53,14 @@ Plans:
 - Agent SSH key + PocketBase API token scope documentation in `workspace/SECURITY.md`
 - Sample agent operation: create `press_releases` collection via POST to `/api/collections`
 
-**Plans:** 3 plans
+**Plans:** 2/3 plans executed
 
 Plans:
 **Wave 1**
-- [ ] 02-01-PLAN.md — internal/validate package (ValidateTemplate, ValidateHTML) + monms validate CLI
+- [x] 02-01-PLAN.md — internal/validate package (ValidateTemplate, ValidateHTML) + monms validate CLI
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 02-02-PLAN.md — pre-commit hook install in monms init + rollback integration + scaffold tests
+- [x] 02-02-PLAN.md — pre-commit hook install in monms init + rollback integration + scaffold tests
 
 **Wave 3** *(blocked on Waves 1 + 2 completion)*
 - [ ] 02-03-PLAN.md — workspace docs (agent-guide.md, SECURITY.md), press_releases fixture + integration test
