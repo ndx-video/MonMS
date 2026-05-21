@@ -69,7 +69,7 @@ completed: 2026-05-22
 2. **Task 2: monms init command and git bootstrap** - `cd30eee` (test), `df63d4c` (feat)
 3. **Task 3: DEMO-03 CDN and layout verification test** - `9c053c4` (test)
 
-**Plan metadata:** pending (docs commit)
+**Plan metadata:** `2f3f237` (docs: complete plan)
 
 ## Files Created/Modified
 
