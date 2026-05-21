@@ -100,7 +100,40 @@ func TestInitGit(t *testing.T) {
 	})
 }
 
+// TestBaseLayoutCDN verifies DEMO-03: scaffolded workspace includes pinned CDN assets.
 func TestBaseLayoutCDN(t *testing.T) {
-	t.Skip("implemented in task 3")
+	dir := t.TempDir()
+	runInitInDir(t, dir)
+
+	basePath := filepath.Join(dir, "templates/layouts/base.gohtml")
+	base, err := os.ReadFile(basePath)
+	if err != nil {
+		t.Fatalf("read base.gohtml: %v", err)
+	}
+	baseStr := string(base)
+
+	required := []struct {
+		token string
+		desc  string
+	}{
+		{"htmx.org@1.9.12", "HTMX CDN pin"},
+		{"alpinejs@3.14.8", "Alpine CDN pin"},
+		{"cdn.tailwindcss.com", "Tailwind Play CDN"},
+		{"/assets/main.css", "main.css link"},
+	}
+	for _, r := range required {
+		if !strings.Contains(baseStr, r.token) {
+			t.Fatalf("base.gohtml missing %s (%s)", r.token, r.desc)
+		}
+	}
+
+	indexPath := filepath.Join(dir, "templates/index.gohtml")
+	index, err := os.ReadFile(indexPath)
+	if err != nil {
+		t.Fatalf("read index.gohtml: %v", err)
+	}
+	if !strings.Contains(string(index), "hero__title") {
+		t.Fatal("index.gohtml missing hero__title class")
+	}
 }
 
