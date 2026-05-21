@@ -1,13 +1,16 @@
 package router
 
 import (
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/monms/monms/internal/schema"
+	"github.com/monms/monms/internal/templates"
 	"github.com/monms/monms/internal/testutil"
 	"github.com/monms/monms/internal/workspace"
 	"github.com/pocketbase/pocketbase"
@@ -16,12 +19,20 @@ import (
 	"github.com/pocketbase/pocketbase/ui"
 )
 
-func startTestServer(t *testing.T, wsAbs string) (*httptest.Server, func()) {
+type testServerOpts struct {
+	isDev          bool
+	productionMode bool
+}
+
+func startTestServer(t *testing.T, wsAbs string, opts testServerOpts) (*httptest.Server, *templates.TemplateCache, func()) {
 	t.Helper()
 
 	if err := workspace.ValidateWorkspace(wsAbs); err != nil {
 		t.Fatalf("validate workspace: %v", err)
 	}
+
+	cache := templates.NewCache()
+	cache.SetProductionMode(opts.productionMode)
 
 	app := pocketbase.NewWithConfig(pocketbase.Config{
 		DefaultDataDir:  filepath.Join(wsAbs, ".pb_data"),
@@ -31,7 +42,10 @@ func startTestServer(t *testing.T, wsAbs string) (*httptest.Server, func()) {
 
 	schema.RegisterBootstrapHook(app, wsAbs)
 
+	deps := Deps{WsAbs: wsAbs, Cache: cache, IsDev: opts.isDev}
+
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
+		RegisterRoutes(se, deps)
 		return se.Next()
 	})
 
@@ -61,7 +75,7 @@ func startTestServer(t *testing.T, wsAbs string) (*httptest.Server, func()) {
 	}
 
 	ts := httptest.NewServer(mux)
-	return ts, func() {
+	return ts, cache, func() {
 		ts.Close()
 		_ = app.ResetBootstrapState()
 	}
@@ -69,7 +83,7 @@ func startTestServer(t *testing.T, wsAbs string) (*httptest.Server, func()) {
 
 func TestServeStarts(t *testing.T) {
 	ws := testutil.NewWorkspace(t)
-	ts, cleanup := startTestServer(t, ws)
+	ts, _, cleanup := startTestServer(t, ws, testServerOpts{isDev: true})
 	defer cleanup()
 
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -86,7 +100,7 @@ func TestServeStarts(t *testing.T) {
 
 func TestAdminDashboard(t *testing.T) {
 	ws := testutil.NewWorkspace(t)
-	ts, cleanup := startTestServer(t, ws)
+	ts, _, cleanup := startTestServer(t, ws, testServerOpts{isDev: true})
 	defer cleanup()
 
 	client := &http.Client{
@@ -108,13 +122,151 @@ func TestAdminDashboard(t *testing.T) {
 }
 
 func TestAssetsHandler(t *testing.T) {
-	t.Skip("implemented in plan 01-04")
+	ws := testutil.NewWorkspace(t)
+	ts, _, cleanup := startTestServer(t, ws, testServerOpts{isDev: true})
+	defer cleanup()
+
+	client := &http.Client{Timeout: 10 * time.Second}
+
+	t.Run("/assets/main.css", func(t *testing.T) {
+		resp, err := client.Get(ts.URL + "/assets/main.css")
+		if err != nil {
+			t.Fatalf("GET: %v", err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			t.Fatalf("status %d, want 200", resp.StatusCode)
+		}
+		if !strings.Contains(resp.Header.Get("Content-Type"), "text/css") {
+			t.Fatalf("Content-Type %q, want text/css", resp.Header.Get("Content-Type"))
+		}
+	})
+
+	t.Run("/assets/missing.css", func(t *testing.T) {
+		resp, err := client.Get(ts.URL + "/assets/missing.css")
+		if err != nil {
+			t.Fatalf("GET: %v", err)
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusNotFound {
+			t.Fatalf("status %d, want 404", resp.StatusCode)
+		}
+	})
+
 }
 
 func Test404NoPanic(t *testing.T) {
-	t.Skip("implemented in plan 01-04")
+	ws := testutil.NewWorkspace(t)
+	ts, _, cleanup := startTestServer(t, ws, testServerOpts{isDev: true})
+	defer cleanup()
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(ts.URL + "/does-not-exist")
+	if err != nil {
+		t.Fatalf("GET /does-not-exist: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusNotFound {
+		t.Fatalf("status %d, want 404", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read body: %v", err)
+	}
+	bodyStr := string(body)
+	if !strings.Contains(bodyStr, "Page not found: /does-not-exist") {
+		t.Fatalf("body missing path message, got: %s", bodyStr)
+	}
 }
 
 func TestHomepageSSR(t *testing.T) {
-	t.Skip("implemented in plan 01-04")
+	ws := testutil.NewWorkspace(t)
+	ts, _, cleanup := startTestServer(t, ws, testServerOpts{isDev: true})
+	defer cleanup()
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(ts.URL + "/")
+	if err != nil {
+		t.Fatalf("GET /: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status %d, want 200", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read body: %v", err)
+	}
+	bodyStr := string(body)
+	if !strings.Contains(bodyStr, "MonMS is running") {
+		t.Fatalf("body missing hero title, got: %s", bodyStr)
+	}
+}
+
+func TestFragmentPartial(t *testing.T) {
+	ws := testutil.NewWorkspace(t)
+	fragPath := filepath.Join(ws, "templates/fragments", "nav.gohtml")
+	testutil.WriteFile(t, fragPath, `<nav class="fragment-nav">Nav partial</nav>`)
+
+	ts, _, cleanup := startTestServer(t, ws, testServerOpts{isDev: true})
+	defer cleanup()
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(ts.URL + "/fragments/nav")
+	if err != nil {
+		t.Fatalf("GET /fragments/nav: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status %d, want 200", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read body: %v", err)
+	}
+	bodyStr := string(body)
+	if strings.Contains(bodyStr, "<!DOCTYPE") {
+		t.Fatal("fragment response must not include DOCTYPE from base layout")
+	}
+	if !strings.Contains(bodyStr, "Nav partial") {
+		t.Fatalf("body missing fragment content, got: %s", bodyStr)
+	}
+}
+
+func TestProduction500Generic(t *testing.T) {
+	ws := testutil.NewWorkspace(t)
+	badPage := filepath.Join(ws, "templates", "broken.gohtml")
+	testutil.WriteFile(t, badPage, `{{define "body"}}{{if}}{{end}}`)
+
+	ts, _, cleanup := startTestServer(t, ws, testServerOpts{isDev: false, productionMode: true})
+	defer cleanup()
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(ts.URL + "/broken")
+	if err != nil {
+		t.Fatalf("GET /broken: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusInternalServerError {
+		t.Fatalf("status %d, want 500", resp.StatusCode)
+	}
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read body: %v", err)
+	}
+	bodyStr := string(body)
+	if strings.Contains(bodyStr, "can't evaluate") || strings.Contains(bodyStr, "BadField") {
+		t.Fatalf("production 500 must not leak parse error, got: %s", bodyStr)
+	}
+	if !strings.Contains(bodyStr, "Internal server error") && !strings.Contains(bodyStr, "Something went wrong") {
+		t.Fatalf("production 500 missing generic message, got: %s", bodyStr)
+	}
 }
