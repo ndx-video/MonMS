@@ -8,9 +8,9 @@
 ### Core Runtime Engine
 
 - [x] **ENG-01**: Go binary starts and serves HTTP with PocketBase embedded without any configuration files.
-- [ ] **ENG-02**: Template cache is populated on first access and invalidated automatically when workspace files change.
-- [ ] **ENG-03**: fsnotify watches the `workspace/templates/` folder and clears in-memory template cache on write/create events.
-- [ ] **ENG-04**: Production mode activates template caching; development mode always reads from disk.
+- [x] **ENG-02**: Template cache is populated on first access and invalidated automatically when workspace files change.
+- [x] **ENG-03**: fsnotify watches the `workspace/templates/` folder and clears in-memory template cache on write/create events.
+- [x] **ENG-04**: Production mode activates template caching; development mode always reads from disk.
 - [ ] **ENG-05**: Binary's idle RAM footprint stays under 30MB in production mode.
 - [ ] **ENG-06**: Server-side rendered routes under SQLite reads produce a TTFB under 15ms.
 
@@ -86,9 +86,9 @@
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | ENG-01 | Phase 1 | Complete |
-| ENG-02 | Phase 1 | Pending |
-| ENG-03 | Phase 1 | Pending |
-| ENG-04 | Phase 1 | Pending |
+| ENG-02 | Phase 1 | Complete |
+| ENG-03 | Phase 1 | Complete |
+| ENG-04 | Phase 1 | Complete |
 | ENG-05 | Phase 1 | Pending |
 | ENG-06 | Phase 1 | Pending |
 | WRK-01 | Phase 1 | Complete |

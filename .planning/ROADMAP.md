@@ -28,7 +28,7 @@ Plans:
 - [x] 01-02-PLAN.md — Wave 1: PocketBase bootstrap, schema sync, TemplateCache skeleton
 
 **Wave 2** *(blocked on Wave 1 completion)*
-- [ ] 01-03-PLAN.md — Wave 1: Template cache, fsnotify watcher, slug resolver
+- [x] 01-03-PLAN.md — Wave 1: Template cache, fsnotify watcher, slug resolver
 - [ ] 01-05-PLAN.md — Wave 2: monms init scaffold and UI-SPEC templates
 
 **Wave 3** *(blocked on Wave 2 completion)*
