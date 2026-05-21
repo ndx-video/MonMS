@@ -4,13 +4,13 @@ milestone: v1.0
 milestone_name: milestone
 status: executing
 stopped_at: Completed 01-05-PLAN.md
-last_updated: "2026-05-22T01:56:30+10:00"
+last_updated: "2026-05-21T15:59:12.530Z"
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 5
-  completed_plans: 4
-  percent: 80
+  completed_plans: 5
+  percent: 100
 ---
 
 # MonMS — Project State
@@ -36,10 +36,12 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 - Integration tests register /_/ static UI route like apis.Serve because NewRouter alone omits admin assets
 - Flat templates/{slug}.gohtml wins when both flat and directory index exist
 - StartWatcher watches entire workspace tree per D-30, not templates/ only
+- Skip existing scaffold files on re-init with info log (no force flag in Phase 1)
+- git init warns and continues when git missing from PATH
 
 ## Last Session
 
-**Stopped at:** Completed 01-03-PLAN.md
+**Stopped at:** Completed 01-05-PLAN.md
 **Resume file:** None
 
 ## Workflow State

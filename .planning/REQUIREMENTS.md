@@ -11,16 +11,16 @@
 - [x] **ENG-02**: Template cache is populated on first access and invalidated automatically when workspace files change.
 - [x] **ENG-03**: fsnotify watches the `workspace/templates/` folder and clears in-memory template cache on write/create events.
 - [x] **ENG-04**: Production mode activates template caching; development mode always reads from disk.
-- [ ] **ENG-05**: Binary's idle RAM footprint stays under 30MB in production mode.
-- [ ] **ENG-06**: Server-side rendered routes under SQLite reads produce a TTFB under 15ms.
+- [x] **ENG-05**: Binary's idle RAM footprint stays under 30MB in production mode.
+- [x] **ENG-06**: Server-side rendered routes under SQLite reads produce a TTFB under 15ms.
 
 ### Workspace Structure
 
 - [x] **WRK-01**: The workspace folder contains `schema/`, `templates/layouts/`, `templates/fragments/`, and `assets/` subdirectories.
 - [x] **WRK-02**: The workspace folder is a Git repository and all agent mutations are tracked as commits.
-- [ ] **WRK-03**: Static assets (`/assets/{path}`) are served directly from `workspace/assets/` without compilation.
-- [ ] **WRK-04**: Route templates are resolved as `workspace/templates/{slug}.gohtml` and merged with `workspace/templates/layouts/base.gohtml`.
-- [ ] **WRK-05**: An unknown slug returns a descriptive 404 rather than a Go panic.
+- [x] **WRK-03**: Static assets (`/assets/{path}`) are served directly from `workspace/assets/` without compilation.
+- [x] **WRK-04**: Route templates are resolved as `workspace/templates/{slug}.gohtml` and merged with `workspace/templates/layouts/base.gohtml`.
+- [x] **WRK-05**: An unknown slug returns a descriptive 404 rather than a Go panic.
 
 ### Agent Mutation Engine
 
@@ -89,13 +89,13 @@
 | ENG-02 | Phase 1 | Complete |
 | ENG-03 | Phase 1 | Complete |
 | ENG-04 | Phase 1 | Complete |
-| ENG-05 | Phase 1 | Pending |
-| ENG-06 | Phase 1 | Pending |
+| ENG-05 | Phase 1 | Complete |
+| ENG-06 | Phase 1 | Complete |
 | WRK-01 | Phase 1 | Complete |
 | WRK-02 | Phase 1 | Complete |
-| WRK-03 | Phase 1 | Pending |
-| WRK-04 | Phase 1 | Pending |
-| WRK-05 | Phase 1 | Pending |
+| WRK-03 | Phase 1 | Complete |
+| WRK-04 | Phase 1 | Complete |
+| WRK-05 | Phase 1 | Complete |
 | AGT-01 | Phase 2 | Pending |
 | AGT-02 | Phase 2 | Pending |
 | AGT-03 | Phase 2 | Pending |

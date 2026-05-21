@@ -32,7 +32,7 @@ Plans:
 - [x] 01-05-PLAN.md — Wave 2: monms init scaffold and UI-SPEC templates
 
 **Wave 3** *(blocked on Wave 2 completion)*
-- [ ] 01-04-PLAN.md — Wave 3: SSR, assets, fragments, error pages, perf gates
+- [x] 01-04-PLAN.md — Wave 3: SSR, assets, fragments, error pages, perf gates
 
 **Status:** Pending
 
