@@ -1,0 +1,46 @@
+{{define "title"}}MonMS{{end}}
+{{define "body"}}
+<header class="site-header" x-data="{ open: false }">
+  <div class="site-header__inner">
+    <a href="/" class="site-header__logo">MonMS</a>
+    <nav class="hidden md:flex gap-6" aria-label="Main">
+      <a href="/" class="text-indigo-600 text-sm font-semibold">Home</a>
+      <a href="/_/" class="text-slate-600 hover:text-indigo-600 text-sm font-semibold">Admin</a>
+    </nav>
+    <button
+      type="button"
+      class="md:hidden p-3 text-slate-600 hover:text-indigo-600"
+      aria-label="Open menu"
+      aria-expanded="false"
+      aria-controls="mobile-nav"
+      @click="open = !open"
+      :aria-expanded="open.toString()"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+      </svg>
+    </button>
+  </div>
+  <div
+    id="mobile-nav"
+    class="mobile-nav md:hidden"
+    x-show="open"
+    x-transition
+    x-cloak
+  >
+    <a href="/" class="text-indigo-600" @click="open = false">Home</a>
+    <a href="/_/" @click="open = false">Admin</a>
+  </div>
+</header>
+<section class="hero">
+  <h1 class="hero__title">MonMS is running</h1>
+  <p class="hero__body">Your workspace is live. Templates load from disk — no build step required.</p>
+  <div class="hero__actions">
+    <a href="/_/" class="btn btn--primary">Explore Admin</a>
+  </div>
+</section>
+<section class="card mt-8">
+  <h2 class="text-base font-semibold mb-2">Workspace ready</h2>
+  <p class="text-slate-600 text-sm">Templates in <code>workspace/templates/</code> render on the next request. Edit files and refresh — no restart needed.</p>
+</section>
+{{end}}
