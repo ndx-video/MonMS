@@ -3,15 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-last_updated: "2026-05-22T01:51:00+10:00"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-05-22T02:00:00+10:00"
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 5
-  completed_plans: 1
-  percent: 20
-current_phase: 01-core-go-runtime-workspace-foundation
-current_plan: 2
+  completed_plans: 2
+  percent: 40
 ---
 
 # MonMS — Project State
@@ -26,17 +25,19 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 ## Active Phase
 
 **Phase 1:** Core Go Runtime & Workspace Foundation
-**Status:** Executing — plan 01-01 complete
-**Next action:** Execute 01-02-PLAN.md (PocketBase bootstrap, schema sync, TemplateCache skeleton)
+**Status:** Executing — plan 01-02 complete
+**Next action:** Execute 01-03-PLAN.md (fsnotify watcher and template resolver)
 
 ## Decisions
 
 - filepath.Clean only on flag/env workspace overrides; default `./workspace` preserved for logging
 - Wave 0 skeleton tests skip with plan ownership until feature plans land
+- TemplateCache production mode set via SetProductionMode from main to avoid internal importing main
+- Integration tests register /_/ static UI route like apis.Serve because NewRouter alone omits admin assets
 
 ## Last Session
 
-**Stopped at:** Completed 01-01-PLAN.md
+**Stopped at:** Completed 01-02-PLAN.md
 **Resume file:** None
 
 ## Workflow State

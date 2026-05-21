@@ -7,7 +7,7 @@
 
 ### Core Runtime Engine
 
-- [ ] **ENG-01**: Go binary starts and serves HTTP with PocketBase embedded without any configuration files.
+- [x] **ENG-01**: Go binary starts and serves HTTP with PocketBase embedded without any configuration files.
 - [ ] **ENG-02**: Template cache is populated on first access and invalidated automatically when workspace files change.
 - [ ] **ENG-03**: fsnotify watches the `workspace/templates/` folder and clears in-memory template cache on write/create events.
 - [ ] **ENG-04**: Production mode activates template caching; development mode always reads from disk.
@@ -42,7 +42,7 @@
 
 ### Authentication & Security
 
-- [ ] **SEC-01**: PocketBase admin dashboard (`/_/`) is accessible for full management fallback.
+- [x] **SEC-01**: PocketBase admin dashboard (`/_/`) is accessible for full management fallback.
 - [ ] **SEC-02**: Unauthenticated PUT requests to PocketBase collection endpoints are rejected at the database layer.
 - [ ] **SEC-03**: Agent operates with SSH keys and REST API tokens scoped strictly to the active workspace subdirectory.
 - [ ] **SEC-04**: HttpOnly cookie contains the session JWT; it is not accessible from JavaScript.
@@ -85,7 +85,7 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| ENG-01 | Phase 1 | Pending |
+| ENG-01 | Phase 1 | Complete |
 | ENG-02 | Phase 1 | Pending |
 | ENG-03 | Phase 1 | Pending |
 | ENG-04 | Phase 1 | Pending |
@@ -108,7 +108,7 @@
 | ICE-04 | Phase 3 | Pending |
 | ICE-05 | Phase 3 | Pending |
 | ICE-06 | Phase 3 | Pending |
-| SEC-01 | Phase 1 | Pending |
+| SEC-01 | Phase 1 | Complete |
 | SEC-02 | Phase 3 | Pending |
 | SEC-03 | Phase 2 | Pending |
 | SEC-04 | Phase 3 | Pending |
