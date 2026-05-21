@@ -1,0 +1,8 @@
+{
+  "name": "press_releases",
+  "type": "base",
+  "fields": [
+    {"name": "title", "type": "text"},
+    {"name": "body",  "type": "text"}
+  ]
+}
