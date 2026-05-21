@@ -12,6 +12,7 @@ import (
 	"github.com/monms/monms/internal/schema"
 	"github.com/monms/monms/internal/scaffold"
 	"github.com/monms/monms/internal/templates"
+	"github.com/monms/monms/internal/validate"
 	"github.com/monms/monms/internal/workspace"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
@@ -24,6 +25,13 @@ var tplCache = templates.NewCache()
 func main() {
 	if len(os.Args) >= 2 && os.Args[1] == "init" {
 		if err := scaffold.RunInit(os.Args[2:]); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
+	if len(os.Args) >= 2 && os.Args[1] == "validate" {
+		if err := validate.RunCLI(os.Args[2:]); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
