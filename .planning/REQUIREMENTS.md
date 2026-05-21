@@ -17,7 +17,7 @@
 ### Workspace Structure
 
 - [x] **WRK-01**: The workspace folder contains `schema/`, `templates/layouts/`, `templates/fragments/`, and `assets/` subdirectories.
-- [ ] **WRK-02**: The workspace folder is a Git repository and all agent mutations are tracked as commits.
+- [x] **WRK-02**: The workspace folder is a Git repository and all agent mutations are tracked as commits.
 - [ ] **WRK-03**: Static assets (`/assets/{path}`) are served directly from `workspace/assets/` without compilation.
 - [ ] **WRK-04**: Route templates are resolved as `workspace/templates/{slug}.gohtml` and merged with `workspace/templates/layouts/base.gohtml`.
 - [ ] **WRK-05**: An unknown slug returns a descriptive 404 rather than a Go panic.
@@ -51,7 +51,7 @@
 
 - [ ] **DEMO-01**: A working `hero_content` PocketBase collection with `title` and `body` fields is seeded.
 - [ ] **DEMO-02**: An `index.gohtml` template renders hero content from the collection with inline editing when authenticated.
-- [ ] **DEMO-03**: A `base.gohtml` layout includes global HTMX, Alpine.js script tags, and the editor overlay block.
+- [x] **DEMO-03**: A `base.gohtml` layout includes global HTMX, Alpine.js script tags, and the editor overlay block.
 
 ## v2 Requirements
 
@@ -92,7 +92,7 @@
 | ENG-05 | Phase 1 | Pending |
 | ENG-06 | Phase 1 | Pending |
 | WRK-01 | Phase 1 | Complete |
-| WRK-02 | Phase 1 | Pending |
+| WRK-02 | Phase 1 | Complete |
 | WRK-03 | Phase 1 | Pending |
 | WRK-04 | Phase 1 | Pending |
 | WRK-05 | Phase 1 | Pending |
@@ -114,7 +114,7 @@
 | SEC-04 | Phase 3 | Pending |
 | DEMO-01 | Phase 3 | Pending |
 | DEMO-02 | Phase 3 | Pending |
-| DEMO-03 | Phase 1 | Pending |
+| DEMO-03 | Phase 1 | Complete |
 
 **Coverage:**
 - v1 requirements: 29 total
