@@ -16,7 +16,7 @@
 
 ### Workspace Structure
 
-- [ ] **WRK-01**: The workspace folder contains `schema/`, `templates/layouts/`, `templates/fragments/`, and `assets/` subdirectories.
+- [x] **WRK-01**: The workspace folder contains `schema/`, `templates/layouts/`, `templates/fragments/`, and `assets/` subdirectories.
 - [ ] **WRK-02**: The workspace folder is a Git repository and all agent mutations are tracked as commits.
 - [ ] **WRK-03**: Static assets (`/assets/{path}`) are served directly from `workspace/assets/` without compilation.
 - [ ] **WRK-04**: Route templates are resolved as `workspace/templates/{slug}.gohtml` and merged with `workspace/templates/layouts/base.gohtml`.
@@ -91,7 +91,7 @@
 | ENG-04 | Phase 1 | Pending |
 | ENG-05 | Phase 1 | Pending |
 | ENG-06 | Phase 1 | Pending |
-| WRK-01 | Phase 1 | Pending |
+| WRK-01 | Phase 1 | Complete |
 | WRK-02 | Phase 1 | Pending |
 | WRK-03 | Phase 1 | Pending |
 | WRK-04 | Phase 1 | Pending |
