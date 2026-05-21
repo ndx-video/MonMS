@@ -2,9 +2,9 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 01-04-PLAN.md
-last_updated: "2026-05-21T15:59:12.530Z"
+status: completed
+stopped_at: Phase 2 context gathered
+last_updated: "2026-05-21T16:09:17.764Z"
 progress:
   total_phases: 3
   completed_phases: 1
@@ -38,11 +38,13 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 - StartWatcher watches entire workspace tree per D-30, not templates/ only
 - Skip existing scaffold files on re-init with info log (no force flag in Phase 1)
 - git init warns and continues when git missing from PATH
+- Traversal blocked in safeAssetPath; unit test covers ../../../ because ServeMux redirects .. in URL paths
+- RegisterRoutes order: assets, fragments, SSR catch-all (D-14)
 
 ## Last Session
 
-**Stopped at:** Completed 01-05-PLAN.md
-**Resume file:** None
+**Stopped at:** Phase 2 context gathered
+**Resume file:** .planning/phases/02-agent-mutation-engine-safety-guardrails/02-CONTEXT.md
 
 ## Workflow State
 
