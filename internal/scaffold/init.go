@@ -1,6 +1,7 @@
 package scaffold
 
 import (
+	"bytes"
 	"fmt"
 	"io/fs"
 	"log/slog"
@@ -11,6 +12,43 @@ import (
 
 	"github.com/monms/monms/internal/config"
 )
+
+// preCommitHookScript is installed into workspace/.git/hooks/pre-commit (D-40).
+// The monms-validate-hook comment is the idempotency marker — do not remove it.
+const preCommitHookScript = `#!/bin/sh
+# monms-validate-hook — DO NOT REMOVE THIS COMMENT (idempotency marker)
+
+if [ -n "$MONMS_BIN" ]; then
+  MONMS="$MONMS_BIN"
+elif command -v monms >/dev/null 2>&1; then
+  MONMS="monms"
+else
+  HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+  CANDIDATE="$HOOK_DIR/../../monms"
+  if [ -x "$CANDIDATE" ]; then
+    MONMS="$(cd "$(dirname "$CANDIDATE")" && pwd)/$(basename "$CANDIDATE")"
+  else
+    echo "monms: binary not found" >&2
+    echo "  Set MONMS_BIN, add monms to PATH, or place binary at ../../monms relative to workspace" >&2
+    exit 1
+  fi
+fi
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep '\.gohtml$')
+if [ -z "$STAGED" ]; then
+  exit 0
+fi
+
+if ! echo "$STAGED" | tr '\n' '\0' | xargs -0 "$MONMS" validate; then
+  echo "" >&2
+  echo "Pre-commit validation failed. Rolling back workspace to last stable state..." >&2
+  git checkout -- .
+  echo "Workspace restored. Fix the errors above, then re-apply your changes." >&2
+  exit 1
+fi
+
+exit 0
+`
 
 type scaffoldFile struct {
 	embedPath string
@@ -62,6 +100,10 @@ func RunInit(args []string) error {
 	}
 
 	if err := maybeGitInit(wsAbs); err != nil {
+		return err
+	}
+
+	if err := installPreCommitHook(wsAbs); err != nil {
 		return err
 	}
 
@@ -138,6 +180,43 @@ func ensureUnderWorkspace(wsRoot, dest string) error {
 	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 		return fmt.Errorf("refusing write outside workspace: %s", dest)
 	}
+	return nil
+}
+
+// installPreCommitHook writes the monms pre-commit hook into workspace/.git/hooks/pre-commit (D-40).
+// Idempotent: skips if the file already contains the monms-validate-hook marker (D-40).
+// Overwrites hooks that lack the marker, so non-monms hooks are replaced silently (T-02-07 accepted).
+func installPreCommitHook(wsRoot string) error {
+	gitDir := filepath.Join(wsRoot, ".git")
+	if _, err := os.Stat(gitDir); os.IsNotExist(err) {
+		slog.Warn("no .git directory found, skipping pre-commit hook install", "dir", gitDir)
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("stat .git: %w", err)
+	}
+
+	hooksDir := filepath.Join(gitDir, "hooks")
+	if _, err := os.Stat(hooksDir); os.IsNotExist(err) {
+		// A4: hooks/ may be absent right after git init on some systems.
+		if err := os.MkdirAll(hooksDir, 0o755); err != nil {
+			return fmt.Errorf("mkdir hooks dir: %w", err)
+		}
+	} else if err != nil {
+		return fmt.Errorf("stat hooks dir: %w", err)
+	}
+
+	hookPath := filepath.Join(hooksDir, "pre-commit")
+	if existing, err := os.ReadFile(hookPath); err == nil {
+		if bytes.Contains(existing, []byte("monms-validate-hook")) {
+			slog.Info("pre-commit hook already installed, skipping")
+			return nil
+		}
+	}
+
+	if err := os.WriteFile(hookPath, []byte(preCommitHookScript), 0o755); err != nil {
+		return fmt.Errorf("install pre-commit hook: %w", err)
+	}
+	slog.Info("pre-commit hook installed", "path", hookPath)
 	return nil
 }
 
