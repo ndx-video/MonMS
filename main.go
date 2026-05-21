@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/monms/monms/internal/config"
+	"github.com/monms/monms/internal/router"
 	"github.com/monms/monms/internal/schema"
 	"github.com/monms/monms/internal/scaffold"
 	"github.com/monms/monms/internal/templates"
@@ -65,6 +66,11 @@ func runServe() {
 	schema.RegisterBootstrapHook(app, abs)
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
+		router.RegisterRoutes(se, router.Deps{
+			WsAbs: abs,
+			Cache: tplCache,
+			IsDev: buildMode != "production",
+		})
 		return se.Next()
 	})
 
