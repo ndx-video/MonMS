@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 	"os"
@@ -49,6 +50,12 @@ func runServe() {
 	)
 
 	tplCache.SetProductionMode(buildMode == "production")
+
+	if buildMode == "production" {
+		if err := templates.StartWatcher(context.Background(), abs, tplCache.Flush); err != nil {
+			slog.Error("template watcher failed to start", "err", err)
+		}
+	}
 
 	app := pocketbase.NewWithConfig(pocketbase.Config{
 		DefaultDataDir: filepath.Join(abs, ".pb_data"),

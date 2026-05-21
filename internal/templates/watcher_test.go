@@ -157,6 +157,7 @@ func TestWatcherAddsNewSubdirectory(t *testing.T) {
 	if err := os.MkdirAll(newDir, 0o755); err != nil {
 		t.Fatalf("mkdir press: %v", err)
 	}
+	time.Sleep(100 * time.Millisecond)
 
 	tplPath := filepath.Join(newDir, "index.gohtml")
 	if err := os.WriteFile(tplPath, []byte(`{{define "body"}}press{{end}}`), 0o644); err != nil {
