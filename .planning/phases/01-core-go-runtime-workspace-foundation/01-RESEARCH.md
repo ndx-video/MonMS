@@ -699,22 +699,20 @@ MONMS_WORKSPACE=/path/to/site go run . init
 | A4 | Schema JSON uses `fields` key (not legacy `schema`) | Pattern 5 | Import fails — validate against `migrate collections` output |
 | A5 | `init` early dispatch is acceptable vs cobra subcommand UX | Implementation A | Minor UX inconsistency (`monms init` vs `monms serve` through PB) |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Flat vs directory index precedence when both exist**
-   - What we know: D-10 gives examples but not conflict resolution
-   - What's unclear: `/about` with both `about.gohtml` and `about/index.gohtml`
-   - Recommendation: Flat file wins; log debug when both exist (planner discretion)
+1. **Flat vs directory index precedence when both exist** — **RESOLVED**
+   - Decision: Flat file wins over `{slug}/index.gohtml` when both exist (Pattern 3 step 3 before step 4).
+   - Implementation: `ResolveSlug` tries `templates/{slug}.gohtml` before `templates/{slug}/index.gohtml`; optional debug log when both exist (planner discretion).
 
-2. **Schema sync with multiple JSON files defining same collection name**
-   - What we know: ImportCollections upserts by id/name
-   - What's unclear: Last-write-wins ordering
-   - Recommendation: Load files in sorted name order; log merged count
+2. **Schema sync with multiple JSON files defining same collection name** — **RESOLVED**
+   - Decision: Load `schema/*.json` in sorted filename order; `ImportCollectionsByMarshaledJSON` upserts by collection id/name (last file in sort order wins on conflict).
+   - Implementation: `loadSchemaJSONFiles` sorts filenames; log merged collection count at INFO.
 
-3. **PocketBase `DefaultDev` auto-enables when using `go run`**
-   - What we know: `pocketbase.New()` sets `DefaultDev: isUsingGoRun` [VERIFIED: pocketbase.go]
-   - What's unclear: Whether PB dev mode SQL logging affects ENG-05 measurements
-   - Recommendation: Use `NewWithConfig` with explicit `DefaultDev: buildMode != "production"` OR decouple MonMS buildMode from PB dev flag — planner should align both to production ldflags build
+3. **PocketBase `DefaultDev` vs MonMS `buildMode` ldflags** — **RESOLVED**
+   - Decision: Align PocketBase `DefaultDev` with MonMS `buildMode` — `DefaultDev: buildMode != "production"` in `NewWithConfig` (plan 01-02 Task 1).
+   - Rationale: Prevents `go run` from enabling PB dev SQL logging during ENG-05 RAM benchmarks; MonMS production ldflags build sets both to production behavior.
+   - ENG-05: `TestIdleMemory` uses production `buildMode` / `SetProductionMode(true)` per 01-04 plan.
 
 ## Environment Availability
 
