@@ -23,10 +23,15 @@
 **Plans:** 5 plans
 
 Plans:
+**Wave 1**
 - [ ] 01-01-PLAN.md — Wave 0: Go module, config, validation, test infrastructure
 - [ ] 01-02-PLAN.md — Wave 1: PocketBase bootstrap, schema sync, TemplateCache skeleton
+
+**Wave 2** *(blocked on Wave 1 completion)*
 - [ ] 01-03-PLAN.md — Wave 1: Template cache, fsnotify watcher, slug resolver
 - [ ] 01-05-PLAN.md — Wave 2: monms init scaffold and UI-SPEC templates
+
+**Wave 3** *(blocked on Wave 2 completion)*
 - [ ] 01-04-PLAN.md — Wave 3: SSR, assets, fragments, error pages, perf gates
 
 **Status:** Pending
