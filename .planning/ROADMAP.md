@@ -84,18 +84,66 @@ Plans:
 - Validation: unauthenticated page load renders no `contenteditable` attributes
 - Manual test walkthrough in `workspace/EDITING-GUIDE.md` documenting the login → edit → save flow
 
-**Plans:** 4 plans
+**Plans:** 4/4 plans complete
 
 Plans:
 **Wave 1** *(parallel — no shared files)*
-- [ ] 03-01-PLAN.md — hero_content schema, API rules, bootstrap homepage seed
-- [ ] 03-02-PLAN.md — auth cookie bridge, SSR AuthToken + Hero enrichment
+- [x] 03-01-PLAN.md — hero_content schema, API rules, bootstrap homepage seed
+- [x] 03-02-PLAN.md — auth cookie bridge, SSR AuthToken + Hero enrichment
 
 **Wave 2** *(blocked on Wave 1)*
-- [ ] 03-03-PLAN.md — base/index templates, editor badge, HTMX inline edit, CSS
+- [x] 03-03-PLAN.md — base/index templates, editor badge, HTMX inline edit, CSS
 
 **Wave 3** *(blocked on Waves 1 + 2)*
-- [ ] 03-04-PLAN.md — integration tests (ICE/SEC), EDITING-GUIDE.md
+- [x] 03-04-PLAN.md — integration tests (ICE/SEC), EDITING-GUIDE.md
+
+**Status:** Complete
+
+---
+
+## Milestone 2: v2 — Staging & Client Content Publish
+
+**Goal:** Staging and production environments with dual promotion rails; clients publish editorial content to live via admin UI without consultant involvement.
+
+---
+
+## Phase 4: Staging Environments & Client Content Publish
+
+**Goal:** Clients publish editorial content from staging to production via admin UI; structure continues to promote via Git tags; media uses shared CDN URLs.
+
+**Requirements Covered:** ENV-01, ENV-02, ENV-03, PUB-01, PUB-02, PUB-03, PUB-04, PUB-05, PUB-06, PUB-07, PUB-08, PUB-09, MED-01, MED-02
+
+**Depends on:** Phase 3 (inline editing)
+
+**Deliverables:**
+- `workspace/content/` convention + `editorial: true` flag in schema JSON
+- `internal/content/` — export, import, diff, upsert by record ID
+- `monms content export|import|diff|publish` CLI subcommands
+- `POST /api/monms/content/import` with scoped publish token on production
+- Admin publish page (`/_/publish`) with diff preview and **Publish to live**
+- Publisher role / permission model
+- Lifecycle docs (`specs/staging.md`, README updates)
+
+**Plans:** 6 plans
+
+Plans:
+**Wave 0**
+- [ ] 04-01-PLAN.md — Editorial schema parse, test fixtures, hero editorial flag
+
+**Wave 1** *(blocked on Wave 0)*
+- [ ] 04-02-PLAN.md — Core content export/import/diff/checksum/state engine
+
+**Wave 2** *(blocked on Wave 1)*
+- [ ] 04-03-PLAN.md — monms content CLI (export, import, diff, publish)
+
+**Wave 3** *(blocked on Waves 1–2)*
+- [ ] 04-04-PLAN.md — Production POST /api/monms/content/import + publish token
+
+**Wave 4** *(blocked on Waves 2–3)*
+- [ ] 04-05-PLAN.md — Staging publish UI, publisher gate, editor badge link
+
+**Wave 5** *(blocked on Wave 4)*
+- [ ] 04-06-PLAN.md — Four-layer docs, MEDIA.md, gitignore (ENV/MED)
 
 **Status:** Pending
 
@@ -115,4 +163,4 @@ The following are tracked but not scheduled for v1:
 
 ---
 *Roadmap created: 2026-05-22*
-*Last updated: 2026-05-22 after initialization*
+*Last updated: 2026-05-23 after ingest specs/staging.md*
