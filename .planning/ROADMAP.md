@@ -84,6 +84,19 @@ Plans:
 - Validation: unauthenticated page load renders no `contenteditable` attributes
 - Manual test walkthrough in `workspace/EDITING-GUIDE.md` documenting the login → edit → save flow
 
+**Plans:** 4 plans
+
+Plans:
+**Wave 1** *(parallel — no shared files)*
+- [ ] 03-01-PLAN.md — hero_content schema, API rules, bootstrap homepage seed
+- [ ] 03-02-PLAN.md — auth cookie bridge, SSR AuthToken + Hero enrichment
+
+**Wave 2** *(blocked on Wave 1)*
+- [ ] 03-03-PLAN.md — base/index templates, editor badge, HTMX inline edit, CSS
+
+**Wave 3** *(blocked on Waves 1 + 2)*
+- [ ] 03-04-PLAN.md — integration tests (ICE/SEC), EDITING-GUIDE.md
+
 **Status:** Pending
 
 ---
