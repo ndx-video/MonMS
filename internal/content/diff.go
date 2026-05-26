@@ -59,6 +59,18 @@ func diffSnapshots(baseline, current []CollectionFile) []string {
 		baseByColl[f.Collection] = byID
 	}
 
+	curByColl := make(map[string]map[string]map[string]any)
+	for _, f := range current {
+		byID := make(map[string]map[string]any)
+		for _, rec := range f.Records {
+			id, _ := rec["id"].(string)
+			if id != "" {
+				byID[id] = rec
+			}
+		}
+		curByColl[f.Collection] = byID
+	}
+
 	var changes []string
 	for _, f := range current {
 		baseRecords := baseByColl[f.Collection]
@@ -75,6 +87,16 @@ func diffSnapshots(baseline, current []CollectionFile) []string {
 			changes = append(changes, diffRecordFields(f.Collection, id, oldRec, rec)...)
 		}
 	}
+
+	for coll, baseRecords := range baseByColl {
+		curRecords := curByColl[coll]
+		for id := range baseRecords {
+			if curRecords == nil || curRecords[id] == nil {
+				changes = append(changes, fmt.Sprintf("%s/%s: record deleted", coll, id))
+			}
+		}
+	}
+
 	sort.Strings(changes)
 	return changes
 }

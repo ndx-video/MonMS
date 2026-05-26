@@ -4,11 +4,13 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"path/filepath"
-	"strings"
+	"time"
 
+	"github.com/monms/monms/internal/cli"
 	"github.com/monms/monms/internal/config"
 	"github.com/monms/monms/internal/schema"
 	"github.com/pocketbase/pocketbase"
@@ -21,7 +23,8 @@ var ErrPendingChanges = errors.New("pending editorial content changes")
 // RunCLI is the entry point for the `monms content` subcommand (PUB-03, PUB-09).
 func RunCLI(args []string) error {
 	if len(args) == 0 {
-		return fmt.Errorf("usage: monms content <export|import|diff|publish> [--workspace PATH]")
+		cli.PrintHelp("content")
+		return nil
 	}
 
 	sub := args[0]
@@ -110,10 +113,17 @@ func runDiff(wsAbs string) error {
 
 func runPublishCLI(args []string, wsAbs string) error {
 	fs := flag.NewFlagSet("publish", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	fs.Usage = func() {
+		if text, ok := cli.ContentSubcommandHelp("publish"); ok {
+			fmt.Print(text)
+		}
+	}
 	var toURL string
 	fs.StringVar(&toURL, "to", "", "production base URL (required)")
-	if err := fs.Parse(stripWorkspaceFlags(args)); err != nil {
+	if err := fs.Parse(config.StripWorkspaceFlags(args)); err != nil {
 		if err == flag.ErrHelp {
+			fs.Usage()
 			return nil
 		}
 		return err
@@ -145,23 +155,23 @@ func runPublishCLI(args []string, wsAbs string) error {
 		}
 	}
 
-	return PublishToProduction(toURL, token, payloads)
-}
-
-func stripWorkspaceFlags(args []string) []string {
-	var out []string
-	for i := 0; i < len(args); i++ {
-		arg := args[i]
-		if strings.HasPrefix(arg, "--workspace=") {
-			continue
-		}
-		if arg == "--workspace" {
-			if i+1 < len(args) {
-				i++
-			}
-			continue
-		}
-		out = append(out, arg)
+	if err := PublishToProduction(toURL, token, payloads); err != nil {
+		return err
 	}
-	return out
+
+	checksum, err := ChecksumExport(snap)
+	if err != nil {
+		return err
+	}
+
+	collections := make([]string, len(payloads))
+	for i, p := range payloads {
+		collections[i] = p.Collection
+	}
+
+	return WritePublishState(wsAbs, PublishState{
+		Checksum:    checksum,
+		PublishedAt: time.Now().UTC().Format(time.RFC3339),
+		Collections: collections,
+	})
 }

@@ -109,6 +109,34 @@ func TestDiffExportNoChangesWhenChecksumMatches(t *testing.T) {
 	}
 }
 
+func TestDiffSnapshotsDetectsDeletedRecord(t *testing.T) {
+	baseline := []CollectionFile{{
+		Collection: "hero_content",
+		Records: []map[string]any{
+			{"id": "homepage", "title": "A"},
+			{"id": "removed", "title": "Gone"},
+		},
+	}}
+	current := []CollectionFile{{
+		Collection: "hero_content",
+		Records: []map[string]any{
+			{"id": "homepage", "title": "A"},
+		},
+	}}
+
+	changes := diffSnapshots(baseline, current)
+	found := false
+	for _, c := range changes {
+		if c == "hero_content/removed: record deleted" {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatalf("changes %v, want deleted record", changes)
+	}
+}
+
 func TestWritePublishStateUnderMonms(t *testing.T) {
 	ws := testutil.NewEditorialWorkspace(t)
 	if err := WritePublishState(ws, PublishState{

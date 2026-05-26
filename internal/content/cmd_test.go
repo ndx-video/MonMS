@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/monms/monms/internal/monmsroutes"
 	"github.com/monms/monms/internal/testutil"
 )
 
@@ -18,6 +19,19 @@ func TestContentExportCLI(t *testing.T) {
 
 	if err := RunCLI([]string{"export", "--workspace", ws}); err != nil {
 		t.Fatalf("RunCLI export: %v", err)
+	}
+
+	path := filepath.Join(ws, "content", "hero_content.json")
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("export file missing: %v", err)
+	}
+}
+
+func TestContentExportCLIWithShortWorkspaceFlag(t *testing.T) {
+	ws := testutil.NewEditorialWorkspace(t)
+
+	if err := RunCLI([]string{"export", "-w", ws}); err != nil {
+		t.Fatalf("RunCLI export -w: %v", err)
 	}
 
 	path := filepath.Join(ws, "content", "hero_content.json")
@@ -71,8 +85,8 @@ func TestContentPublishCLI(t *testing.T) {
 	var gotAuth string
 
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/monms/content/import" {
-			t.Errorf("path %q, want /api/monms/content/import", r.URL.Path)
+		if r.URL.Path != monmsroutes.ContentImportPath {
+			t.Errorf("path %q, want %s", r.URL.Path, monmsroutes.ContentImportPath)
 		}
 		if r.Method != http.MethodPost {
 			t.Errorf("method %q, want POST", r.Method)
@@ -98,6 +112,17 @@ func TestContentPublishCLI(t *testing.T) {
 
 	if gotAuth != "Bearer "+wantToken {
 		t.Fatalf("Authorization %q, want Bearer %s", gotAuth, wantToken)
+	}
+
+	state, err := ReadPublishState(ws)
+	if err != nil {
+		t.Fatalf("read publish state: %v", err)
+	}
+	if state.Checksum == "" {
+		t.Fatal("publish state checksum empty after CLI publish")
+	}
+	if state.PublishedAt == "" {
+		t.Fatal("publish state PublishedAt empty after CLI publish")
 	}
 }
 
