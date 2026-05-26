@@ -3,6 +3,7 @@ package content
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"net/http/httptest"
@@ -201,6 +202,103 @@ func TestImportAPIUnauthorized(t *testing.T) {
 			t.Fatalf("status %d, want >= 400; body: %s", resp.StatusCode, body)
 		}
 	})
+}
+
+func TestPublishUIReturns200(t *testing.T) {
+	ws := testutil.NewEditorialWorkspace(t)
+	ts, app, cleanup := startTestContentServer(t, ws, testPublishToken)
+	defer cleanup()
+
+	publisher := testutil.NewSuperuser(t, app, "publisher@test.local")
+	client := testutil.AuthClient(t, app, publisher)
+
+	resp, err := client.Get(ts.URL + "/api/monms/publish")
+	if err != nil {
+		t.Fatalf("GET publish: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read body: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status %d, want 200; body: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+	if !strings.Contains(string(body), "Publish to live") {
+		t.Fatalf("body missing title, got: %.400s", body)
+	}
+}
+
+func TestPublisherGate(t *testing.T) {
+	ws := testutil.NewEditorialWorkspace(t)
+
+	mockProd := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/monms/content/import" {
+			http.NotFound(w, r)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+		_, _ = w.Write([]byte(`{"upserted":1,"collections":1}`))
+	}))
+	defer mockProd.Close()
+
+	cfgPath := filepath.Join(ws, ".monms/config.json")
+	testutil.WriteFile(t, cfgPath, fmt.Sprintf(
+		`{"productionUrl":%q,"publisherEmails":["publisher@test.local"]}`,
+		mockProd.URL,
+	))
+
+	ts, app, cleanup := startTestContentServer(t, ws, testPublishToken)
+	defer cleanup()
+
+	editor := testutil.NewSuperuser(t, app, "editor@test.local")
+	editorClient := testutil.AuthClient(t, app, editor)
+
+	postReq, err := http.NewRequest(http.MethodPost, ts.URL+"/api/monms/publish", nil)
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	postResp, err := editorClient.Do(postReq)
+	if err != nil {
+		t.Fatalf("POST publish as editor: %v", err)
+	}
+	postResp.Body.Close()
+	if postResp.StatusCode != http.StatusForbidden {
+		t.Fatalf("editor POST status %d, want 403", postResp.StatusCode)
+	}
+
+	publisher := testutil.NewSuperuser(t, app, "publisher@test.local")
+	pubClient := testutil.AuthClient(t, app, publisher)
+
+	pubReq, err := http.NewRequest(http.MethodPost, ts.URL+"/api/monms/publish", nil)
+	if err != nil {
+		t.Fatalf("new publisher request: %v", err)
+	}
+	pubResp, err := pubClient.Do(pubReq)
+	if err != nil {
+		t.Fatalf("POST publish as publisher: %v", err)
+	}
+	defer pubResp.Body.Close()
+
+	pubBody, err := io.ReadAll(pubResp.Body)
+	if err != nil {
+		t.Fatalf("read publisher body: %v", err)
+	}
+	if pubResp.StatusCode != http.StatusOK {
+		t.Fatalf("publisher POST status %d, want 200; body: %s", pubResp.StatusCode, strings.TrimSpace(string(pubBody)))
+	}
+
+	state, err := ReadPublishState(ws)
+	if err != nil {
+		t.Fatalf("read publish state: %v", err)
+	}
+	if state.Checksum == "" {
+		t.Fatal("publish-state checksum empty after successful publish")
+	}
+	if state.PublishedAt == "" {
+		t.Fatal("publish-state publishedAt empty after successful publish")
+	}
 }
 
 func TestImportAPIFailClosedEmptyToken(t *testing.T) {
