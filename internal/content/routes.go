@@ -40,6 +40,7 @@ type importCollection struct {
 func RegisterRoutes(se *core.ServeEvent, deps Deps) {
 	se.Router.POST("/api/monms/content/import", importHandler(deps)).
 		BindFunc(RequirePublishToken(deps.PublishToken))
+	registerPublishRoutes(se, deps)
 }
 
 func importHandler(deps Deps) func(*core.RequestEvent) error {
