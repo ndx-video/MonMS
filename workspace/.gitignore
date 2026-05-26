@@ -1,0 +1,9 @@
+# L3 runtime — PocketBase SQLite, sessions, local uploads
+.pb_data/
+
+# Staging publish config and state (commit config.example.json only)
+.monms/config.json
+.monms/publish-state.json
+
+# Editorial export snapshots — ephemeral by default; force-add for audit if needed
+content/
