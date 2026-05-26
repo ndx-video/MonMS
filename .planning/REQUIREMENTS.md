@@ -64,18 +64,18 @@
 ### Content Publish (Phase 4)
 
 - [x] **PUB-01**: Editorial collections marked `"editorial": true` in schema JSON.
-- [ ] **PUB-02**: `workspace/content/*.json` holds exported editorial records with stable IDs.
+- [x] **PUB-02**: `workspace/content/*.json` holds exported editorial records with stable IDs.
 - [ ] **PUB-03**: `monms content export` writes editorial snapshots to `workspace/content/`.
-- [ ] **PUB-04**: `monms content import` upserts records idempotently by ID.
+- [x] **PUB-04**: `monms content import` upserts records idempotently by ID.
 - [ ] **PUB-05**: Production exposes `POST /api/monms/content/import` with scoped publish token.
 - [ ] **PUB-06**: Staging admin UI includes **Publish to live** with diff preview.
 - [ ] **PUB-07**: Publisher role gates the publish action; editors may edit without publishing.
-- [ ] **PUB-08**: Staging tracks last-published checksum for unpublished-changes indicator.
-- [ ] **PUB-09**: `monms content diff` shows pending changes before publish.
+- [x] **PUB-08**: Staging tracks last-published checksum for unpublished-changes indicator.
+- [x] **PUB-09**: `monms content diff` shows pending changes before publish.
 
 ### Media (Phase 4)
 
-- [ ] **MED-01**: Publishable media uses public CDN URLs stored in content fields; blobs are not copied between environments.
+- [x] **MED-01**: Publishable media uses public CDN URLs stored in content fields; blobs are not copied between environments.
 - [ ] **MED-02**: Documentation warns against PocketBase-local file storage for publishable assets.
 
 ### Extended Malleability
@@ -145,15 +145,15 @@
 | ENV-02 | Phase 4 | Pending |
 | ENV-03 | Phase 4 | Pending |
 | PUB-01 | Phase 4 | Complete |
-| PUB-02 | Phase 4 | Pending |
+| PUB-02 | Phase 4 | Complete |
 | PUB-03 | Phase 4 | Pending |
-| PUB-04 | Phase 4 | Pending |
+| PUB-04 | Phase 4 | Complete |
 | PUB-05 | Phase 4 | Pending |
 | PUB-06 | Phase 4 | Pending |
 | PUB-07 | Phase 4 | Pending |
-| PUB-08 | Phase 4 | Pending |
-| PUB-09 | Phase 4 | Pending |
-| MED-01 | Phase 4 | Pending |
+| PUB-08 | Phase 4 | Complete |
+| PUB-09 | Phase 4 | Complete |
+| MED-01 | Phase 4 | Complete |
 | MED-02 | Phase 4 | Pending |
 
 **Coverage:**

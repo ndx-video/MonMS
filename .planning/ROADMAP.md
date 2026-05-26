@@ -124,14 +124,14 @@ Plans:
 - Publisher role / permission model
 - Lifecycle docs (`specs/staging.md`, README updates)
 
-**Plans:** 6 plans
+**Plans:** 2/6 plans executed
 
 Plans:
 **Wave 0**
 - [x] 04-01-PLAN.md — Editorial schema parse, test fixtures, hero editorial flag
 
 **Wave 1** *(blocked on Wave 0)*
-- [ ] 04-02-PLAN.md — Core content export/import/diff/checksum/state engine
+- [x] 04-02-PLAN.md — Core content export/import/diff/checksum/state engine
 
 **Wave 2** *(blocked on Wave 1)*
 - [ ] 04-03-PLAN.md — monms content CLI (export, import, diff, publish)

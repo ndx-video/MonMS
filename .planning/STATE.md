@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Staging & Client Content Publish
 status: executing
-stopped_at: Completed 04-01-PLAN.md
-last_updated: "2026-05-26T20:39:00Z"
+stopped_at: Completed 04-02-PLAN.md
+last_updated: "2026-05-26T21:15:00Z"
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 18
-  completed_plans: 13
-  percent: 72
+  completed_plans: 14
+  percent: 78
 current_phase: "04"
-current_plan: "02"
+current_plan: "03"
 ---
 
 # MonMS — Project State
@@ -50,11 +50,13 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 - **D-55:** CDN URL media — no blob copy
 - **D-56:** No full .pb_data/ as publish path
 - Editorial flag parsed from raw workspace/schema/*.json only — PocketBase ImportCollections strips unknown keys (D-54 Pitfall 1)
+- Content diff baseline uses workspace/content/*.json on disk when publish-state checksum is stale
+- Export strips PocketBase file-type columns; publishable media uses CDN URLs in text fields (MED-01 / D-55)
 
 ## Last Session
 
-**Stopped at:** Completed 04-01-PLAN.md
-**Resume file:** .planning/phases/04-staging-environments-client-content-publish/04-02-PLAN.md
+**Stopped at:** Completed 04-02-PLAN.md
+**Resume file:** .planning/phases/04-staging-environments-client-content-publish/04-03-PLAN.md
 
 ## Ingest
 
@@ -73,4 +75,4 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 | Verifier | Enabled |
 
 ---
-*State updated: 2026-05-26 after 04-01 plan execution*
+*State updated: 2026-05-26 after 04-02 plan execution*
