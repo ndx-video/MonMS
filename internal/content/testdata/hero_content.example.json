@@ -1,0 +1,10 @@
+{
+  "collection": "hero_content",
+  "records": [
+    {
+      "id": "homepage",
+      "title": "Welcome to Acme Corp",
+      "body": "We build things."
+    }
+  ]
+}
