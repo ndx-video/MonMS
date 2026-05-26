@@ -9,7 +9,7 @@ import (
 
 const defaultWorkspace = "./workspace"
 
-// ResolveWorkspace parses --workspace from args, then MONMS_WORKSPACE env,
+// ResolveWorkspace parses -w/--workspace from args, then MONMS_WORKSPACE env,
 // then defaults to "./workspace". Flag wins over env (D-26).
 func ResolveWorkspace(args []string, env []string) (configured string, absolute string, err error) {
 	configured = defaultWorkspace
@@ -18,13 +18,13 @@ func ResolveWorkspace(args []string, env []string) (configured string, absolute 
 
 	for i := 0; i < len(args); i++ {
 		arg := args[i]
-		if strings.HasPrefix(arg, "--workspace=") {
-			configured = strings.TrimPrefix(arg, "--workspace=")
+		if val, eq, ok := workspaceFlagValue(arg); ok && eq {
+			configured = val
 			flagSet = true
 			fromOverride = true
 			continue
 		}
-		if arg == "--workspace" {
+		if _, eq, ok := workspaceFlagValue(arg); ok && !eq {
 			if i+1 >= len(args) {
 				return "", "", fmt.Errorf("missing value for --workspace flag")
 			}
@@ -55,6 +55,39 @@ func ResolveWorkspace(args []string, env []string) (configured string, absolute 
 	}
 
 	return configured, absolute, nil
+}
+
+// StripWorkspaceFlags removes -w/--workspace and its value from args so downstream
+// CLIs (e.g. PocketBase cobra) do not reject unknown flags.
+func StripWorkspaceFlags(args []string) []string {
+	var out []string
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if val, eq, ok := workspaceFlagValue(arg); ok {
+			if !eq && val == "" {
+				if i+1 < len(args) {
+					i++
+				}
+			}
+			continue
+		}
+		out = append(out, arg)
+	}
+	return out
+}
+
+// workspaceFlagValue reports whether arg is -w or --workspace and an optional inline value.
+func workspaceFlagValue(arg string) (value string, hasEqualsForm bool, ok bool) {
+	switch {
+	case strings.HasPrefix(arg, "--workspace="):
+		return strings.TrimPrefix(arg, "--workspace="), true, true
+	case strings.HasPrefix(arg, "-w="):
+		return strings.TrimPrefix(arg, "-w="), true, true
+	case arg == "--workspace", arg == "-w":
+		return "", false, true
+	default:
+		return "", false, false
+	}
 }
 
 func envValue(env []string, key string) string {

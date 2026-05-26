@@ -48,8 +48,20 @@ func TestResolveWorkspaceFlag(t *testing.T) {
 			wantConfig: "./workspace",
 		},
 		{
-			name:    "missing flag value",
-			args:    []string{"--workspace"},
+			name:       "short flag space separated",
+			args:       []string{"-w", "/tmp/ws-short"},
+			wantConfig: "/tmp/ws-short",
+			wantAbs:    "/tmp/ws-short",
+		},
+		{
+			name:       "short flag equals form",
+			args:       []string{"-w=/tmp/ws-short-eq"},
+			wantConfig: "/tmp/ws-short-eq",
+			wantAbs:    "/tmp/ws-short-eq",
+		},
+		{
+			name:    "missing short flag value",
+			args:    []string{"-w"},
 			wantErr: true,
 		},
 	}
@@ -81,5 +93,26 @@ func TestResolveWorkspaceFlag(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func TestStripWorkspaceFlags(t *testing.T) {
+	t.Parallel()
+
+	got := StripWorkspaceFlags([]string{"serve", "-w", "ws", "--dev"})
+	want := []string{"serve", "--dev"}
+	if len(got) != len(want) {
+		t.Fatalf("got %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("got %v, want %v", got, want)
+		}
+	}
+
+	got2 := StripWorkspaceFlags([]string{"content", "export", "--workspace=./ws"})
+	want2 := []string{"content", "export"}
+	if len(got2) != len(want2) || got2[0] != want2[0] || got2[1] != want2[1] {
+		t.Fatalf("got %v, want %v", got2, want2)
 	}
 }
