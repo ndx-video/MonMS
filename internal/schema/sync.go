@@ -23,11 +23,16 @@ func RegisterBootstrapHook(app core.App, wsAbs string) {
 		if err != nil {
 			return err
 		}
-		if len(raw) == 0 {
-			return nil
+		if len(raw) > 0 {
+			if err := e.App.ImportCollectionsByMarshaledJSON(raw, false); err != nil {
+				return err
+			}
 		}
 
-		return e.App.ImportCollectionsByMarshaledJSON(raw, false)
+		if err := seedHeroHomepage(e.App); err != nil {
+			slog.Warn("schema seed: hero homepage failed", "error", err)
+		}
+		return nil
 	})
 }
 
