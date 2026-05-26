@@ -63,7 +63,7 @@
 
 ### Content Publish (Phase 4)
 
-- [ ] **PUB-01**: Editorial collections marked `"editorial": true` in schema JSON.
+- [x] **PUB-01**: Editorial collections marked `"editorial": true` in schema JSON.
 - [ ] **PUB-02**: `workspace/content/*.json` holds exported editorial records with stable IDs.
 - [ ] **PUB-03**: `monms content export` writes editorial snapshots to `workspace/content/`.
 - [ ] **PUB-04**: `monms content import` upserts records idempotently by ID.
@@ -144,7 +144,7 @@
 | ENV-01 | Phase 4 | Pending |
 | ENV-02 | Phase 4 | Pending |
 | ENV-03 | Phase 4 | Pending |
-| PUB-01 | Phase 4 | Pending |
+| PUB-01 | Phase 4 | Complete |
 | PUB-02 | Phase 4 | Pending |
 | PUB-03 | Phase 4 | Pending |
 | PUB-04 | Phase 4 | Pending |

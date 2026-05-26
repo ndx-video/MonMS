@@ -97,7 +97,7 @@ Plans:
 **Wave 3** *(blocked on Waves 1 + 2)*
 - [x] 03-04-PLAN.md — integration tests (ICE/SEC), EDITING-GUIDE.md
 
-**Status:** Complete
+**Status:** Confirmed (UAT 2026-05-26)
 
 ---
 
@@ -128,7 +128,7 @@ Plans:
 
 Plans:
 **Wave 0**
-- [ ] 04-01-PLAN.md — Editorial schema parse, test fixtures, hero editorial flag
+- [x] 04-01-PLAN.md — Editorial schema parse, test fixtures, hero editorial flag
 
 **Wave 1** *(blocked on Wave 0)*
 - [ ] 04-02-PLAN.md — Core content export/import/diff/checksum/state engine
@@ -163,4 +163,4 @@ The following are tracked but not scheduled for v1:
 
 ---
 *Roadmap created: 2026-05-22*
-*Last updated: 2026-05-23 after ingest specs/staging.md*
+*Last updated: 2026-05-26 — Phase 3 UAT confirmed*

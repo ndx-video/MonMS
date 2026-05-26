@@ -2,15 +2,17 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Staging & Client Content Publish
-status: ready_to_execute
-stopped_at: Phase 4 planned — 6 plans verified
-last_updated: "2026-05-23T00:00:00.000Z"
+status: executing
+stopped_at: Completed 04-01-PLAN.md
+last_updated: "2026-05-26T20:39:00Z"
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 18
-  completed_plans: 8
-  percent: 44
+  completed_plans: 13
+  percent: 72
+current_phase: "04"
+current_plan: "02"
 ---
 
 # MonMS — Project State
@@ -25,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 ## Active Phase
 
 **Phase 4:** Staging Environments & Client Content Publish
-**Status:** Ready to execute — 6 plans in 6 waves
+**Status:** Executing Phase 04
 **Next action:** `/gsd-execute-phase 4`
 
 ## Decisions
@@ -47,11 +49,12 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 - **D-54:** workspace/content/ JSON upsert by record ID
 - **D-55:** CDN URL media — no blob copy
 - **D-56:** No full .pb_data/ as publish path
+- Editorial flag parsed from raw workspace/schema/*.json only — PocketBase ImportCollections strips unknown keys (D-54 Pitfall 1)
 
 ## Last Session
 
-**Stopped at:** Phase 4 ingested from specs/staging.md via gsd-ingest-docs merge
-**Resume file:** .planning/phases/04-staging-environments-client-content-publish/04-CONTEXT.md
+**Stopped at:** Completed 04-01-PLAN.md
+**Resume file:** .planning/phases/04-staging-environments-client-content-publish/04-02-PLAN.md
 
 ## Ingest
 
@@ -70,4 +73,4 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 | Verifier | Enabled |
 
 ---
-*State updated: 2026-05-23 after ingest specs/staging.md*
+*State updated: 2026-05-26 after 04-01 plan execution*
