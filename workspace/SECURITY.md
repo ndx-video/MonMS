@@ -77,7 +77,7 @@ Production content import uses a **scoped publish token** — not the PocketBase
 
 ### Scope
 
-The publish token authorizes **only** `POST /api/monms/content/import` on production. It cannot manage collections, users, or structure. Clients use the publish console at `/api/monms/publish` with superuser login + publisher allowlist — see [EDITING-GUIDE.md](EDITING-GUIDE.md).
+The publish token authorizes **only** `POST /api/monms/content/import` on production. It cannot manage collections, users, or structure. Clients use the publish console at `/_monms/publish` with superuser login + publisher allowlist — see [EDITING-GUIDE.md](EDITING-GUIDE.md).
 
 
 ## Git History Safety

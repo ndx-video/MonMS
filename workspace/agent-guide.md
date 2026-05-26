@@ -8,7 +8,7 @@ MonMS enables external AI agents to safely mutate a Git-tracked workspace. Agent
 - Edit workspace templates (`*.gohtml`) — changes are visible on the next request via in-memory cache invalidation driven by fsnotify (AGT-02).
 - Schema JSON files serve as a Git audit trail and are re-imported on next server start for bootstrap self-healing (D-32, D-33).
 
-**Structure rail only:** Agents and consultants mutate **L2 structure** (templates, schema, assets). Editorial **content publish** (L3) is client-driven via `/api/monms/publish` — agents do not routine-push copy to production. See [README.md](README.md) § content publish and [MEDIA.md](MEDIA.md).
+**Structure rail only:** Agents and consultants mutate **L2 structure** (templates, schema, assets). Editorial **content publish** (L3) is client-driven via `/_monms/publish` — agents do not routine-push copy to production. See [README.md](README.md) § content publish and [MEDIA.md](MEDIA.md).
 
 **Phase 2 safety guardrails** protect the workspace from invalid mutations:
 

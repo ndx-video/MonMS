@@ -4,6 +4,13 @@
 # Staging publish config and state (commit config.example.json only)
 .monms/config.json
 .monms/publish-state.json
+.monms/monms.pid
+.monms/serve.log
 
 # Editorial export snapshots — ephemeral by default; force-add for audit if needed
 content/
+
+monms
+
+# a pretend production workspace used for testing
+prod/

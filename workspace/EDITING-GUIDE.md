@@ -74,7 +74,7 @@ Editors with the **publisher** role can push approved staging content to product
 1. Edit content on **staging** via inline editing (sections 1–3 above).
 2. Open **Publish to live**:
    - Click the link in the **Live Editor Active** badge (publishers only), or
-   - Navigate directly to `/api/monms/publish`
+   - Navigate directly to `/_monms/publish`
 3. Review the **diff preview** — changed collections and fields since last publish.
 4. Click **Publish now** — staging exports editorial records and POSTs to production.
 5. Confirm **Last published** timestamp updates; production site reflects new copy without a structure deploy.

@@ -1,5 +1,13 @@
 {
-  "_comment": "Copy to .monms/config.json for staging. Live config.json and publish-state.json are gitignored (PUB-08).",
+  "_comment": "Committed template — copy to config.json for local staging. Live config.json and publish-state.json are gitignored.",
+  "_fieldDocs": {
+    "productionUrl": "HTTPS origin of the live production site, no trailing slash. Used by Publish to live and by monms content publish when --to is omitted.",
+    "publisherEmails": "PocketBase superuser emails allowed to open /_monms/publish. Create users at /_/ first, then list their emails here.",
+    "allowedHosts": "Hostnames passed to monms serve as --origins when the CLI flag is omitted. CLI --origins always wins. Example: staging.example.com",
+    "bind": "Listen address for monms serve as --http when the CLI flag is omitted. CLI --http always wins. Example: { \"host\": \"0.0.0.0\", \"port\": \"8090\" }"
+  },
   "productionUrl": "https://production.example.com",
-  "publisherEmails": ["publisher@client.com"]
+  "publisherEmails": ["publisher@client.com"],
+  "bind": { "host": "0.0.0.0", "port": "8090" },
+  "allowedHosts": ["staging.example.com"]
 }

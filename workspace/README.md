@@ -69,6 +69,8 @@ workspace/
 
 Staging and production are **separate MonMS instances** with **separate `.pb_data/` directories** (D-52). Both run the same pinned `monms` binary unless an engine upgrade is intentional.
 
+Optional Docker packaging uses the same model: a thin engine image plus git-managed workspace mounts and persistent `.pb_data/` volumes — see [DEPLOY-DOCKER.md](DEPLOY-DOCKER.md).
+
 | | Staging | Production |
 |---|---------|------------|
 | **Instance** | Own MonMS process + workspace checkout | Own MonMS process + tagged workspace checkout |
@@ -79,7 +81,7 @@ Staging and production are **separate MonMS instances** with **separate `.pb_dat
 
 **One-time consultant setup** (per site):
 
-1. Copy `.monms/config.example.json` → `.monms/config.json` with production URL and publisher allowlist.
+1. Edit `.monms/config.json` (created by `monms init` with `_fieldDocs` for each option): set `productionUrl`, `publisherEmails`, and optional `allowedHosts` (CORS origins for `monms serve` when `--origins` is omitted).
 2. Set `MONMS_PUBLISH_TOKEN` on **both** staging (outbound publish) and production (import API gate) — same secret, never commit.
 
 Consultants tag structure releases. Clients publish content themselves — consultants are not in the routine content loop.
@@ -93,14 +95,14 @@ If this workspace was not created yet:
 ../monms init --workspace .
 ```
 
-Re-running `init` on an existing workspace skips files that already exist (safe to run again).
+Re-running `init` on an existing workspace skips files that already exist (safe to run again). Fresh workspaces get `.monms/config.json` and `config.example.json` with documented options in `_fieldDocs`.
 
 This workspace ships a `.gitignore` that excludes runtime data and secrets:
 
 | Path | Why ignored |
 |------|-------------|
 | `.pb_data/` | PocketBase SQLite, sessions, local uploads (L3 runtime) |
-| `.monms/config.json` | Production URL + publisher emails (site-specific) |
+| `.monms/config.json` | Production URL, publisher emails, optional `allowedHosts` → serve `--origins` |
 | `.monms/publish-state.json` | Last-publish checksum (environment-specific) |
 | `content/` | Export snapshots — ephemeral by default |
 
@@ -158,7 +160,7 @@ See [agent-guide.md](agent-guide.md) for curl examples.
 
 ## Content publish (content rail)
 
-Editorial records export to `content/{collection}.json` and upsert to production by fixed record ID. Clients trigger publish from **`/api/monms/publish`** (Publish to live console) or the editor badge link.
+Editorial records export to `content/{collection}.json` and upsert to production by fixed record ID. Clients trigger publish from **`/_monms/publish`** (Publish to live console) or the editor badge link.
 
 ```bash
 # Operator / CI fallback (same payload as the Publish button)
@@ -198,6 +200,7 @@ Use `agent:` prefix in commit messages for AI mutations. Tag releases for produc
 | [MEDIA.md](MEDIA.md) | CDN URL policy for publishable assets |
 | [agent-guide.md](agent-guide.md) | AI agent structure mutation workflow |
 | [SECURITY.md](SECURITY.md) | SSH keys, API tokens, git hygiene |
+| [DEPLOY-DOCKER.md](DEPLOY-DOCKER.md) | Optional Docker deploy (git-on-volume, L1 image + L2/L3 volumes) |
 | [../specs/staging.md](../specs/staging.md) | Environments, roles, content publish |
 
 ## Environment variables
