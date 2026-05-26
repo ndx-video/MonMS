@@ -1,0 +1,40 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{block "title" .}}MonMS{{end}}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      corePlugins: { preflight: true },
+      theme: { extend: {} }
+    }
+  </script>
+  <link rel="stylesheet" href="/assets/main.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+  {{if .IsLoggedIn}}
+  <div class="editor-badge" role="status" aria-live="polite">
+    <span class="editor-badge__dot" aria-hidden="true"></span>
+    Live Editor Active
+    <a href="/_/" class="editor-badge__link">Full Admin Dashboard</a>
+  </div>
+  {{end}}
+  <main class="max-w-6xl mx-auto px-6 py-12">
+    {{template "body" .}}
+  </main>
+  {{if .IsLoggedIn}}
+  <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/json-enc.js"></script>
+  <script>
+    document.body.addEventListener('htmx:configRequest', function (event) {
+      event.detail.headers['Authorization'] = 'Bearer {{.AuthToken}}';
+    });
+  </script>
+  {{end}}
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+</body>
+</html>
+{{end}}
