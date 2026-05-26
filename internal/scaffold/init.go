@@ -60,6 +60,7 @@ var scaffoldFiles = []scaffoldFile{
 	{"embed/index.gohtml", "templates/index.gohtml"},
 	{"embed/errors.gohtml", "templates/errors/errors.gohtml"},
 	{"embed/main.css", "assets/main.css"},
+	{"embed/hero_content.json", "schema/hero_content.json"},
 }
 
 var scaffoldDirs = []string{

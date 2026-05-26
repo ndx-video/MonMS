@@ -52,6 +52,7 @@ func TestInitScaffold(t *testing.T) {
 		"templates/index.gohtml",
 		"templates/errors/errors.gohtml",
 		"assets/main.css",
+		"schema/hero_content.json",
 		"schema/.gitkeep",
 		"templates/fragments/.gitkeep",
 	} {

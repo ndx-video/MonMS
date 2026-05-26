@@ -33,8 +33,29 @@
   </div>
 </header>
 <section class="hero">
-  <h1 class="hero__title">MonMS is running</h1>
-  <p class="hero__body">Your workspace is live. Templates load from disk — no build step required.</p>
+  <h1 class="hero__title{{if .IsLoggedIn}} hero__title--editable{{end}}"
+    {{if .IsLoggedIn}}
+    contenteditable="true"
+    role="textbox"
+    aria-label="Hero headline"
+    aria-multiline="false"
+    spellcheck="true"
+    hx-put="/api/collections/hero_content/records/homepage"
+    hx-trigger="blur"
+    hx-ext="json-enc"
+    hx-vals='js:{"title": event.target.innerText}'
+    {{end}}>{{.Hero.Title}}</h1>
+  <p class="hero__body{{if .IsLoggedIn}} hero__body--editable{{end}}"
+    {{if .IsLoggedIn}}
+    contenteditable="true"
+    role="textbox"
+    aria-label="Hero description"
+    aria-multiline="true"
+    spellcheck="true"
+    hx-put="/api/collections/hero_content/records/homepage"
+    hx-trigger="blur"
+    hx-vals='js:{"body": event.target.innerText}'
+    {{end}}>{{.Hero.Body}}</p>
   <div class="hero__actions">
     <a href="/_/" class="btn btn--primary">Explore Admin</a>
   </div>
