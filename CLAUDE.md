@@ -40,10 +40,12 @@ specs/staging.md           # Four layers, staging/prod, content publish (v2)
 ```bash
 go build -o monms .                                          # Development binary
 go build -ldflags "-X main.buildMode=production" -o monms .  # Production binary
-./monms init [--workspace PATH]                              # Scaffold workspace
-./monms validate [--workspace PATH] [files...]               # Validate templates
-./monms content <export|import|diff|publish> [--workspace PATH]  # Editorial sync (v2)
-./monms [--workspace PATH]                                   # Start server (port 8090)
+./monms --help                                               # CLI overview (all commands)
+./monms <command> --help                                     # Per-command help
+./monms init [-w|--workspace PATH]                              # Scaffold workspace
+./monms validate [-w|--workspace PATH] [files...]               # Validate templates
+./monms content <export|import|diff|publish> [-w|--workspace PATH]  # Editorial sync (v2)
+./monms [-w|--workspace PATH]                                   # Start server (port 8090)
 go test ./... -count=1                                       # All tests
 go test ./... -count=1 -short                                # Skip perf/memory gates
 ```
@@ -55,8 +57,8 @@ go test ./... -count=1 -short                                # Skip perf/memory 
 | **D-01** | Production vs development mode is compile-time via `main.buildMode` ldflags — **not** `ENV` or runtime env vars |
 | **D-04** | fsnotify watcher runs **only** in production builds |
 | **D-10/D-11** | Slug resolution uses mirror+index: `/` → `index.gohtml`, `/press` → `press/index.gohtml` or `press.gohtml` |
-| **D-14** | Route registration order: assets → fragments → SSR catch-all |
-| **D-26** | `--workspace` flag wins over `MONMS_WORKSPACE` env |
+| **D-14** | Route registration order: MonMS JSON API + `/_monms/*` tools → assets → fragments → SSR catch-all |
+| **D-26** | `-w` / `--workspace` flag wins over `MONMS_WORKSPACE` env |
 | **D-27** | PocketBase data dir: `{workspace}/.pb_data/` |
 | **D-30** | Watcher monitors entire workspace tree, not just `templates/` |
 | **D-32/D-33** | Schema JSON in `workspace/schema/` is audit trail + bootstrap self-healing; live changes via PocketBase API |
@@ -69,13 +71,26 @@ go test ./... -count=1 -short                                # Skip perf/memory 
 |-------|----------|-----------|
 | L1 Engine | `monms` binary | Semver release |
 | L2 Structure | `workspace/` Git — templates, schema, assets | Git tag → production deploy |
-| L3 Content | `.pb_data/` records; export to `content/*.json` | Client **Publish to live** at `/api/monms/publish` → JSON upsert |
+| L3 Content | `.pb_data/` records; export to `content/*.json` | Client **Publish to live** at `/_monms/publish` → JSON upsert via `POST /api/monms/content/import` |
 | L4 Audience | Production URL | Read-only |
 
 - **Structure rail** and **content rail** are independent. Git tags do not carry editorial copy.
 - **Media:** public CDN URLs in text fields — blobs do not move between staging and production. See `workspace/MEDIA.md`.
 - **Roles:** consultants own structure tags; clients own content publish; consultants are not in the routine content loop.
-- **Phase 4 (v2) implemented:** `internal/content/` package, `monms content` CLI, `POST /api/monms/content/import`, publish UI at `/api/monms/publish` (not `/_/publish` — admin SPA catch-all). Publisher allowlist in gitignored `workspace/.monms/config.json`; commit `config.example.json` only.
+- **Phase 4 (v2) implemented:** `internal/content/` package, `monms content` CLI, `POST /api/monms/content/import` (JSON API), publish console at `/_monms/publish` (HTML tool — not PocketBase admin SPA at `/_/`). Publisher allowlist in gitignored `workspace/.monms/config.json`; commit `config.example.json` only.
+
+## HTTP routing (MonMS namespaces)
+
+| Prefix | Purpose | Examples |
+|--------|---------|----------|
+| `/api/monms/*` | **JSON REST only** — machine clients, Bearer tokens | `POST /api/monms/content/import` |
+| `/_monms/*` | **Operator tools** — HTML pages and browser session helpers | `GET /_monms/publish`, `POST /_monms/auth/sync`, `GET /_monms/auth/logout` |
+
+`workspace/.monms/config.json` fields: `productionUrl`, `publisherEmails`, `allowedHosts` (injects `monms serve --origins` when CLI flag omitted; CLI wins if set), `bind` (injects `--http=host:port` when CLI `--http` omitted).
+| `/api/` (other) | PocketBase collection REST | `/api/collections/...` |
+| `/_/` | PocketBase admin SPA | Full management fallback |
+
+Canonical path constants live in `internal/monmsroutes/routes.go`. Register `/_monms/*` and `/api/monms/*` in `content.RegisterRoutes` and auth hooks **before** the SSR catch-all (D-14). Add new reserved slug prefixes to `isReservedSlug` in `internal/router/ssr.go` so SSR does not treat them as page templates.
 
 ## Code conventions
 
@@ -109,7 +124,7 @@ When modifying the workspace as an agent:
 | New page/route | `workspace/templates/{slug}.gohtml` |
 | Global layout/HTMX | `workspace/templates/layouts/base.gohtml` + `internal/scaffold/embed/base.gohtml` |
 | New collection | PocketBase API + `workspace/schema/{name}.json` (add `"editorial": true` for client-publishable collections) |
-| Content publish rail | `internal/content/` — agents do not routine-push; clients use `/api/monms/publish` |
+| Content publish rail | `internal/content/` — agents do not routine-push; clients use `/_monms/publish`; production import at `POST /api/monms/content/import` |
 | SSR behavior | `internal/router/ssr.go` |
 | Cache/watcher | `internal/templates/` |
 | Validation rules | `internal/validate/validate.go` |
@@ -156,6 +171,6 @@ GSD milestone v1 has three phases (all verified):
 2. Agent mutation engine & safety guardrails
 3. Inline contextual editing & demonstration content
 
-**v2 Phase 4 (implemented):** staging environments, `workspace/content/` JSON sync, `/api/monms/publish` console, publisher role — see `specs/staging.md` and `.planning/ROADMAP.md`.
+**v2 Phase 4 (implemented):** staging environments, `workspace/content/` JSON sync, `/_monms/publish` console, publisher role — see `specs/staging.md` and `.planning/ROADMAP.md`.
 
 Other v2 backlog (EXT-*, MULT-*, RICH-*) is in `.planning/ROADMAP.md` — do not implement unless asked.

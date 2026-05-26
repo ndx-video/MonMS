@@ -23,7 +23,7 @@ For clients, MonMS provides **Inline Contextual Editing**—the ability to safel
 1. **Single-Binary Monolith:** An entire production-grade CMS, database, file server, and web server compiled into a single executable using \< 30MB RAM.  
 2. **Zero-Compilation Malleability:** The application UI/UX, routing, and database schemas are modified on the fly without restarting or rebuilding the Go binary.  
 3. **Git-Managed Structure:** Every AI structural adjustment (new page, updated CSS, modified collection layout) is tracked, versioned, and rolled back via Git. Editorial copy promotes separately via JSON upsert (v2 — see [`specs/staging.md`](staging.md)).  
-4. **Inline Contextual Editing:** Clients log in and click to type directly on the staging site, instantly updating SQLite records behind the scenes. Publishers push approved copy to production via **Publish to live** (`/api/monms/publish`).
+4. **Inline Contextual Editing:** Clients log in and click to type directly on the staging site, instantly updating SQLite records behind the scenes. Publishers push approved copy to production via **Publish to live** (`/_monms/publish`).
 
 ## **2\. Architectural Design & Folder Topology**
 
@@ -383,7 +383,7 @@ MonMS v2 adds a **four-layer lifecycle** and **dual promotion rails** without ch
 
 - `monms content export|import|diff|publish` — operator/CI content rail
 - `POST /api/monms/content/import` — production import (Bearer `MONMS_PUBLISH_TOKEN`)
-- `/api/monms/publish` — staging publish console with diff preview and publisher gate
+- `/_monms/publish` — staging publish console with diff preview and publisher gate
 - `"editorial": true` in `workspace/schema/*.json` — collections eligible for content sync
 - [`workspace/MEDIA.md`](../workspace/MEDIA.md) — CDN URL policy (no blob copy between environments)
 

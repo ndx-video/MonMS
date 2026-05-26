@@ -8,7 +8,7 @@
 
 ## 1. Summary
 
-MonMS operates across **four layers** with **two promotion rails**. Structure (templates, schema, assets) promotes via Git tags. Editorial content (PocketBase records) promotes via JSON upsert — initiated by **clients** from the **Publish to live** console at `/api/monms/publish`, without consultant involvement for routine updates.
+MonMS operates across **four layers** with **two promotion rails**. Structure (templates, schema, assets) promotes via Git tags. Editorial content (PocketBase records) promotes via JSON upsert — initiated by **clients** from the **Publish to live** console at `/_monms/publish`, without consultant involvement for routine updates.
 
 Media referenced by public CDN URLs does **not** move between environments; only URL strings in content records are synced.
 
@@ -51,7 +51,7 @@ Both instances run the same pinned `monms` binary version unless an engine upgra
 ### 3.2 Content promotion (L3→L4) — client-driven, frequent
 
 1. Client edits content on **staging** via inline HTMX editing (existing v1 feature).
-2. Client opens **Publish to live** at `/api/monms/publish` (or via the editor badge link).
+2. Client opens **Publish to live** at `/_monms/publish` (or via the editor badge link).
 3. Staging exports editorial collections → JSON payload.
 4. Staging POSTs to production **content import API** (scoped token).
 5. Production **upserts records by fixed ID** — idempotent, no binary restart.
@@ -120,7 +120,7 @@ Fixed record IDs (e.g. `homepage`) are required for reliable upsert — same pat
 | `monms content diff` | Show records/fields that differ from last export or target |
 | `monms content publish --to URL` | Export from running instance + POST to production (operator/CI fallback; requires `MONMS_PUBLISH_TOKEN`) |
 
-Primary UX is the **Publish to live** console at `/api/monms/publish`; CLI remains for CI and consultant emergencies.
+Primary UX is the **Publish to live** console at `/_monms/publish`; CLI remains for CI and consultant emergencies.
 
 ### 5.4 Production import API
 
@@ -138,7 +138,7 @@ Body: { "collections": [ { "name": "...", "records": [...] } ] }
 
 ### 5.5 Publish console — Publish to live
 
-**Location:** `/api/monms/publish` (standalone MonMS route — **not** `/_/publish`, which PocketBase's admin SPA would catch).
+**Location:** `/_monms/publish` (standalone MonMS route — **not** `/_/publish`, which PocketBase's admin SPA would catch).
 
 | Element | Behavior |
 |---------|----------|
@@ -225,7 +225,7 @@ Inline content and record fields store **canonical public CDN URLs**. Staging an
 | `internal/content/` — export, import, diff, upsert by ID | ✓ |
 | `monms content` CLI subcommands | ✓ |
 | `POST /api/monms/content/import` + `MONMS_PUBLISH_TOKEN` auth | ✓ |
-| Publish console at `/api/monms/publish` with diff + Publish now | ✓ |
+| Publish console at `/_monms/publish` with diff + Publish now | ✓ |
 | Publisher allowlist in `.monms/config.json` | ✓ |
 | Docs: lifecycle, roles, media (`MEDIA.md`, README updates) | ✓ |
 
@@ -250,7 +250,7 @@ Phase 4 / v2 milestone scope is **implemented**. Human UAT may continue via `.pl
 
 | Surface | Path / command |
 |---------|----------------|
-| Publish console | `GET/POST /api/monms/publish`, `GET /api/monms/publish/diff` |
+| Publish console | `GET/POST /_monms/publish`, `GET /_monms/publish/diff` |
 | Production import | `POST /api/monms/content/import` + `Authorization: Bearer $MONMS_PUBLISH_TOKEN` |
 | Staging config | `workspace/.monms/config.json` (gitignored; copy from `config.example.json`) |
 | Publish state | `workspace/.monms/publish-state.json` (checksum + last publish time) |

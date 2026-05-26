@@ -99,7 +99,7 @@
 | Feature | Reason |
 |---------|--------|
 | React / Next.js frontend | Violates zero-compilation monolith principle |
-| Kubernetes / containerized deploy | Contradicts single-binary low-overhead goal |
+| Kubernetes / multi-container orchestration | Contradicts single-binary low-overhead goal; optional single-container Docker recipes (see `workspace/DEPLOY-DOCKER.md`) are supported |
 | Node.js local build pipeline | Asset footprint must use native CSS or CDN imports only |
 | External database (PostgreSQL, MySQL) | SQLite is embedded and sufficient for target deployment scale |
 | Real-time WebSocket push | HTMX polling or SSE are sufficient; full WS adds complexity |

@@ -45,7 +45,7 @@ Media rail:      shared public CDN URLs  ──→  no blob copy (URLs in conten
 ```
 
 - **Consultants** tag structure releases (new pages, collections, layouts) — infrequent.
-- **Clients** use **Publish to live** at `/api/monms/publish` after editing on staging — frequent.
+- **Clients** use **Publish to live** at `/_monms/publish` after editing on staging — frequent.
 - **Media** on public buckets: content records store CDN URLs; blobs stay put, only strings sync.
 
 > **v2 (Phase 4):** staging/production split, content CLI, and Publish console are implemented — see [Content CLI](#content-cli-v2) below.
@@ -124,7 +124,7 @@ Production import endpoint (Bearer `MONMS_PUBLISH_TOKEN`):
 POST /api/monms/content/import
 ```
 
-Staging publish UI: `GET/POST /api/monms/publish` (publisher allowlist in `workspace/.monms/config.json`).
+Staging publish UI: `GET/POST /_monms/publish` (publisher allowlist in `workspace/.monms/config.json`).
 
 See [specs/staging.md](specs/staging.md) and [workspace/README.md](workspace/README.md) for four-layer lifecycle, dual rails, and environment setup.
 
@@ -132,7 +132,7 @@ See [specs/staging.md](specs/staging.md) and [workspace/README.md](workspace/REA
 
 | Input | Precedence | Default |
 |-------|------------|---------|
-| `--workspace` flag | Highest | `./workspace` |
+| `-w`, `--workspace` flag | Highest | `./workspace` |
 | `MONMS_WORKSPACE` env | Second | `./workspace` |
 | (unset) | — | `./workspace` |
 
@@ -235,7 +235,7 @@ go test -ldflags "-X main.buildMode=production" ./...
 
 **v1 (complete):** engine, workspace/Git structure mutation, inline editing on a single instance.
 
-**v2 (Phase 4 — implemented):** staging/production environments, `workspace/content/` JSON sync, client Publish console at `/api/monms/publish`, publisher role — [specs/staging.md](specs/staging.md).
+**v2 (Phase 4 — implemented):** staging/production environments, `workspace/content/` JSON sync, client Publish console at `/_monms/publish`, publisher role — [specs/staging.md](specs/staging.md).
 
 Requirements: [.planning/REQUIREMENTS.md](.planning/REQUIREMENTS.md)  
 Roadmap: [.planning/ROADMAP.md](.planning/ROADMAP.md)
