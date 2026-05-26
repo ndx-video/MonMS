@@ -13,7 +13,7 @@
 
 **Deliverables:**
 - `main.go` with PocketBase embedded, catch-all `/{slug...}` SSR route, and `/assets/{path...}` static route
-- `TemplateCache` struct with `sync.RWMutex`, production/dev mode toggle via `ENV` env var
+- `TemplateCache` struct with `sync.RWMutex`, production/dev mode toggle via **`buildMode` compile-time ldflags** (D-01)
 - `watchWorkspace()` goroutine using fsnotify to clear template cache on write/create
 - `workspace/` Git repository with `templates/layouts/base.gohtml`, `templates/fragments/`, `assets/main.css`, and `schema/` directories
 - `workspace/templates/layouts/base.gohtml` with HTMX + Alpine.js CDN script tags, auth badge block, and `{{template "body" .}}` render slot
@@ -34,7 +34,7 @@ Plans:
 **Wave 3** *(blocked on Wave 2 completion)*
 - [x] 01-04-PLAN.md — Wave 3: SSR, assets, fragments, error pages, perf gates
 
-**Status:** Pending
+**Status:** Complete
 
 ---
 
@@ -53,7 +53,7 @@ Plans:
 - Agent SSH key + PocketBase API token scope documentation in `workspace/SECURITY.md`
 - Sample agent operation: create `press_releases` collection via POST to `/api/collections`
 
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 
 Plans:
 **Wave 1**
@@ -63,9 +63,9 @@ Plans:
 - [x] 02-02-PLAN.md — pre-commit hook install in monms init + rollback integration + scaffold tests
 
 **Wave 3** *(blocked on Waves 1 + 2 completion)*
-- [ ] 02-03-PLAN.md — workspace docs (agent-guide.md, SECURITY.md), press_releases fixture + integration test
+- [x] 02-03-PLAN.md — workspace docs (agent-guide.md, SECURITY.md), press_releases fixture + integration test
 
-**Status:** Pending
+**Status:** Complete
 
 ---
 
@@ -77,7 +77,7 @@ Plans:
 
 **Deliverables:**
 - `IsLoggedIn` context populated from PocketBase auth session cookie in the SSR route handler
-- `pb_auth` cookie → Bearer token JavaScript injection in `base.gohtml` for HTMX request authorization headers
+- Server-injected `AuthToken` + HttpOnly `monms_auth` cookie bridge for HTMX Bearer headers (SEC-04)
 - Floating "Live Editor Active" overlay badge with PocketBase admin dashboard link (only rendered when `IsLoggedIn = true`)
 - `workspace/templates/index.gohtml` reading from `hero_content` collection with `contenteditable` + `hx-put` + `hx-trigger="blur"` on title and body fields
 - PocketBase seed migration: `hero_content` collection with `title` (text) and `body` (text) fields, one `homepage` record
@@ -145,7 +145,7 @@ Plans:
 **Wave 5** *(blocked on Wave 4)*
 - [x] 04-06-PLAN.md — Four-layer docs, MEDIA.md, gitignore (ENV/MED)
 
-**Status:** Complete (2026-05-26)
+**Status:** Complete (2026-05-26) — human UAT in progress ([04-UAT.md](.planning/phases/04-staging-environments-client-content-publish/04-UAT.md))
 
 ---
 
@@ -163,4 +163,4 @@ The following are tracked but not scheduled for v1:
 
 ---
 *Roadmap created: 2026-05-22*
-*Last updated: 2026-05-26 — Phase 3 UAT confirmed*
+*Last updated: 2026-05-26 — Phase 4 complete (UAT in progress)*

@@ -65,24 +65,40 @@ Rotate the admin token immediately on any suspected compromise:
 PocketBase admin tokens expire (default 7 days). The agent should handle `401 Unauthorized` responses by re-authenticating via `/api/collections/_superusers/auth-with-password` rather than caching tokens indefinitely.
 
 
+## Publish token (`MONMS_PUBLISH_TOKEN`)
+
+Production content import uses a **scoped publish token** — not the PocketBase admin JWT (PUB-05).
+
+### Storage policy
+
+- Set `MONMS_PUBLISH_TOKEN` in the **host environment** on both staging (outbound publish) and production (import API gate) — same value, never commit.
+- **Never log** the token in application output or CLI error messages.
+- Rotate immediately if exposed; update both environments together.
+
+### Scope
+
+The publish token authorizes **only** `POST /api/monms/content/import` on production. It cannot manage collections, users, or structure. Clients use the publish console at `/api/monms/publish` with superuser login + publisher allowlist — see [EDITING-GUIDE.md](EDITING-GUIDE.md).
+
+
 ## Git History Safety
 
 The workspace Git repository records every mutation as an auditable commit. Maintaining Git hygiene prevents accidental secret exposure and keeps the audit trail clean.
 
-### .pb_data Must Never Be Committed
+### Runtime paths must never be committed
 
-`workspace/.pb_data/` contains the PocketBase SQLite database, encryption keys, and logs. It must be excluded from git:
+`monms init` scaffolds `workspace/.gitignore` excluding runtime data and publish secrets:
+
+| Path | Reason |
+|------|--------|
+| `.pb_data/` | PocketBase database and encryption keys |
+| `.monms/config.json` | Production URL + publisher allowlist (site-specific) |
+| `.monms/publish-state.json` | Last-publish checksum (environment-specific) |
+| `content/` | Editorial export snapshots (ephemeral by default) |
+
+Commit `.monms/config.example.json` as the template only. Older workspaces without `.gitignore` should add the same patterns manually:
 
 ```bash
-# Add immediately after monms init
-echo ".pb_data/" >> workspace/.gitignore
-git -C workspace add .gitignore
-git -C workspace commit -m "chore: exclude .pb_data from git"
-```
-
-Verify exclusion:
-```bash
-git -C workspace check-ignore -v .pb_data/
+git -C workspace check-ignore -v .pb_data/ .monms/config.json
 ```
 
 ### Files That Must Never Be Committed
@@ -90,9 +106,12 @@ git -C workspace check-ignore -v .pb_data/
 | File / Pattern | Reason |
 |---|---|
 | `.pb_data/` | PocketBase database and encryption keys |
+| `.monms/config.json` | Staging publish config (production URL, publisher emails) |
+| `.monms/publish-state.json` | Publish checksum state |
+| `content/` | Editorial export snapshots |
 | `.env` | Environment secrets |
 | `*.key`, `*.pem`, `*.p12` | Private keys and certificates |
-| `*token*`, `*secret*`, `*password*` | Credential files |
+| `*token*`, `*secret*`, `*password*` | Credential files (use env vars instead) |
 
 ### Secret Accidentally Committed
 

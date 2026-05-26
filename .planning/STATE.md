@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Staging & Client Content Publish
-status: milestone_complete
+status: phase_complete_uat_pending
 stopped_at: Completed 04-06-PLAN.md
 last_updated: "2026-05-26T14:08:00Z"
 progress:
   total_phases: 4
-  completed_phases: 5
+  completed_phases: 4
   total_plans: 18
   completed_plans: 18
-  percent: 125
+  percent: 100
 ---
 
 # MonMS — Project State
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 ## Active Phase
 
 **Phase 4:** Staging Environments & Client Content Publish
-**Status:** Milestone complete
-**Next action:** `/gsd-verify-work 4` or milestone audit
+**Status:** Complete — Phase 4 UAT in progress (`04-UAT.md`)
+**Next action:** Complete `/gsd-verify-work 4` or milestone audit when UAT passes
 
 ## Decisions
 
@@ -81,4 +81,4 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 | Verifier | Enabled |
 
 ---
-*State updated: 2026-05-26 after 04-06 plan execution*
+*State updated: 2026-05-26 after documentation reconciliation; Phase 4 UAT open*

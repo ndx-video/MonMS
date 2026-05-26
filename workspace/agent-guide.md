@@ -8,6 +8,8 @@ MonMS enables external AI agents to safely mutate a Git-tracked workspace. Agent
 - Edit workspace templates (`*.gohtml`) — changes are visible on the next request via in-memory cache invalidation driven by fsnotify (AGT-02).
 - Schema JSON files serve as a Git audit trail and are re-imported on next server start for bootstrap self-healing (D-32, D-33).
 
+**Structure rail only:** Agents and consultants mutate **L2 structure** (templates, schema, assets). Editorial **content publish** (L3) is client-driven via `/api/monms/publish` — agents do not routine-push copy to production. See [README.md](README.md) § content publish and [MEDIA.md](MEDIA.md).
+
 **Phase 2 safety guardrails** protect the workspace from invalid mutations:
 
 1. **Go template dry-run** — `html/template.ParseFiles` with the layout, matching the production parse path (D-37, AGT-03).
@@ -61,6 +63,9 @@ See `SECURITY.md` for token rotation and storage policy.
 | `MONMS_URL` | Running server base URL | `http://localhost:8090` |
 | `POCKETBASE_ADMIN_TOKEN` | PocketBase admin JWT for collection management | `eyJhbGci...` |
 | `MONMS_BIN` | Path to the `monms` binary (optional) | `/usr/local/bin/monms` |
+| `MONMS_PUBLISH_TOKEN` | Shared secret for production content import (consultant setup only; never commit) | — |
+
+Content CLI (operator fallback): `monms content export|import|diff|publish --workspace .` — see [README.md](README.md).
 
 ### SSH Key
 
@@ -103,6 +108,19 @@ cat > workspace/schema/press_releases.json << 'EOF'
 }
 EOF
 ```
+
+For collections clients will **publish to production**, add `"editorial": true` after `"type": "base"` (PUB-01, D-54). MonMS reads this flag from raw schema JSON — PocketBase strips unknown keys on import.
+
+```json
+{
+  "name": "hero_content",
+  "type": "base",
+  "editorial": true,
+  ...
+}
+```
+
+Do not mark system or auth collections as editorial.
 
 The file must be valid JSON (no comments, no trailing commas). The format matches `internal/schema/sync.go` — a single collection object with `name`, `type`, and `fields` keys. On next server start, this file is automatically imported for self-healing if the collection was deleted from PocketBase.
 
@@ -167,7 +185,7 @@ To render a live PocketBase collection list in a template:
 
 ### Cache Invalidation
 
-Template changes are visible on the next HTTP request without restarting the server. The fsnotify watcher detects changes in `workspace/templates/` and flushes the in-memory cache automatically (Phase 1 infrastructure, AGT-02).
+Template changes are visible on the next HTTP request without restarting the server. In production builds, fsnotify watches the **entire workspace tree** for `.gohtml` changes and flushes the in-memory cache (D-30, AGT-02).
 
 ### Fragment Partials
 
@@ -297,3 +315,12 @@ The pre-commit hook runs automatically. On success, the commit proceeds.
 Open `http://localhost:8090/press` — the page renders immediately without restart.
 
 **Debugging:** If `/press` returns 404, verify the template path is `templates/press/index.gohtml` (mirror+index rule, D-10). The error page displays the attempted template path for diagnosis (D-19).
+
+## Related guides
+
+| Guide | Purpose |
+|-------|---------|
+| [README.md](README.md) | Four layers, dual rails, content publish setup |
+| [MEDIA.md](MEDIA.md) | CDN URL fields for publishable assets |
+| [EDITING-GUIDE.md](EDITING-GUIDE.md) | Human inline editing + Publish to live (clients) |
+| [SECURITY.md](SECURITY.md) | SSH scope, tokens, publish secrets |

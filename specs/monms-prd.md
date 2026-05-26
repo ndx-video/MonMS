@@ -2,6 +2,8 @@
 
 ## **Project Name: MonMS — The Agent-Malleable Monolithic CMS**
 
+> **Document note:** v1 vision and illustrative code below. **v2 lifecycle** (four layers, staging/production, content publish) is specified in [`specs/staging.md`](staging.md) and implemented in Phase 4 (2026-05-26). Where this PRD conflicts with the codebase, prefer `CLAUDE.md`, `specs/staging.md`, and `.planning/` verification artifacts.
+
 ## **1\. Executive Summary & Vision**
 
 Traditional Content Management Systems (CMSs) enforce strict boundaries:
@@ -20,8 +22,8 @@ For clients, MonMS provides **Inline Contextual Editing**—the ability to safel
 
 1. **Single-Binary Monolith:** An entire production-grade CMS, database, file server, and web server compiled into a single executable using \< 30MB RAM.  
 2. **Zero-Compilation Malleability:** The application UI/UX, routing, and database schemas are modified on the fly without restarting or rebuilding the Go binary.  
-3. **Git-Managed State:** Every AI structural adjustment (new page, updated CSS, modified collection layout) is tracked, versioned, and rolled back via Git.  
-4. **Inline Contextual Editing:** Clients log in and click to type directly on the live site, instantly updating SQLite records behind the scenes.
+3. **Git-Managed Structure:** Every AI structural adjustment (new page, updated CSS, modified collection layout) is tracked, versioned, and rolled back via Git. Editorial copy promotes separately via JSON upsert (v2 — see [`specs/staging.md`](staging.md)).  
+4. **Inline Contextual Editing:** Clients log in and click to type directly on the staging site, instantly updating SQLite records behind the scenes. Publishers push approved copy to production via **Publish to live** (`/api/monms/publish`).
 
 ## **2\. Architectural Design & Folder Topology**
 
@@ -29,19 +31,33 @@ The system uses PocketBase as an embedded Go framework. The Go binary remains co
 
 ### **Directory Structure**
 
-├── monms-engine          \# Pre-compiled Go monolithic executable  
-├── pb\_data/              \# SQLite database (contains client & agent raw data)  
-└── workspace/            \# The Git-tracked AI & Human workspace  
-    ├── schema/           \# Declared collection schemas (JSON backups)  
-    ├── templates/        \# Go HTML templates parsed on demand  
-    │   ├── layouts/      \# Global page structures (base layout, head, auth check)  
-    │   ├── fragments/    \# Component parts or partials used by HTMX  
-    │   └── \*.gohtml      \# Live route templates (index, about, pricing, team)  
-    └── assets/           \# Client-facing CSS, JS, fonts, and uploaded media
+```
+monms/                    # Pre-compiled Go monolithic executable (L1 engine)
+└── workspace/            # Git-tracked site structure + runtime (per deployment)
+    ├── schema/           # L2 — collection definitions (JSON; may include "editorial": true)
+    ├── content/          # L3 — editorial export snapshots (gitignored by default)
+    ├── templates/        # L2 — Go HTML templates parsed on demand
+    │   ├── layouts/      # Global page structures (base layout, HTMX auth)
+    │   ├── fragments/    # HTMX partials (no base layout)
+    │   └── *.gohtml      # Route templates
+    ├── assets/           # L2 — CSS, fonts, static files (structure rail)
+    ├── .monms/           # Staging publish config (config.example.json committed)
+    └── .pb_data/         # L3 runtime — PocketBase SQLite (never committed)
+```
+
+See [`specs/staging.md`](staging.md) for four-layer promotion rails and staging vs production.
 
 ## **3\. High-Performance Runtime Malleability (Go Backend)**
 
 To allow the AI to mutate the system without service interruption, MonMS implements a custom, performance-optimized, on-demand parsing engine in Go.
+
+> **Implementation notes (as built):**
+> - Production vs development mode uses compile-time `buildMode` ldflags — **not** `ENV` (D-01).
+> - fsnotify watches the **entire workspace tree** for `.gohtml` changes in production builds (D-30), not `templates/` only.
+> - PocketBase data dir is `{workspace}/.pb_data/` (D-27).
+> - See `internal/templates/`, `main.go`, and Phase 1 verification for the live implementation.
+
+The pseudocode below illustrates the original v1 design:
 
 package main
 
@@ -228,6 +244,8 @@ While the AI handles high-level structural and design mutations, human clients r
 
 When an authenticated client views the site, MonMS injects editability directly into the SSR layout.
 
+> **Implementation note:** HTMX Bearer auth uses server-injected `AuthToken` in `htmx:configRequest` — not `document.cookie` (session cookie is HttpOnly; SEC-04). See `workspace/templates/layouts/base.gohtml`.
+
 ### **Global Base Layout Layout (/workspace/templates/layouts/base.gohtml)**
 
 This template automatically enables inline saving functionality if the client is logged in.
@@ -347,3 +365,26 @@ This template uses HTMX attributes to trigger REST API requests back to the dyna
 
 * **Agent Execution Layer:** The AI agent operates using dedicated SSH keys and REST API tokens restricting permissions strictly to the active workspace subdirectory.  
 * **Editor Layer:** Strict PocketBase API rules apply. Unauthenticated users cannot overwrite fields, as validation is enforced at the database layer, blockading unauthorized PUT calls.
+
+## **8\. Staging, Environments & Content Publish (v2)**
+
+MonMS v2 adds a **four-layer lifecycle** and **dual promotion rails** without changing the v1 engine or inline-editing model:
+
+| Layer | Artifact | Promotion |
+|-------|----------|-----------|
+| L1 Engine | `monms` binary | Semver release |
+| L2 Structure | `workspace/` Git — templates, schema, assets | Git tag → production deploy |
+| L3 Content | `.pb_data/` records; export to `content/*.json` | **Publish to live** → JSON upsert |
+| L4 Audience | Production URL | Read-only |
+
+**Authoritative spec:** [`specs/staging.md`](staging.md)
+
+**Key surfaces (implemented):**
+
+- `monms content export|import|diff|publish` — operator/CI content rail
+- `POST /api/monms/content/import` — production import (Bearer `MONMS_PUBLISH_TOKEN`)
+- `/api/monms/publish` — staging publish console with diff preview and publisher gate
+- `"editorial": true` in `workspace/schema/*.json` — collections eligible for content sync
+- [`workspace/MEDIA.md`](../workspace/MEDIA.md) — CDN URL policy (no blob copy between environments)
+
+Consultants own structure Git tags; clients own routine content publish. Full `.pb_data/` backup is **not** the primary publish path (D-56).

@@ -2,7 +2,7 @@
 
 ## What This Is
 
-MonMS (Monolithic Content Management System) is an agent-malleable, single-binary monolith CMS built on Go and PocketBase. It operates across **four layers** — engine, structure, content, and audience — with **two promotion rails**: consultants and AI agents shape site structure in a Git-tracked workspace; business clients edit copy on staging and publish to production themselves via an admin button.
+MonMS (Monolithic Content Management System) is an agent-malleable, single-binary monolith CMS built on Go and PocketBase. It operates across **four layers** — engine, structure, content, and audience — with **two promotion rails**: consultants and AI agents shape site structure in a Git-tracked workspace; business clients edit copy on staging and publish to production themselves via **Publish to live** at `/api/monms/publish`.
 
 AI agents mutate the workspace folder tree (templates, schema, assets) with validation and Git versioning. Human editors use HTMX inline editing on staging. Structure deploys by Git tag; editorial content syncs by JSON upsert — not by copying `.pb_data/`.
 
@@ -56,12 +56,12 @@ MonMS addresses the divide between developer-only environments (CI/CD pipelines,
 
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
-| SQLite Embedded Database | Embedded database within generic monolithic binary to keep RAM footprint low | — Pending |
-| fsnotify Cache Invalidation | Invalidate templates cache immediately on local fs writes/git pulls without server restarts | — Pending |
-| HTML5 contenteditable + HTMX | Native browser text-manipulation saving asynchronously on blur for simple visual content updates | — Pending |
+| SQLite Embedded Database | Embedded database within generic monolithic binary to keep RAM footprint low | Validated — Phase 1 |
+| fsnotify Cache Invalidation | Invalidate templates cache on workspace `.gohtml` changes without server restarts (D-30) | Validated — Phase 1 |
+| HTML5 contenteditable + HTMX | Native browser text-manipulation saving asynchronously on blur for simple visual content updates | Validated — Phase 3 |
 | Four-layer lifecycle (D-50) | Engine, structure, content, audience have distinct actors and artifacts | Accepted — specs/staging.md |
 | Dual promotion rails (D-51) | Git tags for structure; JSON upsert for content — independent paths | Accepted — specs/staging.md |
-| Client Publish button (D-53) | Clients self-serve content to production; consultants not in routine loop | Accepted — Phase 4 |
+| Client Publish console (D-53) | Clients self-serve at `/api/monms/publish`; consultants not in routine loop | Validated — Phase 4 |
 | CDN URL media policy (D-55) | Publishable media referenced by URL; no blob copy staging→prod | Accepted — specs/staging.md |
 
 ## Evolution

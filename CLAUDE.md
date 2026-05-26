@@ -22,8 +22,9 @@ MonMS is an **agent-malleable monolithic CMS**: a single Go binary (PocketBase e
 main.go                    # Entry: init | validate | serve
 internal/
   config/                  # --workspace flag, MONMS_WORKSPACE env
+  content/                 # Editorial export/import/diff/publish (v2)
   router/                  # SSR, assets, fragments, auth cookie bridge
-  schema/                  # Bootstrap import from schema/*.json, seed records
+  schema/                  # Bootstrap import from schema/*.json, seed, editorial flag
   scaffold/                # monms init, embedded templates, pre-commit hook
   templates/               # TemplateCache, ResolveSlug, fsnotify watcher
   validate/                # monms validate CLI (dry-run + HTML lint)
@@ -107,7 +108,8 @@ When modifying the workspace as an agent:
 |-------------|-------|
 | New page/route | `workspace/templates/{slug}.gohtml` |
 | Global layout/HTMX | `workspace/templates/layouts/base.gohtml` + `internal/scaffold/embed/base.gohtml` |
-| New collection | PocketBase API + `workspace/schema/{name}.json` |
+| New collection | PocketBase API + `workspace/schema/{name}.json` (add `"editorial": true` for client-publishable collections) |
+| Content publish rail | `internal/content/` — agents do not routine-push; clients use `/api/monms/publish` |
 | SSR behavior | `internal/router/ssr.go` |
 | Cache/watcher | `internal/templates/` |
 | Validation rules | `internal/validate/validate.go` |

@@ -6,19 +6,19 @@
 
 ## Summary
 
-Extends v1 with a four-layer lifecycle and dual promotion model. v1 single-instance inline editing remains valid; staging/production split and client-driven content publish are new Phase 4 scope.
+Extends v1 with a four-layer lifecycle and dual promotion model. v1 single-instance inline editing remains valid; staging/production split and client-driven content publish shipped in Phase 4 (2026-05-26).
 
-## New phase
+## Phase 4 — complete
 
 **Phase 4: Staging Environments & Client Content Publish**
 
-Requirements: ENV-01–03, PUB-01–09, MED-01–02
+Requirements: ENV-01–03, PUB-01–09, MED-01–02 — all marked complete in `.planning/REQUIREMENTS.md`.
 
-## PROJECT.md updates needed
+## PROJECT.md updates — done (2026-05-26)
 
-- Refine "What This Is" to distinguish structure vs content layers
-- Add Key Decisions D-50 through D-56
-- Clarify Git-managed state applies to structure (L2), not editorial content (L3)
+- Refine "What This Is" to distinguish structure vs content layers ✓
+- Add Key Decisions D-50 through D-56 ✓
+- Clarify Git-managed state applies to structure (L2), not editorial content (L3) ✓
 
 ## Non-goals confirmed
 

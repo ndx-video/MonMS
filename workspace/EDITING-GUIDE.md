@@ -1,6 +1,6 @@
-# Inline Editing Guide
+# Inline Editing & Publish Guide
 
-This walkthrough verifies Phase 3 inline contextual editing for MonMS operators.
+Walkthrough for MonMS **inline contextual editing** (Phase 3) and **Publish to live** (Phase 4) for operators and clients.
 
 ## Prerequisites
 
@@ -78,6 +78,12 @@ Editors with the **publisher** role can push approved staging content to product
 3. Review the **diff preview** — changed collections and fields since last publish.
 4. Click **Publish now** — staging exports editorial records and POSTs to production.
 5. Confirm **Last published** timestamp updates; production site reflects new copy without a structure deploy.
+
+### Publish limitations
+
+- **Upsert only:** Publish sends the current editorial snapshot to production and upserts records by ID. Records you delete on staging remain on production until removed manually in production admin (`/_/`).
+- **Diff includes deletions:** The pending-changes diff reports records removed from staging, but publish does not propagate those deletions.
+- **Partial import:** If a publish or CLI import fails mid-batch, production may already contain some updated collections. Imports are idempotent — retry after fixing the error and verify with diff or the publish console.
 
 ### Roles
 

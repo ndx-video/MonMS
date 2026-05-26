@@ -145,8 +145,9 @@ monms/                          # Generic Go binary (frozen at deploy)
 ├── main.go                     # PocketBase bootstrap, route registration
 ├── internal/
 │   ├── config/                 # Workspace path resolution
+│   ├── content/                # Editorial export/import/diff/publish (v2)
 │   ├── router/                 # SSR, assets, fragments, auth
-│   ├── schema/                 # Declarative schema sync + seed
+│   ├── schema/                 # Declarative schema sync, seed, editorial flag
 │   ├── scaffold/               # monms init + embedded templates
 │   ├── templates/              # TemplateCache, slug resolver, fsnotify watcher
 │   ├── validate/               # monms validate CLI
@@ -217,6 +218,7 @@ go test -ldflags "-X main.buildMode=production" ./...
 
 | Package | Role |
 |---------|------|
+| `internal/content` | Editorial export/import, diff, publish API + UI (v2) |
 | `internal/router` | `/assets`, `/fragments/{name}`, `/{slug...}` SSR |
 | `internal/templates` | Cache, slug resolver, fsnotify watcher |
 | `internal/schema` | Import `schema/*.json` on bootstrap; seed demo content |
@@ -250,14 +252,16 @@ Roadmap: [.planning/ROADMAP.md](.planning/ROADMAP.md)
 | [workspace/agent-guide.md](workspace/agent-guide.md) | AI agent structure mutation workflow |
 | [workspace/SECURITY.md](workspace/SECURITY.md) | SSH scope, token policy, git hygiene |
 
-## Out of scope (v1)
+## Out of scope
+
+The following are not part of the core MonMS model (see v2 backlog in [.planning/ROADMAP.md](.planning/ROADMAP.md)):
 
 - React/Next.js frontend or Node build pipelines
 - External databases (PostgreSQL, MySQL)
-- Multi-workspace / multi-tenant routing
+- Multi-workspace / multi-tenant routing (MULT-* backlog)
 - Kubernetes-style container orchestration
 
-See v2 backlog in [.planning/ROADMAP.md](.planning/ROADMAP.md) and [specs/staging.md](specs/staging.md).
+See [specs/staging.md](specs/staging.md) for implemented v2 lifecycle vs remaining backlog.
 
 ## License
 

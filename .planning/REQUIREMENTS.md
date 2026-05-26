@@ -9,7 +9,7 @@
 
 - [x] **ENG-01**: Go binary starts and serves HTTP with PocketBase embedded without any configuration files.
 - [x] **ENG-02**: Template cache is populated on first access and invalidated automatically when workspace files change.
-- [x] **ENG-03**: fsnotify watches the `workspace/templates/` folder and clears in-memory template cache on write/create events.
+- [x] **ENG-03**: fsnotify watches the workspace tree for `.gohtml` changes and clears in-memory template cache on write/create events (D-30; entire workspace, not `templates/` only).
 - [x] **ENG-04**: Production mode activates template caching; development mode always reads from disk.
 - [x] **ENG-05**: Binary's idle RAM footprint stays under 30MB in production mode.
 - [x] **ENG-06**: Server-side rendered routes under SQLite reads produce a TTFB under 15ms.
@@ -24,12 +24,12 @@
 
 ### Agent Mutation Engine
 
-- [ ] **AGT-01**: Agent can create a new PocketBase collection by POSTing to `/api/collections` without restarting the binary.
-- [ ] **AGT-02**: Agent can modify an existing `*.gohtml` template file and the change is visible on the next browser request without restart.
-- [ ] **AGT-03**: Before committing, agent runs Go HTML template dry-run validation on modified templates.
-- [ ] **AGT-04**: Before committing, agent runs an HTML structure linter on modified templates.
+- [x] **AGT-01**: Agent can create a new PocketBase collection by POSTing to `/api/collections` without restarting the binary.
+- [x] **AGT-02**: Agent can modify an existing `*.gohtml` template file and the change is visible on the next browser request without restart.
+- [x] **AGT-03**: Before committing, agent runs Go HTML template dry-run validation on modified templates.
+- [x] **AGT-04**: Before committing, agent runs an HTML structure linter on modified templates.
 - [x] **AGT-05**: On validation failure, agent performs `git checkout -- .` to restore the last stable workspace state.
-- [ ] **AGT-06**: All agent file mutations are committed to git with descriptive commit messages.
+- [x] **AGT-06**: All agent file mutations are committed to git with descriptive commit messages.
 
 ### Inline Contextual Editing
 
@@ -37,14 +37,14 @@
 - [x] **ICE-02**: `IsLoggedIn` context variable is correctly set when a PocketBase session cookie is present.
 - [x] **ICE-03**: Template regions can expose `contenteditable="true"` conditionally when `.IsLoggedIn` is true.
 - [x] **ICE-04**: HTMX PUT requests on `blur` event transmit updated field content to PocketBase REST endpoint.
-- [x] **ICE-05**: HTMX request includes Authorization Bearer token extracted from `pb_auth` cookie via JavaScript.
+- [x] **ICE-05**: HTMX requests include Authorization Bearer token via server-injected `AuthToken` in `htmx:configRequest` (HttpOnly session cookie — not read from JavaScript).
 - [x] **ICE-06**: Unauthenticated users see the page normally with no `contenteditable` attributes rendered.
 
 ### Authentication & Security
 
 - [x] **SEC-01**: PocketBase admin dashboard (`/_/`) is accessible for full management fallback.
 - [x] **SEC-02**: Unauthenticated PUT requests to PocketBase collection endpoints are rejected at the database layer.
-- [ ] **SEC-03**: Agent operates with SSH keys and REST API tokens scoped strictly to the active workspace subdirectory.
+- [x] **SEC-03**: Agent operates with SSH keys and REST API tokens scoped strictly to the active workspace subdirectory.
 - [x] **SEC-04**: HttpOnly cookie contains the session JWT; it is not accessible from JavaScript.
 
 ### Demonstration Content
@@ -122,12 +122,12 @@
 | WRK-03 | Phase 1 | Complete |
 | WRK-04 | Phase 1 | Complete |
 | WRK-05 | Phase 1 | Complete |
-| AGT-01 | Phase 2 | Pending |
-| AGT-02 | Phase 2 | Pending |
-| AGT-03 | Phase 2 | Pending |
-| AGT-04 | Phase 2 | Pending |
+| AGT-01 | Phase 2 | Complete |
+| AGT-02 | Phase 2 | Complete |
+| AGT-03 | Phase 2 | Complete |
+| AGT-04 | Phase 2 | Complete |
 | AGT-05 | Phase 2 | Complete |
-| AGT-06 | Phase 2 | Pending |
+| AGT-06 | Phase 2 | Complete |
 | ICE-01 | Phase 3 | Complete |
 | ICE-02 | Phase 3 | Complete |
 | ICE-03 | Phase 3 | Complete |
@@ -136,7 +136,7 @@
 | ICE-06 | Phase 3 | Complete |
 | SEC-01 | Phase 1 | Complete |
 | SEC-02 | Phase 3 | Complete |
-| SEC-03 | Phase 2 | Pending |
+| SEC-03 | Phase 2 | Complete |
 | SEC-04 | Phase 3 | Complete |
 | DEMO-01 | Phase 3 | Complete |
 | DEMO-02 | Phase 3 | Complete |
@@ -162,5 +162,4 @@
 - Unmapped: 0 ✓
 
 ---
-*Requirements defined: 2026-05-22*
-*Last updated: 2026-05-23 after ingest specs/staging.md*
+*Last updated: 2026-05-26 after Phase 4 execution and doc reconciliation*

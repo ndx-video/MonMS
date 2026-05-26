@@ -206,6 +206,7 @@ Use `agent:` prefix in commit messages for AI mutations. Tag releases for produc
 |----------|---------|
 | `MONMS_URL` | Running server URL (e.g. `http://localhost:8090`) |
 | `POCKETBASE_ADMIN_TOKEN` | Admin JWT for collection management |
+| `MONMS_PUBLISH_TOKEN` | Bearer token for production `POST /api/monms/content/import` (staging publish + production gate) |
 | `MONMS_BIN` | Path to the `monms` binary (for pre-commit hook) |
 | `MONMS_WORKSPACE` | Override workspace path (default: `./workspace`) |
 

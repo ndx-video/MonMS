@@ -1,6 +1,6 @@
 # SPEC: MonMS Staging, Environments & Content Publish
 
-**Status:** Accepted (2026-05-23)  
+**Status:** Accepted (2026-05-23) · **Implemented** (Phase 4, 2026-05-26)  
 **Supersedes:** Implicit single-environment assumptions in v1 planning  
 **Related:** `specs/monms-prd.md`, `.planning/ROADMAP.md`, `.planning/REQUIREMENTS.md`
 
@@ -8,7 +8,7 @@
 
 ## 1. Summary
 
-MonMS operates across **four layers** with **two promotion rails**. Structure (templates, schema, assets) promotes via Git tags. Editorial content (PocketBase records) promotes via JSON upsert — initiated by **clients** from a button in the PocketBase admin area, without consultant involvement for routine updates.
+MonMS operates across **four layers** with **two promotion rails**. Structure (templates, schema, assets) promotes via Git tags. Editorial content (PocketBase records) promotes via JSON upsert — initiated by **clients** from the **Publish to live** console at `/api/monms/publish`, without consultant involvement for routine updates.
 
 Media referenced by public CDN URLs does **not** move between environments; only URL strings in content records are synced.
 
@@ -51,7 +51,7 @@ Both instances run the same pinned `monms` binary version unless an engine upgra
 ### 3.2 Content promotion (L3→L4) — client-driven, frequent
 
 1. Client edits content on **staging** via inline HTMX editing (existing v1 feature).
-2. Client opens **Publish to live** in PocketBase admin (new feature).
+2. Client opens **Publish to live** at `/api/monms/publish` (or via the editor badge link).
 3. Staging exports editorial collections → JSON payload.
 4. Staging POSTs to production **content import API** (scoped token).
 5. Production **upserts records by fixed ID** — idempotent, no binary restart.
@@ -118,9 +118,9 @@ Fixed record IDs (e.g. `homepage`) are required for reliable upsert — same pat
 | `monms content export` | Snapshot editorial collections → `workspace/content/*.json` |
 | `monms content import` | Upsert from `workspace/content/*.json` → local `.pb_data/` |
 | `monms content diff` | Show records/fields that differ from last export or target |
-| `monms content publish` | Export from `--from` URL + import to `--to` URL (operator/CI fallback) |
+| `monms content publish --to URL` | Export from running instance + POST to production (operator/CI fallback; requires `MONMS_PUBLISH_TOKEN`) |
 
-Primary UX is the **admin Publish button**; CLI remains for CI and consultant emergencies.
+Primary UX is the **Publish to live** console at `/api/monms/publish`; CLI remains for CI and consultant emergencies.
 
 ### 5.4 Production import API
 
@@ -136,18 +136,18 @@ Body: { "collections": [ { "name": "...", "records": [...] } ] }
 - Upsert by record ID; skip or warn on unknown fields if structure lagged.
 - Never imports auth users, admin accounts, or non-editorial collections.
 
-### 5.5 Admin UI — Publish to live
+### 5.5 Publish console — Publish to live
 
-Location: PocketBase admin area (MonMS-extended page, e.g. `/_/publish`).
+**Location:** `/api/monms/publish` (standalone MonMS route — **not** `/_/publish`, which PocketBase's admin SPA would catch).
 
 | Element | Behavior |
 |---------|----------|
 | Diff preview | Lists collections/records changed since last publish |
 | Publish now | Triggers export + POST to production import API |
-| Last published | Timestamp + checksum stored in staging settings |
-| Permissions | **Publisher** role (may overlap Editor); not anonymous |
+| Last published | Timestamp + checksum stored in `.monms/publish-state.json` |
+| Permissions | Superuser session + **publisher** email allowlist in `.monms/config.json` |
 
-Clients use this button; consultants configure credentials once at site setup.
+Clients use this console; consultants configure `productionUrl`, `publisherEmails`, and `MONMS_PUBLISH_TOKEN` once at site setup.
 
 ---
 
@@ -182,7 +182,7 @@ Inline content and record fields store **canonical public CDN URLs**. Staging an
 
 ---
 
-## 8. Requirements (v2 — to merge into GSD)
+## 8. Requirements (v2 — merged into GSD, complete)
 
 ### Environment & Lifecycle
 
@@ -215,25 +215,21 @@ Inline content and record fields store **canonical public CDN URLs**. Staging an
 
 ---
 
-## 9. Proposed GSD Phase (v2)
+## 9. Phase 4 delivery (complete)
 
-**Phase 4: Staging Environments & Client Content Publish**
+**Phase 4: Staging Environments & Client Content Publish** — executed 2026-05-26.
 
-**Goal:** Clients publish editorial content from staging to production via admin UI; structure continues to promote via Git tags; media uses shared CDN URLs.
+| Deliverable | Status |
+|-------------|--------|
+| `workspace/content/` + `"editorial": true` in schema JSON | ✓ |
+| `internal/content/` — export, import, diff, upsert by ID | ✓ |
+| `monms content` CLI subcommands | ✓ |
+| `POST /api/monms/content/import` + `MONMS_PUBLISH_TOKEN` auth | ✓ |
+| Publish console at `/api/monms/publish` with diff + Publish now | ✓ |
+| Publisher allowlist in `.monms/config.json` | ✓ |
+| Docs: lifecycle, roles, media (`MEDIA.md`, README updates) | ✓ |
 
-**Depends on:** Phase 3 (inline editing) complete.
-
-**Deliverables (high level):**
-
-1. `workspace/content/` convention + `editorial` flag in schema JSON
-2. `internal/content/` — export, import, diff, upsert by ID
-3. `monms content` CLI subcommands
-4. `POST /api/monms/content/import` + publish token auth
-5. Admin publish page (`/_/publish`) with diff + Publish now
-6. Publisher role / permission model
-7. Docs: lifecycle, roles, media guidance (this spec + README updates)
-
-**Requirements covered:** ENV-01–03, PUB-01–09, MED-01–02
+**Requirements covered:** ENV-01–03, PUB-01–09, MED-01–02 (see `.planning/REQUIREMENTS.md`).
 
 ---
 
@@ -246,19 +242,29 @@ v1 delivered L1 engine, L2 workspace/Git mutation, and L3 inline editing on a si
 - Pre-commit template validation — unchanged; applies to structure rail
 - `.pb_data/` gitignored — unchanged
 
-New work is **Phase 4 / v2 milestone** scope.
+Phase 4 / v2 milestone scope is **implemented**. Human UAT may continue via `.planning/phases/04-staging-environments-client-content-publish/04-UAT.md`.
 
 ---
 
-## 11. GSD Integration Notes
+## 11. Implementation reference (as built)
 
-**Recommended reconciliation path:**
+| Surface | Path / command |
+|---------|----------------|
+| Publish console | `GET/POST /api/monms/publish`, `GET /api/monms/publish/diff` |
+| Production import | `POST /api/monms/content/import` + `Authorization: Bearer $MONMS_PUBLISH_TOKEN` |
+| Staging config | `workspace/.monms/config.json` (gitignored; copy from `config.example.json`) |
+| Publish state | `workspace/.monms/publish-state.json` (checksum + last publish time) |
+| Editorial allowlist | `"editorial": true` in `workspace/schema/*.json` (parsed by `internal/schema/editorial.go`) |
+| CLI | `monms content export\|import\|diff\|publish --to URL` |
 
-1. **`gsd-ingest-docs --mode merge`** pointing at `specs/staging.md` — merges ENV-*, PUB-*, MED-* requirements into `.planning/REQUIREMENTS.md` and adds Phase 4 to `.planning/ROADMAP.md`.
-2. **`gsd-import --from specs/staging.md`** — optional later step when ready to generate `{04-01-PLAN.md}` execution plans from §9 deliverables.
-
-`gsd-import --from` alone does not update REQUIREMENTS.md; use ingest-docs for requirement reconciliation, import for phase plan generation.
+**Publish behavior:** upsert by record ID only — deletions on staging do not remove production records. Diff reports deleted records for operator awareness.
 
 ---
 
-*Accepted: 2026-05-23*
+## 12. GSD integration (historical)
+
+Reconciliation completed 2026-05-23 via `gsd-ingest-docs`; Phase 4 plans executed 2026-05-26.
+
+---
+
+*Accepted: 2026-05-23 · Implemented: 2026-05-26*
