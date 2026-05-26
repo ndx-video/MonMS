@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"html"
 	"html/template"
+	"log/slog"
 	"net/http"
 	"path/filepath"
 	"strings"
@@ -23,8 +24,15 @@ type Deps struct {
 // RegisterRoutes wires assets, fragments, then SSR catch-all (D-14).
 func RegisterRoutes(se *core.ServeEvent, deps Deps) {
 	se.Router.GET("/assets/{path...}", AssetsHandler(deps.WsAbs))
-	se.Router.GET("/fragments/{name}", FragmentsHandler(deps.WsAbs, deps.Cache))
-	se.Router.GET("/{slug...}", SSRHandler(deps.WsAbs, deps.Cache, deps.IsDev))
+	se.Router.GET("/fragments/{name}", withAuthCookie(FragmentsHandler(deps.WsAbs, deps.Cache)))
+	se.Router.GET("/{slug...}", withAuthCookie(SSRHandler(deps.WsAbs, deps.Cache, deps.IsDev)))
+}
+
+func withAuthCookie(next func(*core.RequestEvent) error) func(*core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		_ = LoadAuthFromCookie(e)
+		return next(e)
+	}
 }
 
 // SSRHandler renders full pages via base layout and template cache.
@@ -60,7 +68,7 @@ func SSRHandler(wsAbs string, cache *templates.TemplateCache, isDev bool) func(*
 			return renderErrorPage(e, wsAbs, cache, isDev, http.StatusInternalServerError, "", err)
 		}
 
-		data := ssrData(e, slug)
+		data := enrichSSRData(e, slug)
 		e.Response.Header().Set("Content-Type", "text/html; charset=utf-8")
 		return tmpl.ExecuteTemplate(e.Response, "base", data)
 	}
@@ -74,6 +82,45 @@ func ssrData(e *core.RequestEvent, slug string) map[string]any {
 		"Path":       e.Request.URL.Path,
 	}
 }
+
+func enrichSSRData(e *core.RequestEvent, slug string) map[string]any {
+	data := ssrData(e, slug)
+
+	if e.Auth != nil {
+		if token, err := e.Auth.NewAuthToken(); err == nil && token != "" {
+			data["AuthToken"] = token
+		}
+	}
+
+	if slug == "" || slug == "index" {
+		data["Hero"] = loadHero(e.App)
+	}
+
+	return data
+}
+
+func loadHero(app core.App) map[string]any {
+	fallback := map[string]any{
+		"Title": "MonMS is running",
+		"Body":  "Your workspace is live. Templates load from disk — no build step required.",
+		"ID":    heroRecordID,
+	}
+
+	rec, err := app.FindRecordById(heroCollection, heroRecordID)
+	if err != nil || rec == nil {
+		slog.Warn("hero load: homepage record missing, using fallback", "error", err)
+		return fallback
+	}
+
+	return map[string]any{
+		"Title": rec.GetString("title"),
+		"Body":  rec.GetString("body"),
+		"ID":    rec.Id,
+	}
+}
+
+const heroCollection = "hero_content"
+const heroRecordID = "homepage"
 
 func isReservedSlug(slug string) bool {
 	if slug == "" {

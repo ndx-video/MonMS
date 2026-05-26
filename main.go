@@ -72,6 +72,7 @@ func runServe() {
 	})
 
 	schema.RegisterBootstrapHook(app, abs)
+	router.RegisterAuthHooks(app)
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		router.RegisterRoutes(se, router.Deps{

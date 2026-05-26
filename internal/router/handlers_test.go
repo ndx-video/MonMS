@@ -25,6 +25,11 @@ type testServerOpts struct {
 }
 
 func startTestServer(t *testing.T, wsAbs string, opts testServerOpts) (*httptest.Server, *templates.TemplateCache, func()) {
+	ts, _, cache, cleanup := startTestServerWithApp(t, wsAbs, opts)
+	return ts, cache, cleanup
+}
+
+func startTestServerWithApp(t *testing.T, wsAbs string, opts testServerOpts) (*httptest.Server, core.App, *templates.TemplateCache, func()) {
 	t.Helper()
 
 	if err := workspace.ValidateWorkspace(wsAbs); err != nil {
@@ -41,6 +46,7 @@ func startTestServer(t *testing.T, wsAbs string, opts testServerOpts) (*httptest
 	})
 
 	schema.RegisterBootstrapHook(app, wsAbs)
+	RegisterAuthHooks(app)
 
 	deps := Deps{WsAbs: wsAbs, Cache: cache, IsDev: opts.isDev}
 
@@ -75,7 +81,7 @@ func startTestServer(t *testing.T, wsAbs string, opts testServerOpts) (*httptest
 	}
 
 	ts := httptest.NewServer(mux)
-	return ts, cache, func() {
+	return ts, app, cache, func() {
 		ts.Close()
 		_ = app.ResetBootstrapState()
 	}
