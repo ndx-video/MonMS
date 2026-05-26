@@ -124,7 +124,7 @@ Plans:
 - Publisher role / permission model
 - Lifecycle docs (`specs/staging.md`, README updates)
 
-**Plans:** 4/6 plans executed
+**Plans:** 6/6 plans complete
 
 Plans:
 **Wave 0**
@@ -145,7 +145,7 @@ Plans:
 **Wave 5** *(blocked on Wave 4)*
 - [x] 04-06-PLAN.md — Four-layer docs, MEDIA.md, gitignore (ENV/MED)
 
-**Status:** Ready to execute
+**Status:** Complete (2026-05-26)
 
 ---
 

@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Staging & Client Content Publish
-status: complete
+status: milestone_complete
 stopped_at: Completed 04-06-PLAN.md
 last_updated: "2026-05-26T14:08:00Z"
 progress:
   total_phases: 4
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 18
   completed_plans: 18
-  percent: 100
+  percent: 125
 ---
 
 # MonMS — Project State
@@ -25,7 +25,7 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 ## Active Phase
 
 **Phase 4:** Staging Environments & Client Content Publish
-**Status:** Complete — all 6 plans executed
+**Status:** Milestone complete
 **Next action:** `/gsd-verify-work 4` or milestone audit
 
 ## Decisions

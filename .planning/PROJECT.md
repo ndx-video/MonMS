@@ -14,17 +14,17 @@ High-performance runtime malleability without build or compilation overhead, com
 
 ### Validated
 
-(None yet — ship to validate)
+- **Single-Binary Monolith** — Validated in Phase 1
+- **Zero-Compilation Malleability** — Validated in Phase 1
+- **Git-Managed Structure** — Validated in Phase 2
+- **Client Content Publish** — Validated in Phase 4 (export/import CLI, production import API, Publish to live UI)
+- **Visual Inline Contextual Editing** — Validated in Phase 3
+- **Embedded Access & Security** — Validated in Phases 2–3
+- **Safety Guardrails** — Validated in Phase 2
 
 ### Active
 
-- [ ] **Single-Binary Monolith**: Production-grade CMS, database, file server, and web server compiled into a single generic Go executable using < 30MB RAM.
-- [ ] **Zero-Compilation Malleability**: Dynamically parsed routing, folder watching, and Go HTML templates loaded on the fly without service restart or rebuilding.
-- [ ] **Git-Managed Structure**: Track, version, and roll back structural mutations (pages, templates, schema) using workspace Git tags.
-- [ ] **Client Content Publish**: Editorial records promote from staging to production via JSON upsert; clients use Publish to live in admin — consultants not required for routine pushes.
-- [ ] **Visual Inline Contextual Editing**: contenteditable regions combined with HTMX PUT requests on blur event to update SQLite records seamlessly.
-- [ ] **Embedded Access & Security**: PocketBase admin login integration, secure HttpOnly cookie with JWT, and database-level validation to prevent unauthorized visual updates.
-- [ ] **Safety Guardrails**: Pre-commit validation including Go HTML template dry-run parser validation, HTML structure linting, and automated git checkout rollbacks on verification failure.
+(No active requirements — Milestone 2 v2 complete pending audit)
 
 ### Out of Scope
 
@@ -82,4 +82,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-23 after ingest specs/staging.md*
+*Last updated: 2026-05-26 after Phase 4 execution — Milestone 2 v2 complete*
