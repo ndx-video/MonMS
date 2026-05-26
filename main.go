@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/monms/monms/internal/config"
+	"github.com/monms/monms/internal/content"
 	"github.com/monms/monms/internal/router"
 	"github.com/monms/monms/internal/schema"
 	"github.com/monms/monms/internal/scaffold"
@@ -32,6 +33,13 @@ func main() {
 	}
 	if len(os.Args) >= 2 && os.Args[1] == "validate" {
 		if err := validate.RunCLI(os.Args[2:]); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
+	if len(os.Args) >= 2 && os.Args[1] == "content" {
+		if err := content.RunCLI(os.Args[2:]); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}

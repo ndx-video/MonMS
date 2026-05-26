@@ -2,10 +2,12 @@ package content
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/monms/monms/internal/config"
 	"github.com/monms/monms/internal/schema"
@@ -36,6 +38,8 @@ func RunCLI(args []string) error {
 		return runImport(wsAbs)
 	case "diff":
 		return runDiff(wsAbs)
+	case "publish":
+		return runPublishCLI(args[1:], wsAbs)
 	default:
 		return fmt.Errorf("unknown content subcommand %q (want export, import, diff, or publish)", sub)
 	}
@@ -102,4 +106,62 @@ func runDiff(wsAbs string) error {
 		fmt.Println("  editorial content changed since last publish")
 	}
 	return ErrPendingChanges
+}
+
+func runPublishCLI(args []string, wsAbs string) error {
+	fs := flag.NewFlagSet("publish", flag.ContinueOnError)
+	var toURL string
+	fs.StringVar(&toURL, "to", "", "production base URL (required)")
+	if err := fs.Parse(stripWorkspaceFlags(args)); err != nil {
+		if err == flag.ErrHelp {
+			return nil
+		}
+		return err
+	}
+	if toURL == "" {
+		return fmt.Errorf("content publish: --to production URL is required")
+	}
+
+	token := os.Getenv("MONMS_PUBLISH_TOKEN")
+	if token == "" {
+		return fmt.Errorf("content publish: missing publish token (set MONMS_PUBLISH_TOKEN)")
+	}
+
+	app, err := bootstrapApp(wsAbs)
+	if err != nil {
+		return err
+	}
+
+	snap, err := ExportSnapshot(app, wsAbs)
+	if err != nil {
+		return err
+	}
+
+	payloads := make([]CollectionPayload, len(snap))
+	for i, f := range snap {
+		payloads[i] = CollectionPayload{
+			Collection: f.Collection,
+			Records:    f.Records,
+		}
+	}
+
+	return PublishToProduction(toURL, token, payloads)
+}
+
+func stripWorkspaceFlags(args []string) []string {
+	var out []string
+	for i := 0; i < len(args); i++ {
+		arg := args[i]
+		if strings.HasPrefix(arg, "--workspace=") {
+			continue
+		}
+		if arg == "--workspace" {
+			if i+1 < len(args) {
+				i++
+			}
+			continue
+		}
+		out = append(out, arg)
+	}
+	return out
 }
