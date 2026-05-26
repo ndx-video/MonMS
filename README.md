@@ -45,10 +45,10 @@ Media rail:      shared public CDN URLs  ──→  no blob copy (URLs in conten
 ```
 
 - **Consultants** tag structure releases (new pages, collections, layouts) — infrequent.
-- **Clients** use **Publish to live** in the PocketBase admin after editing on staging — frequent.
+- **Clients** use **Publish to live** at `/api/monms/publish` after editing on staging — frequent.
 - **Media** on public buckets: content records store CDN URLs; blobs stay put, only strings sync.
 
-> **v1 today:** single-instance dev/demo with inline editing. Staging/production split and the Publish button are **Phase 4 / v2** — specified in [specs/staging.md](specs/staging.md).
+> **v2 (Phase 4):** staging/production split, content CLI, and Publish console are implemented — see [Content CLI](#content-cli-v2) below.
 
 ## Quick start
 
@@ -104,9 +104,29 @@ See [workspace/EDITING-GUIDE.md](workspace/EDITING-GUIDE.md) for the full walkth
 monms                          # Start the server
 monms init [--workspace PATH]  # Scaffold workspace (default: ./workspace)
 monms validate [--workspace PATH] [files...]  # Dry-run template + HTML validation
+monms content <subcommand> [--workspace PATH]  # Editorial export/import/diff/publish (v2)
 ```
 
-Planned (v2): `monms content export|import|diff|publish` — see [specs/staging.md](specs/staging.md).
+### Content CLI (v2)
+
+Editorial content promotes separately from structure Git tags. Operators and CI use `monms content`; clients normally use the **Publish to live** console.
+
+| Subcommand | Purpose |
+|------------|---------|
+| `monms content export` | Snapshot editorial collections → `workspace/content/*.json` |
+| `monms content import` | Upsert from `workspace/content/*.json` → local `.pb_data/` |
+| `monms content diff` | Show records/fields changed since last publish (exit 1 if pending) |
+| `monms content publish` | Export staging + POST to production (CI/consultant fallback) |
+
+Production import endpoint (Bearer `MONMS_PUBLISH_TOKEN`):
+
+```
+POST /api/monms/content/import
+```
+
+Staging publish UI: `GET/POST /api/monms/publish` (publisher allowlist in `workspace/.monms/config.json`).
+
+See [specs/staging.md](specs/staging.md) and [workspace/README.md](workspace/README.md) for four-layer lifecycle, dual rails, and environment setup.
 
 ### Configuration
 
@@ -213,7 +233,7 @@ go test -ldflags "-X main.buildMode=production" ./...
 
 **v1 (complete):** engine, workspace/Git structure mutation, inline editing on a single instance.
 
-**v2 (planned):** staging/production environments, `workspace/content/` JSON sync, client Publish button — [specs/staging.md](specs/staging.md).
+**v2 (Phase 4 — implemented):** staging/production environments, `workspace/content/` JSON sync, client Publish console at `/api/monms/publish`, publisher role — [specs/staging.md](specs/staging.md).
 
 Requirements: [.planning/REQUIREMENTS.md](.planning/REQUIREMENTS.md)  
 Roadmap: [.planning/ROADMAP.md](.planning/ROADMAP.md)
@@ -224,7 +244,8 @@ Roadmap: [.planning/ROADMAP.md](.planning/ROADMAP.md)
 |----------|----------|
 | [specs/monms-prd.md](specs/monms-prd.md) | Product vision and architecture |
 | [specs/staging.md](specs/staging.md) | Four layers, environments, content publish |
-| [workspace/README.md](workspace/README.md) | Workspace layout and conventions |
+| [workspace/README.md](workspace/README.md) | Workspace layout, four layers, dual rails |
+| [workspace/MEDIA.md](workspace/MEDIA.md) | CDN URL policy for publishable media |
 | [workspace/EDITING-GUIDE.md](workspace/EDITING-GUIDE.md) | Human inline editing walkthrough |
 | [workspace/agent-guide.md](workspace/agent-guide.md) | AI agent structure mutation workflow |
 | [workspace/SECURITY.md](workspace/SECURITY.md) | SSH scope, token policy, git hygiene |

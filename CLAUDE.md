@@ -41,6 +41,7 @@ go build -o monms .                                          # Development binar
 go build -ldflags "-X main.buildMode=production" -o monms .  # Production binary
 ./monms init [--workspace PATH]                              # Scaffold workspace
 ./monms validate [--workspace PATH] [files...]               # Validate templates
+./monms content <export|import|diff|publish> [--workspace PATH]  # Editorial sync (v2)
 ./monms [--workspace PATH]                                   # Start server (port 8090)
 go test ./... -count=1                                       # All tests
 go test ./... -count=1 -short                                # Skip perf/memory gates
@@ -67,13 +68,13 @@ go test ./... -count=1 -short                                # Skip perf/memory 
 |-------|----------|-----------|
 | L1 Engine | `monms` binary | Semver release |
 | L2 Structure | `workspace/` Git — templates, schema, assets | Git tag → production deploy |
-| L3 Content | `.pb_data/` records; export to `content/*.json` | Client **Publish to live** → JSON upsert (v2) |
+| L3 Content | `.pb_data/` records; export to `content/*.json` | Client **Publish to live** at `/api/monms/publish` → JSON upsert |
 | L4 Audience | Production URL | Read-only |
 
 - **Structure rail** and **content rail** are independent. Git tags do not carry editorial copy.
-- **Media:** public CDN URLs in text fields — blobs do not move between staging and production.
+- **Media:** public CDN URLs in text fields — blobs do not move between staging and production. See `workspace/MEDIA.md`.
 - **Roles:** consultants own structure tags; clients own content publish; consultants are not in the routine content loop.
-- v1 implements single-instance inline editing; staging/production split and publish UI are Phase 4 / v2 (not yet built).
+- **Phase 4 (v2) implemented:** `internal/content/` package, `monms content` CLI, `POST /api/monms/content/import`, publish UI at `/api/monms/publish` (not `/_/publish` — admin SPA catch-all). Publisher allowlist in gitignored `workspace/.monms/config.json`; commit `config.example.json` only.
 
 ## Code conventions
 
@@ -97,7 +98,7 @@ When modifying the workspace as an agent:
 
 1. **Schema:** dual-write — POST `/api/collections` then write `schema/{name}.json`
 2. **Templates:** edit `*.gohtml`, run `monms validate`, commit with `agent:` prefix
-3. **Never commit:** `.pb_data/`, tokens, secrets, `.env`
+3. **Never commit:** `.pb_data/`, `.monms/config.json`, `.monms/publish-state.json`, tokens, secrets, `.env`
 4. **Rollback caveat:** `git checkout -- .` does not remove newly added untracked files after failed validation — clean up manually
 
 ## What to change vs leave alone
@@ -153,6 +154,6 @@ GSD milestone v1 has three phases (all verified):
 2. Agent mutation engine & safety guardrails
 3. Inline contextual editing & demonstration content
 
-**v2 (accepted spec, not yet in GSD):** `specs/staging.md` — Phase 4 staging environments, `workspace/content/` JSON sync, client Publish button, publisher role. Reconcile into GSD via `gsd-ingest-docs --mode merge` (requirements/roadmap) then `gsd-import --from specs/staging.md` (execution plans when ready).
+**v2 Phase 4 (implemented):** staging environments, `workspace/content/` JSON sync, `/api/monms/publish` console, publisher role — see `specs/staging.md` and `.planning/ROADMAP.md`.
 
 Other v2 backlog (EXT-*, MULT-*, RICH-*) is in `.planning/ROADMAP.md` — do not implement unless asked.
