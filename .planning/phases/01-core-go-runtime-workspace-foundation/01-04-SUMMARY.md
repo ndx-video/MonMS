@@ -76,7 +76,7 @@ Each task was committed atomically:
 2. **Task 2: SSR catch-all, fragments, and error pages** - `9f9fa90` (feat)
 3. **Task 3: Performance gates ENG-05 and ENG-06** - `26adef6` (test)
 
-**Plan metadata:** pending (docs commit follows)
+**Plan metadata:** `bff2590` (docs: complete plan)
 
 ## Files Created/Modified
 

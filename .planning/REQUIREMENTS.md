@@ -33,27 +33,50 @@
 
 ### Inline Contextual Editing
 
-- [ ] **ICE-01**: Authenticated users see a floating "Live Editor Active" badge with a link to the PocketBase admin dashboard.
-- [ ] **ICE-02**: `IsLoggedIn` context variable is correctly set when a PocketBase session cookie is present.
-- [ ] **ICE-03**: Template regions can expose `contenteditable="true"` conditionally when `.IsLoggedIn` is true.
-- [ ] **ICE-04**: HTMX PUT requests on `blur` event transmit updated field content to PocketBase REST endpoint.
-- [ ] **ICE-05**: HTMX request includes Authorization Bearer token extracted from `pb_auth` cookie via JavaScript.
-- [ ] **ICE-06**: Unauthenticated users see the page normally with no `contenteditable` attributes rendered.
+- [x] **ICE-01**: Authenticated users see a floating "Live Editor Active" badge with a link to the PocketBase admin dashboard.
+- [x] **ICE-02**: `IsLoggedIn` context variable is correctly set when a PocketBase session cookie is present.
+- [x] **ICE-03**: Template regions can expose `contenteditable="true"` conditionally when `.IsLoggedIn` is true.
+- [x] **ICE-04**: HTMX PUT requests on `blur` event transmit updated field content to PocketBase REST endpoint.
+- [x] **ICE-05**: HTMX request includes Authorization Bearer token extracted from `pb_auth` cookie via JavaScript.
+- [x] **ICE-06**: Unauthenticated users see the page normally with no `contenteditable` attributes rendered.
 
 ### Authentication & Security
 
 - [x] **SEC-01**: PocketBase admin dashboard (`/_/`) is accessible for full management fallback.
-- [ ] **SEC-02**: Unauthenticated PUT requests to PocketBase collection endpoints are rejected at the database layer.
+- [x] **SEC-02**: Unauthenticated PUT requests to PocketBase collection endpoints are rejected at the database layer.
 - [ ] **SEC-03**: Agent operates with SSH keys and REST API tokens scoped strictly to the active workspace subdirectory.
-- [ ] **SEC-04**: HttpOnly cookie contains the session JWT; it is not accessible from JavaScript.
+- [x] **SEC-04**: HttpOnly cookie contains the session JWT; it is not accessible from JavaScript.
 
 ### Demonstration Content
 
-- [ ] **DEMO-01**: A working `hero_content` PocketBase collection with `title` and `body` fields is seeded.
-- [ ] **DEMO-02**: An `index.gohtml` template renders hero content from the collection with inline editing when authenticated.
+- [x] **DEMO-01**: A working `hero_content` PocketBase collection with `title` and `body` fields is seeded.
+- [x] **DEMO-02**: An `index.gohtml` template renders hero content from the collection with inline editing when authenticated.
 - [x] **DEMO-03**: A `base.gohtml` layout includes global HTMX, Alpine.js script tags, and the editor overlay block.
 
 ## v2 Requirements
+
+### Environment & Lifecycle (Phase 4)
+
+- [ ] **ENV-01**: Documentation and tooling distinguish four layers (engine, structure, content, audience).
+- [ ] **ENV-02**: Structure promotion uses workspace Git tags; content promotion is a separate rail.
+- [ ] **ENV-03**: Staging and production are separate MonMS instances with separate `.pb_data/` directories.
+
+### Content Publish (Phase 4)
+
+- [ ] **PUB-01**: Editorial collections marked `"editorial": true` in schema JSON.
+- [ ] **PUB-02**: `workspace/content/*.json` holds exported editorial records with stable IDs.
+- [ ] **PUB-03**: `monms content export` writes editorial snapshots to `workspace/content/`.
+- [ ] **PUB-04**: `monms content import` upserts records idempotently by ID.
+- [ ] **PUB-05**: Production exposes `POST /api/monms/content/import` with scoped publish token.
+- [ ] **PUB-06**: Staging admin UI includes **Publish to live** with diff preview.
+- [ ] **PUB-07**: Publisher role gates the publish action; editors may edit without publishing.
+- [ ] **PUB-08**: Staging tracks last-published checksum for unpublished-changes indicator.
+- [ ] **PUB-09**: `monms content diff` shows pending changes before publish.
+
+### Media (Phase 4)
+
+- [ ] **MED-01**: Publishable media uses public CDN URLs stored in content fields; blobs are not copied between environments.
+- [ ] **MED-02**: Documentation warns against PocketBase-local file storage for publishable assets.
 
 ### Extended Malleability
 
@@ -69,7 +92,7 @@
 ### Rich Content Editing
 
 - **RICH-01**: Support for Markdown rendering in `contenteditable` regions with HTMX preview fragment.
-- **RICH-02**: Image upload via drag-and-drop in inline edit mode, persisted via PocketBase file fields.
+- **RICH-02**: Image upload via drag-and-drop in inline edit mode — must store public CDN URL in content field (see MED-02; not `.pb_data/storage/` as publish source).
 
 ## Out of Scope
 
@@ -80,6 +103,9 @@
 | Node.js local build pipeline | Asset footprint must use native CSS or CDN imports only |
 | External database (PostgreSQL, MySQL) | SQLite is embedded and sufficient for target deployment scale |
 | Real-time WebSocket push | HTMX polling or SSE are sufficient; full WS adds complexity |
+| Full `.pb_data/` backup as content publish | Editorial content uses JSON upsert rail (D-56) |
+| Consultant on every content push | Clients self-serve via Publish button (D-53) |
+| Blob replication staging → production | Media uses shared CDN URLs (D-55) |
 
 ## Traceability
 
@@ -102,25 +128,39 @@
 | AGT-04 | Phase 2 | Pending |
 | AGT-05 | Phase 2 | Complete |
 | AGT-06 | Phase 2 | Pending |
-| ICE-01 | Phase 3 | Pending |
-| ICE-02 | Phase 3 | Pending |
-| ICE-03 | Phase 3 | Pending |
-| ICE-04 | Phase 3 | Pending |
-| ICE-05 | Phase 3 | Pending |
-| ICE-06 | Phase 3 | Pending |
+| ICE-01 | Phase 3 | Complete |
+| ICE-02 | Phase 3 | Complete |
+| ICE-03 | Phase 3 | Complete |
+| ICE-04 | Phase 3 | Complete |
+| ICE-05 | Phase 3 | Complete |
+| ICE-06 | Phase 3 | Complete |
 | SEC-01 | Phase 1 | Complete |
-| SEC-02 | Phase 3 | Pending |
+| SEC-02 | Phase 3 | Complete |
 | SEC-03 | Phase 2 | Pending |
-| SEC-04 | Phase 3 | Pending |
-| DEMO-01 | Phase 3 | Pending |
-| DEMO-02 | Phase 3 | Pending |
+| SEC-04 | Phase 3 | Complete |
+| DEMO-01 | Phase 3 | Complete |
+| DEMO-02 | Phase 3 | Complete |
 | DEMO-03 | Phase 1 | Complete |
+| ENV-01 | Phase 4 | Pending |
+| ENV-02 | Phase 4 | Pending |
+| ENV-03 | Phase 4 | Pending |
+| PUB-01 | Phase 4 | Pending |
+| PUB-02 | Phase 4 | Pending |
+| PUB-03 | Phase 4 | Pending |
+| PUB-04 | Phase 4 | Pending |
+| PUB-05 | Phase 4 | Pending |
+| PUB-06 | Phase 4 | Pending |
+| PUB-07 | Phase 4 | Pending |
+| PUB-08 | Phase 4 | Pending |
+| PUB-09 | Phase 4 | Pending |
+| MED-01 | Phase 4 | Pending |
+| MED-02 | Phase 4 | Pending |
 
 **Coverage:**
-- v1 requirements: 29 total
-- Mapped to phases: 29
+- v1 requirements: 29 total — mapped to phases 1–3
+- v2 requirements (Phase 4): 14 total — ENV, PUB, MED
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-22*
-*Last updated: 2026-05-22 after initial definition*
+*Last updated: 2026-05-23 after ingest specs/staging.md*

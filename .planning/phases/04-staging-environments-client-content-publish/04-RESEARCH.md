@@ -569,19 +569,13 @@ func checksum(payload any) (string, error) {
 
 ---
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Should `workspace/content/` be committed to structure Git?**
-   - What we know: staging.md says “optional in Git”; structure and content rails are independent.
-   - Recommendation: Default gitignore `content/` on staging; export is ephemeral snapshot for publish. Production receives via API only. Consultants can opt in to commit for audit.
+1. **Should `workspace/content/` be committed to structure Git?** — **RESOLVED (Plan 04-06):** Default gitignore `content/` on staging; export is ephemeral for publish. Example JSON shape lives in `internal/content/testdata/hero_content.example.json` (Plan 04-02), not committed workspace exports. Consultants may opt in to commit `content/` per site policy.
 
-2. **Exact publish UI URL branding (`/_/publish` vs `/api/monms/publish`)?**
-   - What we know: SPA conflict at `/_/` [VERIFIED: handlers_test.go].
-   - Recommendation: Ship `/api/monms/publish`; add redirect or prominent link from editor badge; mention in docs as “admin area extension.”
+2. **Exact publish UI URL branding (`/_/publish` vs `/api/monms/publish`)?** — **RESOLVED (Plan 04-05):** Ship `/api/monms/publish`; link from editor badge. PocketBase SPA at `/_/` cannot host custom routes without UI fork.
 
-3. **Auth migration to non-superuser editors?**
-   - What we know: Phase 3 uses `_superusers` for inline edit tests.
-   - Recommendation: Phase 4 keeps superuser model; publisher allowlist distinguishes publish capability. Full auth-collection roles = future milestone.
+3. **Auth migration to non-superuser editors?** — **RESOLVED (Plan 04-05):** Phase 4 keeps superuser model for inline edit; publisher email allowlist gates publish only. Full auth-collection roles deferred to future milestone.
 
 ---
 

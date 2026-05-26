@@ -1,0 +1,15 @@
+{
+  "path": "specs/staging.md",
+  "type": "SPEC",
+  "precedence": 1,
+  "title": "MonMS Staging, Environments & Content Publish",
+  "status": "Accepted",
+  "scope_summary": "Four-layer lifecycle model, staging/production environments, dual promotion rails (Git structure vs JSON content), client Publish button, workspace/content/ convention, CDN media policy.",
+  "requirements_extracted": [
+    "ENV-01", "ENV-02", "ENV-03",
+    "PUB-01", "PUB-02", "PUB-03", "PUB-04", "PUB-05", "PUB-06", "PUB-07", "PUB-08", "PUB-09",
+    "MED-01", "MED-02"
+  ],
+  "phase_proposed": "04-staging-environments-client-content-publish",
+  "milestone": "v2"
+}

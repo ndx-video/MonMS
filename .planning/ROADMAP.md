@@ -120,7 +120,7 @@ Plans:
 - `internal/content/` — export, import, diff, upsert by record ID
 - `monms content export|import|diff|publish` CLI subcommands
 - `POST /api/monms/content/import` with scoped publish token on production
-- Admin publish page (`/_/publish`) with diff preview and **Publish to live**
+- Admin publish page (`/api/monms/publish`) with diff preview and **Publish to live**
 - Publisher role / permission model
 - Lifecycle docs (`specs/staging.md`, README updates)
 
@@ -145,7 +145,7 @@ Plans:
 **Wave 5** *(blocked on Wave 4)*
 - [ ] 04-06-PLAN.md — Four-layer docs, MEDIA.md, gitignore (ENV/MED)
 
-**Status:** Pending
+**Status:** Ready to execute
 
 ---
 

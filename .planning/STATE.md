@@ -1,32 +1,32 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: completed
-stopped_at: Phase 3 context gathered
-last_updated: "2026-05-21T16:43:14.393Z"
+milestone: v2.0
+milestone_name: Staging & Client Content Publish
+status: ready_to_execute
+stopped_at: Phase 4 planned — 6 plans verified
+last_updated: "2026-05-23T00:00:00.000Z"
 progress:
-  total_phases: 3
-  completed_phases: 2
-  total_plans: 8
+  total_phases: 4
+  completed_phases: 3
+  total_plans: 18
   completed_plans: 8
-  percent: 100
+  percent: 44
 ---
 
 # MonMS — Project State
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-22)
+See: .planning/PROJECT.md (updated 2026-05-23)
 
 **Core value:** High-performance runtime malleability without build or compilation overhead, compiled into a single executable that uses less than 30MB of RAM.
-**Current focus:** Phase 1 — Core Go Runtime & Workspace Foundation
+**Current focus:** Phase 04 — staging-environments-client-content-publish
 
 ## Active Phase
 
-**Phase 1:** Core Go Runtime & Workspace Foundation
-**Status:** Complete — all Phase 1 plans done
-**Next action:** Run phase verification or start Phase 2
+**Phase 4:** Staging Environments & Client Content Publish
+**Status:** Ready to execute — 6 plans in 6 waves
+**Next action:** `/gsd-execute-phase 4`
 
 ## Decisions
 
@@ -40,11 +40,22 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 - git init warns and continues when git missing from PATH
 - Traversal blocked in safeAssetPath; unit test covers ../../../ because ServeMux redirects .. in URL paths
 - RegisterRoutes order: assets, fragments, SSR catch-all (D-14)
+- **D-50:** Four-layer lifecycle (engine, structure, content, audience)
+- **D-51:** Dual promotion rails — Git structure, JSON content
+- **D-52:** Separate staging/production instances
+- **D-53:** Client Publish button primary UX
+- **D-54:** workspace/content/ JSON upsert by record ID
+- **D-55:** CDN URL media — no blob copy
+- **D-56:** No full .pb_data/ as publish path
 
 ## Last Session
 
-**Stopped at:** Phase 3 context gathered
-**Resume file:** .planning/phases/03-inline-contextual-editing-demonstration-content/03-CONTEXT.md
+**Stopped at:** Phase 4 ingested from specs/staging.md via gsd-ingest-docs merge
+**Resume file:** .planning/phases/04-staging-environments-client-content-publish/04-CONTEXT.md
+
+## Ingest
+
+**2026-05-23:** Merged `specs/staging.md` — 14 v2 requirements, Phase 4 added. Conflict report: `.planning/INGEST-CONFLICTS.md` (0 blockers).
 
 ## Workflow State
 
@@ -59,4 +70,4 @@ See: .planning/PROJECT.md (updated 2026-05-22)
 | Verifier | Enabled |
 
 ---
-*State initialized: 2026-05-22*
+*State updated: 2026-05-23 after ingest specs/staging.md*
