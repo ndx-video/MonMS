@@ -36,6 +36,9 @@ func TestInitInstallsPreCommitHook(t *testing.T) {
 	if !strings.Contains(string(data), "git checkout -- .") {
 		t.Fatal("hook missing rollback command 'git checkout -- .' (AGT-05)")
 	}
+	if !strings.Contains(string(data), `validate -w "$WS_ROOT"`) {
+		t.Fatal("hook missing workspace-scoped validate -w")
+	}
 
 	fi, err := os.Stat(hookPath)
 	if err != nil {

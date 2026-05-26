@@ -36,6 +36,8 @@ func TestInitScaffold(t *testing.T) {
 		"templates/layouts",
 		"templates/errors",
 		"assets",
+		".monms",
+		"content",
 	} {
 		path := filepath.Join(dir, rel)
 		info, err := os.Stat(path)
@@ -55,6 +57,12 @@ func TestInitScaffold(t *testing.T) {
 		"schema/hero_content.json",
 		"schema/.gitkeep",
 		"templates/fragments/.gitkeep",
+		"content/.gitkeep",
+		".monms/config.json",
+		".monms/config.example.json",
+		"Dockerfile.example",
+		"docker-compose.example.yml",
+		"DEPLOY-DOCKER.md",
 	} {
 		if _, err := os.Stat(filepath.Join(dir, rel)); err != nil {
 			t.Fatalf("missing %s: %v", rel, err)
@@ -63,6 +71,14 @@ func TestInitScaffold(t *testing.T) {
 
 	if err := workspace.ValidateWorkspace(dir); err != nil {
 		t.Fatalf("ValidateWorkspace: %v", err)
+	}
+
+	cfg, err := os.ReadFile(filepath.Join(dir, ".monms/config.json"))
+	if err != nil {
+		t.Fatalf("read config.json: %v", err)
+	}
+	if !strings.Contains(string(cfg), `"publisherEmails"`) || !strings.Contains(string(cfg), `"_fieldDocs"`) {
+		t.Fatalf("config.json missing expected keys: %s", cfg)
 	}
 }
 

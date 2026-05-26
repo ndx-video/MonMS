@@ -18,18 +18,20 @@ import (
 const preCommitHookScript = `#!/bin/sh
 # monms-validate-hook — DO NOT REMOVE THIS COMMENT (idempotency marker)
 
+HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
+WS_ROOT="$(cd "$HOOK_DIR/../.." && pwd)"
+
 if [ -n "$MONMS_BIN" ]; then
   MONMS="$MONMS_BIN"
 elif command -v monms >/dev/null 2>&1; then
   MONMS="monms"
 else
-  HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
-  CANDIDATE="$HOOK_DIR/../../monms"
+  CANDIDATE="$WS_ROOT/monms"
   if [ -x "$CANDIDATE" ]; then
-    MONMS="$(cd "$(dirname "$CANDIDATE")" && pwd)/$(basename "$CANDIDATE")"
+    MONMS="$CANDIDATE"
   else
     echo "monms: binary not found" >&2
-    echo "  Set MONMS_BIN, add monms to PATH, or place binary at ../../monms relative to workspace" >&2
+    echo "  Set MONMS_BIN, add monms to PATH, or place binary at $WS_ROOT/monms" >&2
     exit 1
   fi
 fi
@@ -39,7 +41,7 @@ if [ -z "$STAGED" ]; then
   exit 0
 fi
 
-if ! echo "$STAGED" | tr '\n' '\0' | xargs -0 "$MONMS" validate; then
+if ! echo "$STAGED" | tr '\n' '\0' | xargs -0 "$MONMS" validate -w "$WS_ROOT"; then
   echo "" >&2
   echo "Pre-commit validation failed. Rolling back workspace to last stable state..." >&2
   git checkout -- .
@@ -61,6 +63,11 @@ var scaffoldFiles = []scaffoldFile{
 	{"embed/errors.gohtml", "templates/errors/errors.gohtml"},
 	{"embed/main.css", "assets/main.css"},
 	{"embed/hero_content.json", "schema/hero_content.json"},
+	{"embed/monms-config.json", ".monms/config.json"},
+	{"embed/monms-config.example.json", ".monms/config.example.json"},
+	{"embed/Dockerfile.example", "Dockerfile.example"},
+	{"embed/docker-compose.example.yml", "docker-compose.example.yml"},
+	{"embed/DEPLOY-DOCKER.md", "DEPLOY-DOCKER.md"},
 }
 
 var scaffoldDirs = []string{
@@ -69,6 +76,8 @@ var scaffoldDirs = []string{
 	"templates/errors",
 	"assets",
 	"schema",
+	".monms",
+	"content",
 }
 
 // RunInit scaffolds a new workspace at the resolved path (D-05, D-07).
@@ -94,7 +103,7 @@ func RunInit(args []string) error {
 		}
 	}
 
-	for _, rel := range []string{"schema/.gitkeep", "templates/fragments/.gitkeep"} {
+	for _, rel := range []string{"schema/.gitkeep", "templates/fragments/.gitkeep", "content/.gitkeep"} {
 		if err := writeKeepFile(wsAbs, rel); err != nil {
 			return err
 		}
@@ -109,7 +118,30 @@ func RunInit(args []string) error {
 	}
 
 	slog.Info("workspace initialized", "path", wsAbs)
+	printInitSummary(wsAbs)
 	return nil
+}
+
+func printInitSummary(wsAbs string) {
+	fmt.Fprintf(os.Stdout, `
+MonMS workspace ready at %s
+
+Scaffolded:
+  templates/          Page shells and layouts (HTMX inline editing)
+  assets/             Static CSS and media paths
+  schema/             Collection bootstrap JSON
+  content/            Editorial export snapshots (monms content export)
+  .monms/config.json  Staging publish config — edit publisherEmails and productionUrl
+  DEPLOY-DOCKER.md    Optional Docker deploy (git-on-volume model)
+
+Next steps:
+  1. Edit .monms/config.json (_fieldDocs describes each option)
+  2. monms serve -w %s
+  3. Open http://127.0.0.1:8090/_/ and create a PocketBase admin
+  4. Add admin email(s) to publisherEmails in .monms/config.json for Publish to live
+
+Tip: commit config.example.json; keep config.json gitignored with site-specific URLs.
+`, wsAbs, wsAbs)
 }
 
 func mkdirUnder(wsRoot, rel string) error {
