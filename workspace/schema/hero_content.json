@@ -1,6 +1,7 @@
 {
   "name": "hero_content",
   "type": "base",
+  "editorial": true,
   "listRule": "",
   "viewRule": "",
   "updateRule": "@request.auth.id != ''",
