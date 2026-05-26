@@ -83,6 +83,10 @@ func runServe() {
 	router.RegisterAuthHooks(app)
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
+		content.RegisterRoutes(se, content.Deps{
+			WsAbs:        abs,
+			PublishToken: os.Getenv("MONMS_PUBLISH_TOKEN"),
+		})
 		router.RegisterRoutes(se, router.Deps{
 			WsAbs: abs,
 			Cache: tplCache,
