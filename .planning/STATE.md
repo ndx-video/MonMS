@@ -3,16 +3,16 @@ gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Staging & Client Content Publish
 status: executing
-stopped_at: Completed 04-03-PLAN.md
-last_updated: "2026-05-26T23:05:00Z"
+stopped_at: Completed 04-04-PLAN.md
+last_updated: "2026-05-26T23:18:00Z"
 progress:
   total_phases: 4
   completed_phases: 3
   total_plans: 18
-  completed_plans: 15
-  percent: 83
+  completed_plans: 16
+  percent: 89
 current_phase: "04"
-current_plan: "04"
+current_plan: "05"
 ---
 
 # MonMS — Project State
@@ -55,11 +55,14 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 - Publish subcommand strips --workspace before publish FlagSet parse
 - MONMS_PUBLISH_TOKEN via os.Getenv; CLI errors never log token value (T-04-06)
 - Diff returns ErrPendingChanges for monms content diff exit code 1
+- Import handler maps HTTP collections[].name to CollectionPayload for ImportPayload reuse
+- content.RegisterRoutes before router.RegisterRoutes in OnServe for /api/monms/* (D-14)
+- RequirePublishToken fails closed when MONMS_PUBLISH_TOKEN unset on production
 
 ## Last Session
 
-**Stopped at:** Completed 04-03-PLAN.md
-**Resume file:** .planning/phases/04-staging-environments-client-content-publish/04-04-PLAN.md
+**Stopped at:** Completed 04-04-PLAN.md
+**Resume file:** .planning/phases/04-staging-environments-client-content-publish/04-05-PLAN.md
 
 ## Ingest
 
@@ -78,4 +81,4 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 | Verifier | Enabled |
 
 ---
-*State updated: 2026-05-26 after 04-03 plan execution*
+*State updated: 2026-05-26 after 04-04 plan execution*

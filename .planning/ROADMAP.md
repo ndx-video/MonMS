@@ -124,7 +124,7 @@ Plans:
 - Publisher role / permission model
 - Lifecycle docs (`specs/staging.md`, README updates)
 
-**Plans:** 2/6 plans executed
+**Plans:** 4/6 plans executed
 
 Plans:
 **Wave 0**
@@ -137,7 +137,7 @@ Plans:
 - [x] 04-03-PLAN.md — monms content CLI (export, import, diff, publish)
 
 **Wave 3** *(blocked on Waves 1–2)*
-- [ ] 04-04-PLAN.md — Production POST /api/monms/content/import + publish token
+- [x] 04-04-PLAN.md — Production POST /api/monms/content/import + publish token
 
 **Wave 4** *(blocked on Waves 2–3)*
 - [ ] 04-05-PLAN.md — Staging publish UI, publisher gate, editor badge link
