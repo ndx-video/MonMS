@@ -108,7 +108,7 @@ func TestEnrichSSRData_AuthTokenAndHero(t *testing.T) {
 	event.Response = recorder
 
 	t.Run("index includes hero and auth token", func(t *testing.T) {
-		data := enrichSSRData(event, "")
+		data := enrichSSRData(event, "", "", true)
 		if _, ok := data["AuthToken"]; !ok {
 			t.Fatal("expected AuthToken when logged in")
 		}
@@ -122,7 +122,7 @@ func TestEnrichSSRData_AuthTokenAndHero(t *testing.T) {
 	})
 
 	t.Run("non-index omits hero", func(t *testing.T) {
-		data := enrichSSRData(event, "about")
+		data := enrichSSRData(event, "", "about", true)
 		if _, ok := data["Hero"]; ok {
 			t.Fatal("Hero should be omitted on non-index routes")
 		}
@@ -132,7 +132,7 @@ func TestEnrichSSRData_AuthTokenAndHero(t *testing.T) {
 		guest := &core.RequestEvent{App: app}
 		guest.Request = req
 		guest.Response = recorder
-		data := enrichSSRData(guest, "")
+		data := enrichSSRData(guest, "", "", false)
 		if _, ok := data["AuthToken"]; ok {
 			t.Fatal("AuthToken should be absent when logged out")
 		}
@@ -156,7 +156,7 @@ func TestEnrichSSRData_HeroFallback(t *testing.T) {
 	event.Request = req
 	event.Response = recorder
 
-	data := enrichSSRData(event, "")
+	data := enrichSSRData(event, "", "", true)
 	hero, ok := data["Hero"].(map[string]any)
 	if !ok {
 		t.Fatal("expected Hero map with fallback")

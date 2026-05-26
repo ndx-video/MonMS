@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/monms/monms/internal/content"
 	"github.com/monms/monms/internal/templates"
 	"github.com/pocketbase/pocketbase/core"
 )
@@ -68,7 +69,7 @@ func SSRHandler(wsAbs string, cache *templates.TemplateCache, isDev bool) func(*
 			return renderErrorPage(e, wsAbs, cache, isDev, http.StatusInternalServerError, "", err)
 		}
 
-		data := enrichSSRData(e, slug)
+		data := enrichSSRData(e, wsAbs, slug, isDev)
 		e.Response.Header().Set("Content-Type", "text/html; charset=utf-8")
 		return tmpl.ExecuteTemplate(e.Response, "base", data)
 	}
@@ -83,12 +84,16 @@ func ssrData(e *core.RequestEvent, slug string) map[string]any {
 	}
 }
 
-func enrichSSRData(e *core.RequestEvent, slug string) map[string]any {
+func enrichSSRData(e *core.RequestEvent, wsAbs, slug string, isDev bool) map[string]any {
 	data := ssrData(e, slug)
+	data["IsDev"] = isDev
 
 	if e.Auth != nil {
 		if token, err := e.Auth.NewAuthToken(); err == nil && token != "" {
 			data["AuthToken"] = token
+		}
+		if cfg, err := content.LoadMonmsConfig(wsAbs); err == nil {
+			data["IsPublisher"] = content.IsPublisher(e.Auth.GetString("email"), cfg.PublisherEmails)
 		}
 	}
 
