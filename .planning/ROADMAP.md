@@ -140,7 +140,7 @@ Plans:
 - [x] 04-04-PLAN.md — Production POST /api/monms/content/import + publish token
 
 **Wave 4** *(blocked on Waves 2–3)*
-- [ ] 04-05-PLAN.md — Staging publish UI, publisher gate, editor badge link
+- [x] 04-05-PLAN.md — Staging publish UI, publisher gate, editor badge link
 
 **Wave 5** *(blocked on Wave 4)*
 - [ ] 04-06-PLAN.md — Four-layer docs, MEDIA.md, gitignore (ENV/MED)

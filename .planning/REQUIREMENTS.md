@@ -68,8 +68,8 @@
 - [x] **PUB-03**: `monms content export` writes editorial snapshots to `workspace/content/`.
 - [x] **PUB-04**: `monms content import` upserts records idempotently by ID.
 - [x] **PUB-05**: Production exposes `POST /api/monms/content/import` with scoped publish token.
-- [ ] **PUB-06**: Staging admin UI includes **Publish to live** with diff preview.
-- [ ] **PUB-07**: Publisher role gates the publish action; editors may edit without publishing.
+- [x] **PUB-06**: Staging admin UI includes **Publish to live** with diff preview.
+- [x] **PUB-07**: Publisher role gates the publish action; editors may edit without publishing.
 - [x] **PUB-08**: Staging tracks last-published checksum for unpublished-changes indicator.
 - [x] **PUB-09**: `monms content diff` shows pending changes before publish.
 
@@ -149,8 +149,8 @@
 | PUB-03 | Phase 4 | Complete |
 | PUB-04 | Phase 4 | Complete |
 | PUB-05 | Phase 4 | Complete |
-| PUB-06 | Phase 4 | Pending |
-| PUB-07 | Phase 4 | Pending |
+| PUB-06 | Phase 4 | Complete |
+| PUB-07 | Phase 4 | Complete |
 | PUB-08 | Phase 4 | Complete |
 | PUB-09 | Phase 4 | Complete |
 | MED-01 | Phase 4 | Complete |
