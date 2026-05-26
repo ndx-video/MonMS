@@ -65,7 +65,7 @@
 
 - [x] **PUB-01**: Editorial collections marked `"editorial": true` in schema JSON.
 - [x] **PUB-02**: `workspace/content/*.json` holds exported editorial records with stable IDs.
-- [ ] **PUB-03**: `monms content export` writes editorial snapshots to `workspace/content/`.
+- [x] **PUB-03**: `monms content export` writes editorial snapshots to `workspace/content/`.
 - [x] **PUB-04**: `monms content import` upserts records idempotently by ID.
 - [ ] **PUB-05**: Production exposes `POST /api/monms/content/import` with scoped publish token.
 - [ ] **PUB-06**: Staging admin UI includes **Publish to live** with diff preview.
@@ -146,7 +146,7 @@
 | ENV-03 | Phase 4 | Pending |
 | PUB-01 | Phase 4 | Complete |
 | PUB-02 | Phase 4 | Complete |
-| PUB-03 | Phase 4 | Pending |
+| PUB-03 | Phase 4 | Complete |
 | PUB-04 | Phase 4 | Complete |
 | PUB-05 | Phase 4 | Pending |
 | PUB-06 | Phase 4 | Pending |

@@ -134,7 +134,7 @@ Plans:
 - [x] 04-02-PLAN.md — Core content export/import/diff/checksum/state engine
 
 **Wave 2** *(blocked on Wave 1)*
-- [ ] 04-03-PLAN.md — monms content CLI (export, import, diff, publish)
+- [x] 04-03-PLAN.md — monms content CLI (export, import, diff, publish)
 
 **Wave 3** *(blocked on Waves 1–2)*
 - [ ] 04-04-PLAN.md — Production POST /api/monms/content/import + publish token
