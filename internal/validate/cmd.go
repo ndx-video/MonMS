@@ -3,23 +3,33 @@ package validate
 import (
 	"flag"
 	"fmt"
+	"io"
 	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 
+	"github.com/monms/monms/internal/cli"
 	"github.com/monms/monms/internal/config"
 )
 
 // RunCLI is the entry point for the `monms validate` subcommand (D-36, D-39).
 // Called from main.go early-dispatch arm before PocketBase construction.
 func RunCLI(args []string) error {
+	if cmd, wantHelp := cli.ParseHelpRequest(append([]string{"validate"}, args...)); wantHelp && cmd == "validate" {
+		cli.PrintHelp("validate")
+		return nil
+	}
+
 	fs := flag.NewFlagSet("validate", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	fs.Usage = func() { cli.PrintHelp("validate") }
 	var wsFlag string
 	fs.StringVar(&wsFlag, "workspace", "", "workspace path (default: MONMS_WORKSPACE or ./workspace)")
-	if err := fs.Parse(args); err != nil {
+	if err := fs.Parse(config.StripWorkspaceFlags(args)); err != nil {
 		if err == flag.ErrHelp {
+			cli.PrintHelp("validate")
 			return nil
 		}
 		return err
