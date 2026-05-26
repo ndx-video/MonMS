@@ -143,7 +143,7 @@ Plans:
 - [x] 04-05-PLAN.md — Staging publish UI, publisher gate, editor badge link
 
 **Wave 5** *(blocked on Wave 4)*
-- [ ] 04-06-PLAN.md — Four-layer docs, MEDIA.md, gitignore (ENV/MED)
+- [x] 04-06-PLAN.md — Four-layer docs, MEDIA.md, gitignore (ENV/MED)
 
 **Status:** Ready to execute
 

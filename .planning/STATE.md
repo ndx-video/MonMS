@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v2.0
 milestone_name: Staging & Client Content Publish
-status: executing
-stopped_at: Completed 04-05-PLAN.md
-last_updated: "2026-05-26T13:22:00Z"
+status: complete
+stopped_at: Completed 04-06-PLAN.md
+last_updated: "2026-05-26T14:08:00Z"
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 18
-  completed_plans: 17
-  percent: 94
+  completed_plans: 18
+  percent: 100
 ---
 
 # MonMS — Project State
@@ -25,8 +25,8 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 ## Active Phase
 
 **Phase 4:** Staging Environments & Client Content Publish
-**Status:** Executing Phase 04
-**Next action:** `/gsd-execute-phase 4`
+**Status:** Complete — all 6 plans executed
+**Next action:** `/gsd-verify-work 4` or milestone audit
 
 ## Decisions
 
@@ -56,10 +56,12 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 - Import handler maps HTTP collections[].name to CollectionPayload for ImportPayload reuse
 - content.RegisterRoutes before router.RegisterRoutes in OnServe for /api/monms/* (D-14)
 - RequirePublishToken fails closed when MONMS_PUBLISH_TOKEN unset on production
+- Publish UI documented at /api/monms/publish not /_/publish per SPA catch-all
+- content/ gitignored by default with force-add escape hatch for audit
 
 ## Last Session
 
-**Stopped at:** Completed 04-04-PLAN.md
+**Stopped at:** Completed 04-06-PLAN.md
 **Resume file:** None
 
 ## Ingest
@@ -79,4 +81,4 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 | Verifier | Enabled |
 
 ---
-*State updated: 2026-05-26 after 04-04 plan execution*
+*State updated: 2026-05-26 after 04-06 plan execution*

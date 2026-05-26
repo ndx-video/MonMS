@@ -57,9 +57,9 @@
 
 ### Environment & Lifecycle (Phase 4)
 
-- [ ] **ENV-01**: Documentation and tooling distinguish four layers (engine, structure, content, audience).
-- [ ] **ENV-02**: Structure promotion uses workspace Git tags; content promotion is a separate rail.
-- [ ] **ENV-03**: Staging and production are separate MonMS instances with separate `.pb_data/` directories.
+- [x] **ENV-01**: Documentation and tooling distinguish four layers (engine, structure, content, audience).
+- [x] **ENV-02**: Structure promotion uses workspace Git tags; content promotion is a separate rail.
+- [x] **ENV-03**: Staging and production are separate MonMS instances with separate `.pb_data/` directories.
 
 ### Content Publish (Phase 4)
 
@@ -76,7 +76,7 @@
 ### Media (Phase 4)
 
 - [x] **MED-01**: Publishable media uses public CDN URLs stored in content fields; blobs are not copied between environments.
-- [ ] **MED-02**: Documentation warns against PocketBase-local file storage for publishable assets.
+- [x] **MED-02**: Documentation warns against PocketBase-local file storage for publishable assets.
 
 ### Extended Malleability
 
@@ -141,9 +141,9 @@
 | DEMO-01 | Phase 3 | Complete |
 | DEMO-02 | Phase 3 | Complete |
 | DEMO-03 | Phase 1 | Complete |
-| ENV-01 | Phase 4 | Pending |
-| ENV-02 | Phase 4 | Pending |
-| ENV-03 | Phase 4 | Pending |
+| ENV-01 | Phase 4 | Complete |
+| ENV-02 | Phase 4 | Complete |
+| ENV-03 | Phase 4 | Complete |
 | PUB-01 | Phase 4 | Complete |
 | PUB-02 | Phase 4 | Complete |
 | PUB-03 | Phase 4 | Complete |
@@ -154,7 +154,7 @@
 | PUB-08 | Phase 4 | Complete |
 | PUB-09 | Phase 4 | Complete |
 | MED-01 | Phase 4 | Complete |
-| MED-02 | Phase 4 | Pending |
+| MED-02 | Phase 4 | Complete |
 
 **Coverage:**
 - v1 requirements: 29 total — mapped to phases 1–3
