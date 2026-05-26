@@ -1,0 +1,5 @@
+{
+  "_comment": "Copy to .monms/config.json for staging. Live config.json and publish-state.json are gitignored (PUB-08).",
+  "productionUrl": "https://production.example.com",
+  "publisherEmails": ["publisher@client.com"]
+}
