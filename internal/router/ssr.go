@@ -133,7 +133,7 @@ func isReservedSlug(slug string) bool {
 	}
 	first := strings.Split(slug, "/")[0]
 	switch first {
-	case "api", "assets", "_":
+	case "api", "assets", "_", "_monms":
 		return true
 	default:
 		return false

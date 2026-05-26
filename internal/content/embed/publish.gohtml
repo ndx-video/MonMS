@@ -16,7 +16,7 @@
     {{if .SetupMode}}
     <section class="rounded-lg border border-amber-200 bg-amber-50 p-6 mb-6" role="status">
       <h2 class="text-lg font-medium text-amber-900 mb-2">Staging setup required</h2>
-      <p class="text-slate-700 mb-2">Copy <code>workspace/.monms/config.example.json</code> to <code>workspace/.monms/config.json</code> and set <code>productionUrl</code> to your production site URL.</p>
+      <p class="text-slate-700 mb-2">Set <code>productionUrl</code> in <code>workspace/.monms/config.json</code> to your production site URL. New workspaces get this file from <code>monms init</code>; see <code>_fieldDocs</code> in the file for all options.</p>
       <p class="text-slate-600 text-sm">Publishing is disabled until production URL is configured.</p>
     </section>
     {{else}}
@@ -68,9 +68,13 @@
     </div>
     {{end}}
 
+    <p class="text-sm text-amber-800 bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4" role="note">
+      Publish updates and adds editorial records on production. Deleting content on staging does <strong>not</strong> remove records from production.
+    </p>
+
     <div class="flex flex-wrap items-center gap-4">
-      <a href="/api/monms/publish/diff" class="editor-badge__link">Preview diff</a>
-      <form method="post" action="/api/monms/publish" class="inline">
+      <a href="/_monms/publish/diff" class="editor-badge__link">Preview diff</a>
+      <form method="post" action="/_monms/publish" class="inline">
         <button type="submit" class="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2">
           Publish now
         </button>

@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/monms/monms/internal/monmsroutes"
 	"github.com/monms/monms/internal/schema"
 	"github.com/monms/monms/internal/testutil"
 	"github.com/monms/monms/internal/workspace"
@@ -23,7 +24,7 @@ import (
 
 const testPublishToken = "test-publish-token"
 
-func startTestContentServer(t *testing.T, wsAbs, publishToken string) (*httptest.Server, core.App, func()) {
+func startTestContentServer(t *testing.T, wsAbs, publishToken string, loadAuth func(*core.RequestEvent) error) (*httptest.Server, core.App, func()) {
 	t.Helper()
 
 	if err := workspace.ValidateWorkspace(wsAbs); err != nil {
@@ -42,6 +43,7 @@ func startTestContentServer(t *testing.T, wsAbs, publishToken string) (*httptest
 		RegisterRoutes(se, Deps{
 			WsAbs:        wsAbs,
 			PublishToken: publishToken,
+			LoadAuth:     loadAuth,
 		})
 		return se.Next()
 	})
@@ -110,11 +112,11 @@ func postImport(t *testing.T, client *http.Client, url, token string, body any) 
 
 func TestImportAPIUnauthorized(t *testing.T) {
 	ws := testutil.NewEditorialWorkspace(t)
-	ts, app, cleanup := startTestContentServer(t, ws, testPublishToken)
+	ts, app, cleanup := startTestContentServer(t, ws, testPublishToken, nil)
 	defer cleanup()
 
 	client := &http.Client{Timeout: 10 * time.Second}
-	url := ts.URL + "/api/monms/content/import"
+	url := ts.URL + monmsroutes.ContentImportPath
 
 	t.Run("missing authorization", func(t *testing.T) {
 		resp, _ := postImport(t, client, url, "", importRequest{
@@ -206,15 +208,67 @@ func TestImportAPIUnauthorized(t *testing.T) {
 
 func TestPublishUIReturns200(t *testing.T) {
 	ws := testutil.NewEditorialWorkspace(t)
-	ts, app, cleanup := startTestContentServer(t, ws, testPublishToken)
+	ts, app, cleanup := startTestContentServer(t, ws, testPublishToken, nil)
 	defer cleanup()
 
 	publisher := testutil.NewSuperuser(t, app, "publisher@test.local")
 	client := testutil.AuthClient(t, app, publisher)
 
-	resp, err := client.Get(ts.URL + "/api/monms/publish")
+	resp, err := client.Get(ts.URL + monmsroutes.PublishPath)
 	if err != nil {
 		t.Fatalf("GET publish: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read body: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status %d, want 200; body: %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+	if !strings.Contains(string(body), "Publish to live") {
+		t.Fatalf("body missing title, got: %.400s", body)
+	}
+}
+
+func testLoadAuthFromCookie(e *core.RequestEvent) error {
+	if e.Auth != nil {
+		return nil
+	}
+	c, err := e.Request.Cookie("monms_auth")
+	if err != nil || c.Value == "" {
+		return nil
+	}
+	record, err := e.App.FindAuthRecordByToken(c.Value, core.TokenTypeAuth)
+	if err != nil || record == nil {
+		return nil
+	}
+	e.Auth = record
+	return nil
+}
+
+func TestPublishUIReturns200WithCookie(t *testing.T) {
+	ws := testutil.NewEditorialWorkspace(t)
+	ts, app, cleanup := startTestContentServer(t, ws, testPublishToken, testLoadAuthFromCookie)
+	defer cleanup()
+
+	publisher := testutil.NewSuperuser(t, app, "publisher@test.local")
+	token, err := publisher.NewAuthToken()
+	if err != nil {
+		t.Fatalf("new auth token: %v", err)
+	}
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	req, err := http.NewRequest(http.MethodGet, ts.URL+monmsroutes.PublishPath, nil)
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	req.AddCookie(&http.Cookie{Name: "monms_auth", Value: token})
+
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("GET publish with cookie: %v", err)
 	}
 	defer resp.Body.Close()
 
@@ -234,7 +288,7 @@ func TestPublisherGate(t *testing.T) {
 	ws := testutil.NewEditorialWorkspace(t)
 
 	mockProd := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path != "/api/monms/content/import" {
+		if r.URL.Path != monmsroutes.ContentImportPath {
 			http.NotFound(w, r)
 			return
 		}
@@ -249,13 +303,13 @@ func TestPublisherGate(t *testing.T) {
 		mockProd.URL,
 	))
 
-	ts, app, cleanup := startTestContentServer(t, ws, testPublishToken)
+	ts, app, cleanup := startTestContentServer(t, ws, testPublishToken, nil)
 	defer cleanup()
 
 	editor := testutil.NewSuperuser(t, app, "editor@test.local")
 	editorClient := testutil.AuthClient(t, app, editor)
 
-	postReq, err := http.NewRequest(http.MethodPost, ts.URL+"/api/monms/publish", nil)
+	postReq, err := http.NewRequest(http.MethodPost, ts.URL+monmsroutes.PublishPath, nil)
 	if err != nil {
 		t.Fatalf("new request: %v", err)
 	}
@@ -271,7 +325,7 @@ func TestPublisherGate(t *testing.T) {
 	publisher := testutil.NewSuperuser(t, app, "publisher@test.local")
 	pubClient := testutil.AuthClient(t, app, publisher)
 
-	pubReq, err := http.NewRequest(http.MethodPost, ts.URL+"/api/monms/publish", nil)
+	pubReq, err := http.NewRequest(http.MethodPost, ts.URL+monmsroutes.PublishPath, nil)
 	if err != nil {
 		t.Fatalf("new publisher request: %v", err)
 	}
@@ -303,11 +357,11 @@ func TestPublisherGate(t *testing.T) {
 
 func TestImportAPIFailClosedEmptyToken(t *testing.T) {
 	ws := testutil.NewEditorialWorkspace(t)
-	ts, _, cleanup := startTestContentServer(t, ws, "")
+	ts, _, cleanup := startTestContentServer(t, ws, "", nil)
 	defer cleanup()
 
 	client := &http.Client{Timeout: 10 * time.Second}
-	resp, _ := postImport(t, client, ts.URL+"/api/monms/content/import", testPublishToken, importRequest{
+	resp, _ := postImport(t, client, ts.URL+monmsroutes.ContentImportPath, testPublishToken, importRequest{
 		Collections: []importCollection{{
 			Name: "hero_content",
 			Records: []map[string]any{

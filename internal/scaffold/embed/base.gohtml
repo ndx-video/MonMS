@@ -20,9 +20,9 @@
   <div class="editor-badge" role="status" aria-live="polite">
     <span class="editor-badge__dot" aria-hidden="true"></span>
     Live Editor Active
-    {{if .IsPublisher}}<a href="/api/monms/publish" class="editor-badge__link">Publish to live</a>{{end}}
+    {{if .IsPublisher}}<a href="/_monms/publish" class="editor-badge__link">Publish to live</a>{{end}}
     <a href="/_/" class="editor-badge__link">Full Admin Dashboard</a>
-    <a href="/api/monms/logout?redirect=/" class="editor-badge__link" id="monms-sign-out">Sign out</a>
+    <a href="/_monms/auth/logout?redirect=/" class="editor-badge__link" id="monms-sign-out">Sign out</a>
   </div>
   {{if .IsDev}}
   <div id="editor-save-error" class="editor-save-error" role="alert" hidden></div>
@@ -91,7 +91,7 @@
       }
 
       function clearMonmsCookie(reload) {
-        return fetch('/api/monms/logout', { method: 'POST', credentials: 'same-origin' })
+        return fetch('/_monms/auth/logout', { method: 'POST', credentials: 'same-origin' })
           .then(function () {
             if (reload) window.location.reload();
           });
@@ -105,7 +105,7 @@
       function syncFromPb() {
         var token = pbToken();
         if (!token) return Promise.resolve();
-        return fetch('/api/monms/sync-auth', {
+        return fetch('/_monms/auth/sync', {
           method: 'POST',
           credentials: 'same-origin',
           headers: { 'Authorization': 'Bearer ' + token }

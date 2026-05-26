@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 
+	"github.com/monms/monms/internal/monmsroutes"
 	"github.com/pocketbase/pocketbase/core"
 )
 
@@ -18,6 +19,8 @@ var deniedSystemCollections = map[string]struct{}{
 type Deps struct {
 	WsAbs        string
 	PublishToken string
+	// LoadAuth hydrates e.Auth from browser session (e.g. monms_auth cookie) before RequireSuperuserAuth.
+	LoadAuth func(*core.RequestEvent) error
 }
 
 // ImportReport summarizes a production import request.
@@ -38,7 +41,7 @@ type importCollection struct {
 
 // RegisterRoutes wires MonMS content API routes on the PocketBase router.
 func RegisterRoutes(se *core.ServeEvent, deps Deps) {
-	se.Router.POST("/api/monms/content/import", importHandler(deps)).
+	se.Router.POST(monmsroutes.ContentImportPath, importHandler(deps)).
 		BindFunc(RequirePublishToken(deps.PublishToken))
 	registerPublishRoutes(se, deps)
 }

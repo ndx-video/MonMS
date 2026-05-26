@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/monms/monms/internal/monmsroutes"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
 )
@@ -101,6 +102,7 @@ func publishPostHandler(deps Deps) func(*core.RequestEvent) error {
 			if buildErr != nil {
 				return e.InternalServerError("publish page", buildErr)
 			}
+			e.Response.WriteHeader(http.StatusBadGateway)
 			e.Response.Header().Set("Content-Type", "text/html; charset=utf-8")
 			return tmpl.Execute(e.Response, data)
 		}
@@ -218,6 +220,9 @@ func parseDiffLine(line string) (collection, field, summary string, ok bool) {
 	path := parts[0]
 	summary = parts[1]
 	segments := strings.Split(path, "/")
+	if len(segments) == 2 {
+		return segments[0], segments[1], summary, true
+	}
 	if len(segments) < 3 {
 		return "", "", "", false
 	}
@@ -234,18 +239,31 @@ func requirePublisherFromWorkspace(wsAbs string) func(*core.RequestEvent) error 
 	}
 }
 
+func bindLoadAuth(loadAuth func(*core.RequestEvent) error) func(*core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		if loadAuth != nil {
+			_ = loadAuth(e)
+		}
+		return e.Next()
+	}
+}
+
 func registerPublishRoutes(se *core.ServeEvent, deps Deps) {
 	publisherBind := requirePublisherFromWorkspace(deps.WsAbs)
+	authBind := bindLoadAuth(deps.LoadAuth)
 
-	se.Router.GET("/api/monms/publish", publishPageHandler(deps)).
+	se.Router.GET(monmsroutes.PublishPath, publishPageHandler(deps)).
+		BindFunc(authBind).
 		Bind(apis.RequireSuperuserAuth()).
 		BindFunc(publisherBind)
 
-	se.Router.GET("/api/monms/publish/diff", publishDiffHandler(deps)).
+	se.Router.GET(monmsroutes.PublishDiffPath, publishDiffHandler(deps)).
+		BindFunc(authBind).
 		Bind(apis.RequireSuperuserAuth()).
 		BindFunc(publisherBind)
 
-	se.Router.POST("/api/monms/publish", publishPostHandler(deps)).
+	se.Router.POST(monmsroutes.PublishPath, publishPostHandler(deps)).
+		BindFunc(authBind).
 		Bind(apis.RequireSuperuserAuth()).
 		BindFunc(publisherBind)
 }

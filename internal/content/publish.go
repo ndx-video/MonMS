@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/monms/monms/internal/monmsroutes"
 	"io"
 	"net/http"
 	"strings"
@@ -31,7 +32,7 @@ func PublishToProduction(productionURL, token string, payload []CollectionPayloa
 	}
 
 	base := strings.TrimRight(productionURL, "/")
-	url := base + "/api/monms/content/import"
+	url := base + monmsroutes.ContentImportPath
 
 	req, err := http.NewRequest(http.MethodPost, url, bytes.NewReader(body))
 	if err != nil {

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/monms/monms/internal/monmsroutes"
 	"github.com/monms/monms/internal/testutil"
 )
 
@@ -41,7 +42,7 @@ func TestEditorBadge_PublishLinkForPublisher(t *testing.T) {
 	}
 	bodyStr := string(body)
 
-	if !strings.Contains(bodyStr, `href="/api/monms/publish"`) {
+	if !strings.Contains(bodyStr, `href="`+monmsroutes.PublishPath+`"`) {
 		t.Fatalf("publisher body missing publish link, got: %.400s", bodyStr)
 	}
 	if !strings.Contains(bodyStr, "Publish to live") {
@@ -69,7 +70,7 @@ func TestEditorBadge_NoPublishLinkForEditor(t *testing.T) {
 	}
 	bodyStr := string(body)
 
-	if strings.Contains(bodyStr, `href="/api/monms/publish"`) {
+	if strings.Contains(bodyStr, `href="`+monmsroutes.PublishPath+`"`) {
 		t.Fatalf("editor body must not contain publish link, got: %.400s", bodyStr)
 	}
 }
