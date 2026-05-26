@@ -13,8 +13,16 @@ import (
 
 // MonmsConfig is staging workspace config (workspace/.monms/config.json).
 type MonmsConfig struct {
-	ProductionURL   string   `json:"productionUrl"`
-	PublisherEmails []string `json:"publisherEmails"`
+	ProductionURL   string      `json:"productionUrl"`
+	PublisherEmails []string    `json:"publisherEmails"`
+	AllowedHosts    []string    `json:"allowedHosts"`
+	Bind            *BindConfig `json:"bind,omitempty"`
+}
+
+// BindConfig is the workspace listen address for monms serve (maps to PocketBase --http).
+type BindConfig struct {
+	Host string `json:"host"`
+	Port string `json:"port"`
 }
 
 // RequirePublishToken gates content import routes with MONMS_PUBLISH_TOKEN (PUB-05).
@@ -61,8 +69,9 @@ func LoadMonmsConfig(wsAbs string) (MonmsConfig, error) {
 
 // IsPublisher reports whether email is in the publisher allowlist (PUB-07).
 func IsPublisher(email string, allowed []string) bool {
-	for _, allowed := range allowed {
-		if email == allowed {
+	email = strings.ToLower(strings.TrimSpace(email))
+	for _, a := range allowed {
+		if email == strings.ToLower(strings.TrimSpace(a)) {
 			return true
 		}
 	}
