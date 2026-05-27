@@ -111,7 +111,9 @@ func printInitHelp(w io.Writer) {
 	fmt.Fprintln(w, `Usage:
   monms init [-s|--site PATH]
 
-Scaffold a new MonMS site at PATH (default: ./site or MONMS_SITE).
+Scaffold or refresh a MonMS site at PATH (default: ./site or MONMS_SITE).
+On an interactive terminal, also runs the setup wizard (port, allowed hosts,
+bind address) and offers to start the server. Idempotent — safe to re-run.
 
 Creates:
   templates/layouts/base.gohtml   Site shell + HTMX inline editing

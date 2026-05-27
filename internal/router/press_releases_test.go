@@ -19,7 +19,7 @@ import (
 //   - AGT-03: ValidateTemplate returns nil for valid template
 //   - AGT-04: ValidateHTML returns nil for well-formed HTML
 func TestPressReleasesOperation(t *testing.T) {
-	// Step 1 — workspace with schema fixture (AGT-01 setup, D-33).
+	// Step 1 — site with schema fixture (AGT-01 setup, D-33).
 	// Schema written before startTestServer so Bootstrap() imports it automatically.
 	ws := testutil.NewSite(t)
 	schemaJSON := `{"name":"press_releases","type":"base","fields":[{"name":"title","type":"text"},{"name":"body","type":"text"}]}`

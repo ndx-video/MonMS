@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"os"
 	"path/filepath"
 
 	"github.com/monms/monms/internal/cli"
+	"github.com/monms/monms/internal/cli/prompt"
 	"github.com/monms/monms/internal/config"
 	"github.com/monms/monms/internal/content"
 	"github.com/monms/monms/internal/daemon"
@@ -61,9 +63,23 @@ func main() {
 	if len(args) >= 1 {
 		switch args[0] {
 		case "init":
-			if err := scaffold.RunInit(args[1:]); err != nil {
+			outcome, err := scaffold.RunInitCLI(args[1:], &prompt.Stdio)
+			if err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
+			}
+			switch outcome.StartMode {
+			case scaffold.StartBackground:
+				if err := startDaemon(outcome.SiteAbs, []string{"serve", "-d"}); err != nil {
+					fmt.Fprintln(os.Stderr, err)
+					os.Exit(1)
+				}
+			case scaffold.StartForeground:
+				if err := os.Setenv("MONMS_SITE", outcome.SiteAbs); err != nil {
+					fmt.Fprintln(os.Stderr, err)
+					os.Exit(1)
+				}
+				runServeAt(outcome.SiteAbs)
 			}
 			return
 		case "validate":
@@ -97,39 +113,54 @@ func main() {
 }
 
 func runServe() {
-	args := os.Args[1:]
-
-	if daemon.ShouldDetach(args) {
-		configured, abs, err := config.ResolveSite(os.Args, os.Environ())
-		if err != nil {
-			fmt.Fprintf(os.Stderr, "site: %v\n", err)
-			os.Exit(1)
-		}
-		if err := site.ValidateSite(abs); err != nil {
-			fmt.Fprintln(os.Stderr, err)
-			os.Exit(1)
-		}
-		slog.Info("starting daemon",
-			"path", configured,
-			"absolute", abs,
-			"mode", buildMode,
-		)
-		if err := daemon.Start(abs, args); err != nil {
-			fmt.Fprintf(os.Stderr, "daemon: %v\n", err)
-			os.Exit(1)
-		}
-		return
-	}
-
-	configured, abs, err := config.ResolveSite(os.Args, os.Environ())
+	res, err := config.ResolveSiteMeta(os.Args[1:], os.Environ())
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "site: %v\n", err)
 		os.Exit(1)
 	}
 
-	if err := site.ValidateSite(abs); err != nil {
+	outcome, err := site.EnsureReady(res, &prompt.Stdio)
+	if err != nil {
+		if errors.Is(err, site.ErrDeclined) {
+			os.Exit(1)
+		}
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
+	}
+
+	switch outcome.StartMode {
+	case scaffold.StartNone:
+		if outcome.Scaffolded {
+			return
+		}
+	case scaffold.StartBackground:
+		if err := startDaemon(outcome.SiteAbs, os.Args[1:]); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			os.Exit(1)
+		}
+		return
+	}
+
+	runServeAt(outcome.SiteAbs)
+}
+
+func startDaemon(siteAbs string, args []string) error {
+	slog.Info("starting daemon",
+		"path", siteAbs,
+		"mode", buildMode,
+	)
+	return daemon.Start(siteAbs, args)
+}
+
+func runServeAt(abs string) {
+	args := os.Args[1:]
+
+	if daemon.ShouldDetach(args) {
+		if err := startDaemon(abs, args); err != nil {
+			fmt.Fprintf(os.Stderr, "daemon: %v\n", err)
+			os.Exit(1)
+		}
+		return
 	}
 
 	if err := content.ApplyShapeSyncFromSite(abs); err != nil {
@@ -150,6 +181,11 @@ func runServe() {
 		os.Exit(1)
 	}
 	os.Args = append([]string{os.Args[0]}, serveArgs...)
+
+	configured := abs
+	if res, err := config.ResolveSiteMeta(os.Args[1:], os.Environ()); err == nil {
+		configured = res.Configured
+	}
 
 	slog.Info("site configured",
 		"path", configured,
@@ -174,15 +210,16 @@ func runServe() {
 	router.RegisterAuthHooks(app)
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
+		router.RegisterAdminUIExtension(se)
 		content.RegisterRoutes(se, content.Deps{
-			SiteAbs:        abs,
+			SiteAbs:      abs,
 			PublishToken: os.Getenv("MONMS_PUBLISH_TOKEN"),
 			LoadAuth:     router.LoadAuthFromCookie,
 		})
 		router.RegisterRoutes(se, router.Deps{
 			SiteAbs: abs,
-			Cache: tplCache,
-			IsDev: buildMode != "production",
+			Cache:   tplCache,
+			IsDev:   buildMode != "production",
 		})
 		return se.Next()
 	})

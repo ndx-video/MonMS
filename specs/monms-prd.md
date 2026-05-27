@@ -2,7 +2,9 @@
 
 ## **Project Name: MonMS — The Agent-Malleable Monolithic CMS**
 
-> **Document note:** v1 vision and illustrative code below. **v2 lifecycle** (four layers, phases of work — development / shaping / staging / production — content publish) is specified in [`specs/staging.md`](staging.md) and implemented in Phase 4 (2026-05-26). Where this PRD conflicts with the codebase, prefer `CLAUDE.md`, `specs/staging.md`, and `.planning/` verification artifacts.
+> **DEPRECATED:** Prefer [`docs/README.md`](../docs/README.md) and [`docs/operators/architecture-overview.md`](../docs/operators/architecture-overview.md). The codebase is authoritative when this PRD conflicts with implementation.
+
+> **Document note:** v1 vision and illustrative code below. **v2 lifecycle** (four layers, phases of work — development / shaping / staging / production — content publish) was specified in [`specs/staging.md`](staging.md) and implemented in Phase 4 (2026-05-26).
 
 ## **1\. Executive Summary & Vision**
 
@@ -53,8 +55,8 @@ To allow the AI to mutate the system without service interruption, MonMS impleme
 
 > **Implementation notes (as built):**
 > - Production vs development mode uses compile-time `buildMode` ldflags — **not** `ENV` (D-01).
-> - fsnotify watches the **entire workspace tree** for `.gohtml` changes in production builds (D-30), not `templates/` only.
-> - PocketBase data dir is `{workspace}/.pb_data/` (D-27).
+> - fsnotify watches the **entire site tree** for `.gohtml` changes in production builds (D-30), not `templates/` only.
+> - PocketBase data dir is `{site}/.pb_data/` (D-27).
 > - See `internal/templates/`, `main.go`, and Phase 1 verification for the live implementation.
 
 The pseudocode below illustrates the original v1 design:
@@ -95,7 +97,7 @@ func main() {
 	go watchWorkspace(tplCache)
 
 	app.OnServe().BindFunc(func(se \*core.ServeEvent) error {  
-		// Static asset serving directly from the Git-managed workspace  
+		// Static asset serving directly from the Git-managed site  
 		se.Router.GET("/assets/{path...}", func(e \*core.RequestEvent) error {  
 			filePath := filepath.Join("./site/assets", e.Request.PathValue("path"))  
 			return e.File(filePath)  
@@ -189,7 +191,7 @@ func watchWorkspace(c \*TemplateCache) {
 
 ## **4\. The Agent Mutation Engine (How the AI Modifies the CMS)**
 
-When instructed by a user via an integrated chatbox or API hook, the AI Agent acts as an active workspace editor. It reasons over the current system state and applies atomic mutations.
+When instructed by a user via an integrated chatbox or API hook, the AI Agent acts as an active site editor. It reasons over the current system state and applies atomic mutations.
 
                   ┌────────────────────────────────────────┐  
                   │          AI Agent Interaction          │  
@@ -236,7 +238,7 @@ To prevent syntax runtime panics or breaking the UI layout, the Agent platform r
 
 * **Validation Stage:** Compiles the updated template in an isolated Go dry-run environment using standard parsing.  
 * **HTML Linting:** Runs an HTML structure validator to ensure no broken tags damage the layout.  
-* **Rollback Path:** The workspace directory is a tracked Git repo. If the verification fails, the engine runs git checkout \-- . to revert back to the last stable state instantly.
+* **Rollback Path:** The site directory is a tracked Git repo. If the verification fails, the engine runs git checkout \-- . to revert back to the last stable state instantly.
 
 ## **5\. Flagship Feature: Inline Contextual Editing**
 
@@ -363,7 +365,7 @@ This template uses HTMX attributes to trigger REST API requests back to the dyna
 
 ### **3\. Permissions & Security**
 
-* **Agent Execution Layer:** The AI agent operates using dedicated SSH keys and REST API tokens restricting permissions strictly to the active workspace subdirectory.  
+* **Agent Execution Layer:** The AI agent operates using dedicated SSH keys and REST API tokens restricting permissions strictly to the active site subdirectory.  
 * **Editor Layer:** Strict PocketBase API rules apply. Unauthenticated users cannot overwrite fields, as validation is enforced at the database layer, blockading unauthorized PUT calls.
 
 ## **8\. Staging, Environments & Content Publish (v2)**

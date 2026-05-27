@@ -44,7 +44,7 @@ func setupInlineEditSite(t *testing.T) string {
 	ws := testutil.NewSite(t)
 	testutil.WriteFile(t, filepath.Join(ws, "schema/hero_content.json"), heroContentSchema)
 
-	// Copy Phase 3 templates from repo workspace fixtures.
+	// Copy Phase 3 templates from repo site fixtures.
 	repoRoot := filepath.Join("..", "..")
 	baseSrc := filepath.Join(repoRoot, "site/templates/layouts/base.gohtml")
 	indexSrc := filepath.Join(repoRoot, "site/templates/index.gohtml")

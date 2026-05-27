@@ -1,14 +1,14 @@
-# Media & Publishable Assets
+# Media URLs
 
-MonMS content publish moves **text and JSON only** between staging and production. Blobs do not copy across environments (D-55, MED-02).
+> **Bundled PocketBase:** [v0.38.1](https://github.com/pocketbase/pocketbase/releases/tag/v0.38.1)
 
-Full policy: [../specs/staging.md](../specs/staging.md) §6
+MonMS content publish moves **text and JSON only** between staging and production. Blobs do not copy across environments.
 
 ## What promotes where
 
 | Storage | Layer | Promotion |
 |---------|-------|-----------|
-| `assets/` in this Git repo | L2 Structure | Deploys with workspace **Git tag** |
+| `assets/` in the site Git repo | L2 Structure | Deploys with site **Git tag** |
 | Public CDN URLs in text/HTML fields | L3 Content | URL string upserted via **Publish to live** |
 | PocketBase `file` fields → `.pb_data/storage/` | L3 runtime | **Environment-local** — not synced |
 
@@ -34,10 +34,7 @@ If a collection needs a publishable image, add a text field for the CDN URL in s
 
 Site CSS and fonts in `assets/` remain on the structure rail — they deploy with Git tags, not the Publish button.
 
-## Related docs
+## Related
 
-| Doc | Topic |
-|-----|-------|
-| [README.md](README.md) | Four layers, dual rails, staging vs production |
-| [EDITING-GUIDE.md](EDITING-GUIDE.md) | Inline editing and Publish to live |
-| [../specs/staging.md](../specs/staging.md) | Authoritative media policy |
+- [Publish to live](publish-to-live.md)
+- [Getting started](../operators/getting-started.md)

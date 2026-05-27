@@ -9,10 +9,26 @@ import (
 
 const defaultSite = "./site"
 
+// SiteResolution is the resolved site path plus CLI metadata for interactive prompts.
+type SiteResolution struct {
+	Configured  string
+	Absolute    string
+	SiteFlagSet bool // true when -s/--site was passed on the CLI (not MONMS_SITE or default)
+}
+
 // ResolveSite parses -s/--site from args, then MONMS_SITE env,
 // then defaults to "./site". Flag wins over env (D-26).
 func ResolveSite(args []string, env []string) (configured string, absolute string, err error) {
-	configured = defaultSite
+	res, err := ResolveSiteMeta(args, env)
+	if err != nil {
+		return "", "", err
+	}
+	return res.Configured, res.Absolute, nil
+}
+
+// ResolveSiteMeta is like ResolveSite but reports whether the site CLI flag was set.
+func ResolveSiteMeta(args []string, env []string) (SiteResolution, error) {
+	configured := defaultSite
 	flagSet := false
 	fromOverride := false
 
@@ -26,7 +42,7 @@ func ResolveSite(args []string, env []string) (configured string, absolute strin
 		}
 		if _, eq, ok := siteFlagValue(arg); ok && !eq {
 			if i+1 >= len(args) {
-				return "", "", fmt.Errorf("missing value for --site flag")
+				return SiteResolution{}, fmt.Errorf("missing value for --site flag")
 			}
 			configured = args[i+1]
 			i++
@@ -45,16 +61,20 @@ func ResolveSite(args []string, env []string) (configured string, absolute strin
 	if fromOverride {
 		configured = filepath.Clean(configured)
 		if configured == "" || configured == "." {
-			return "", "", fmt.Errorf("site path must not be empty")
+			return SiteResolution{}, fmt.Errorf("site path must not be empty")
 		}
 	}
 
-	absolute, err = filepath.Abs(configured)
+	absolute, err := filepath.Abs(configured)
 	if err != nil {
-		return "", "", fmt.Errorf("resolve site absolute path: %w", err)
+		return SiteResolution{}, fmt.Errorf("resolve site absolute path: %w", err)
 	}
 
-	return configured, absolute, nil
+	return SiteResolution{
+		Configured:  configured,
+		Absolute:    absolute,
+		SiteFlagSet: flagSet,
+	}, nil
 }
 
 // StripSiteFlags removes -s/--site and its value from args so downstream

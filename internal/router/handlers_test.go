@@ -51,6 +51,7 @@ func startTestServerWithApp(t *testing.T, siteAbs string, opts testServerOpts) (
 	deps := Deps{SiteAbs: siteAbs, Cache: cache, IsDev: opts.isDev}
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
+		RegisterAdminUIExtension(se)
 		RegisterRoutes(se, deps)
 		return se.Next()
 	})
@@ -124,6 +125,38 @@ func TestAdminDashboard(t *testing.T) {
 
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusFound {
 		t.Fatalf("expected admin dashboard 200 or 302, got %d", resp.StatusCode)
+	}
+}
+
+func TestAdminUIExtension_ViewSiteLink(t *testing.T) {
+	if ui.DistDirFS == nil {
+		t.Skip("admin UI not bundled")
+	}
+
+	ws := testutil.NewSite(t)
+	ts, _, cleanup := startTestServer(t, ws, testServerOpts{isDev: true})
+	defer cleanup()
+
+	client := &http.Client{Timeout: 10 * time.Second}
+	resp, err := client.Get(ts.URL + "/_/extensions.js")
+	if err != nil {
+		t.Fatalf("GET /_/extensions.js: %v", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("extensions.js status %d", resp.StatusCode)
+	}
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read body: %v", err)
+	}
+	bodyStr := string(body)
+	if !strings.Contains(bodyStr, "View site") {
+		t.Fatalf("extensions.js missing View site link: %q", bodyStr)
+	}
+	if !strings.Contains(bodyStr, `href: "/"`) {
+		t.Fatalf("extensions.js missing home href: %q", bodyStr)
 	}
 }
 

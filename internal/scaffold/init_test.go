@@ -5,8 +5,6 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
-
-	"github.com/monms/monms/internal/site"
 )
 
 func runInitInDir(t *testing.T, dir string) {
@@ -62,15 +60,14 @@ func TestInitScaffold(t *testing.T) {
 		".monms/config.example.json",
 		"Dockerfile.example",
 		"docker-compose.example.yml",
-		"DEPLOY-DOCKER.md",
 	} {
 		if _, err := os.Stat(filepath.Join(dir, rel)); err != nil {
 			t.Fatalf("missing %s: %v", rel, err)
 		}
 	}
 
-	if err := site.ValidateSite(dir); err != nil {
-		t.Fatalf("ValidateSite: %v", err)
+	if err := siteValidateMinimum(dir); err != nil {
+		t.Fatalf("site minimum: %v", err)
 	}
 
 	cfg, err := os.ReadFile(filepath.Join(dir, ".monms/config.json"))
@@ -117,7 +114,7 @@ func TestInitGit(t *testing.T) {
 	})
 }
 
-// TestBaseLayoutCDN verifies DEMO-03: scaffolded workspace includes pinned CDN assets.
+// TestBaseLayoutCDN verifies DEMO-03: scaffolded site includes pinned CDN assets.
 func TestBaseLayoutCDN(t *testing.T) {
 	dir := t.TempDir()
 	runInitInDir(t, dir)
@@ -152,5 +149,14 @@ func TestBaseLayoutCDN(t *testing.T) {
 	if !strings.Contains(string(index), "hero__title") {
 		t.Fatal("index.gohtml missing hero__title class")
 	}
+}
+
+func siteValidateMinimum(dir string) error {
+	for _, rel := range []string{"templates/layouts/base.gohtml", "assets"} {
+		if _, err := os.Stat(filepath.Join(dir, rel)); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 

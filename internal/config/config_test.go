@@ -96,6 +96,30 @@ func TestResolveSiteFlag(t *testing.T) {
 	}
 }
 
+func TestResolveSiteMetaFlagSet(t *testing.T) {
+	res, err := ResolveSiteMeta([]string{"--site", "/tmp/ws"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !res.SiteFlagSet {
+		t.Fatal("expected SiteFlagSet true for CLI flag")
+	}
+	if res.Absolute != "/tmp/ws" {
+		t.Fatalf("absolute = %q", res.Absolute)
+	}
+
+	res2, err := ResolveSiteMeta(nil, []string{"MONMS_SITE=/env/ws"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if res2.SiteFlagSet {
+		t.Fatal("expected SiteFlagSet false for env-only resolution")
+	}
+	if res2.Configured != "/env/ws" {
+		t.Fatalf("configured = %q", res2.Configured)
+	}
+}
+
 func TestStripSiteFlags(t *testing.T) {
 	t.Parallel()
 

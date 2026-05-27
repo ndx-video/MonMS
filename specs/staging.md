@@ -1,5 +1,7 @@
 # SPEC: MonMS Staging, Environments & Content Publish
 
+> **DEPRECATED:** Prefer [`docs/operators/getting-started.md`](../docs/operators/getting-started.md) and the live codebase. This file is retained for planning history only.
+
 **Status:** Accepted (2026-05-23) · **Implemented** (Phase 4, 2026-05-26)  
 **Supersedes:** Implicit single-environment assumptions in v1 planning  
 **Related:** `specs/monms-prd.md`, `.planning/ROADMAP.md`, `.planning/REQUIREMENTS.md`
@@ -29,9 +31,9 @@ MonMS documentation uses four **phases of work**. These are distinct from the fo
 
 ### Shaping → Git tag → both environments
 
-During **shaping**, the consultant or agent checks out the workspace repository and mutates templates, schema JSON, and assets. When a shape release is ready, they commit, validate (`monms validate`, pre-commit hook), and apply a **Git tag** on the workspace repo (e.g. `v1.2.0`).
+During **shaping**, the consultant or agent checks out the site repository and mutates templates, schema JSON, and assets. When a shape release is ready, they commit, validate (`monms validate`, pre-commit hook), and apply a **Git tag** on the site repo (e.g. `v1.2.0`).
 
-A **policy-based deploy mechanism** (outside the scope of this project) then pulls that tag into **both** the staging and production workspace checkouts. Example implementations operators may choose:
+A **policy-based deploy mechanism** (outside the scope of this project) then pulls that tag into **both** the staging and production site checkouts. Example implementations operators may choose:
 
 - GitHub Actions (or similar CI) triggered on tag push — SSH or webhook to each host
 - Cron job or systemd timer calling `monms site sync --ref v1.2.0`
@@ -67,16 +69,16 @@ Typical deployment uses **two MonMS instances** — one for **staging** (client 
 | **Staging** | Staging | Client content editing and preview | L2 (tagged shape), L3 (staging `.pb_data/`) |
 | **Production** | Production | Public audience | L2 (tagged shape), L3 (production `.pb_data/`), L4 |
 
-**Shaping** happens on a workspace Git checkout (consultant laptop, CI sandbox, or dedicated clone) — not as routine client work on the staging instance. Both staging and production instances receive the same tagged shape via the operator's deploy policy (§2).
+**Shaping** happens on a site Git checkout (consultant laptop, CI sandbox, or dedicated clone) — not as routine client work on the staging instance. Both staging and production instances receive the same tagged shape via the operator's deploy policy (§2).
 
 Both instances run the same pinned `monms` binary version unless an engine upgrade is intentional.
 
 ### 4.1 Structure promotion (L2) — shaping, infrequent
 
-1. Consultant or agent **shapes** the site on a workspace checkout (templates, schema JSON, assets).
-2. Changes committed to workspace Git with validation (`monms validate`, pre-commit hook).
-3. Review → **Git tag** on workspace repo (e.g. `v1.2.0`).
-4. Operator policy pulls that tag into **both** staging and production workspace checkouts (§2 — e.g. GitHub Actions, cron, or `monms site sync`).
+1. Consultant or agent **shapes** the site on a site checkout (templates, schema JSON, assets).
+2. Changes committed to site Git with validation (`monms validate`, pre-commit hook).
+3. Review → **Git tag** on site repo (e.g. `v1.2.0`).
+4. Operator policy pulls that tag into **both** staging and production site checkouts (§2 — e.g. GitHub Actions, cron, or `monms site sync`).
 5. fsnotify/cache picks up template changes; bootstrap imports `schema/*.json`.
 
 **Git is the transport for structure only.** Tags do not carry editorial content from `.pb_data/`.
@@ -97,7 +99,7 @@ Both instances run the same pinned `monms` binary version unless an engine upgra
 ## 5. Two-Rail Model (decided)
 
 ```
-Structure rail:  workspace Git tag  →  staging + production checkouts (operator policy)
+Structure rail:  site Git tag  →  staging + production checkouts (operator policy)
 Content rail:    editorial JSON upsert (outside Git)  →  production .pb_data/ records
 Media rail:      shared public CDN URLs  →  no blob copy (URL strings only)
 ```
@@ -190,7 +192,7 @@ Clients use this console; consultants configure `productionUrl`, `publisherEmail
 
 | Storage | Promotion |
 |---------|-----------|
-| `site/assets/` (Git-tracked) | Structure rail — deploys with workspace tag |
+| `site/assets/` (Git-tracked) | Structure rail — deploys with site tag |
 | Public CDN bucket URLs in text/HTML fields | **No blob copy** — URL string upserted in content rail |
 | PocketBase file fields → local `.pb_data/storage/` | **Avoid for publishable media** — environment-local unless shared S3 backend |
 
@@ -220,7 +222,7 @@ Inline content and record fields store **canonical public CDN URLs**. Staging an
 ### Environment & Lifecycle
 
 - **ENV-01**: Documentation and tooling distinguish four layers (engine, structure, content, audience).
-- **ENV-02**: Structure promotion uses workspace Git tags; content promotion is a separate rail.
+- **ENV-02**: Structure promotion uses site Git tags; content promotion is a separate rail.
 - **ENV-03**: Staging and production are separate MonMS instances with separate `.pb_data/` directories.
 
 ### Content Publish

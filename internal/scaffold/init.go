@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/monms/monms/internal/cli/prompt"
 	"github.com/monms/monms/internal/config"
 )
 
@@ -67,7 +68,6 @@ var scaffoldFiles = []scaffoldFile{
 	{"embed/monms-config.example.json", ".monms/config.example.json"},
 	{"embed/Dockerfile.example", "Dockerfile.example"},
 	{"embed/docker-compose.example.yml", "docker-compose.example.yml"},
-	{"embed/DEPLOY-DOCKER.md", "DEPLOY-DOCKER.md"},
 }
 
 var scaffoldDirs = []string{
@@ -80,46 +80,114 @@ var scaffoldDirs = []string{
 	"content",
 }
 
-// RunInit scaffolds a new site at the resolved path (D-05, D-07).
+// Result lists artifacts created during InitAt.
+type Result struct {
+	Created []string
+}
+
+// CLIOutcome is returned from interactive init.
+type CLIOutcome struct {
+	SiteAbs   string
+	StartMode StartMode
+}
+
+// RunInit scaffolds a site at the resolved path (D-05, D-07).
+// On an interactive terminal it also runs the setup wizard.
 func RunInit(args []string) error {
-	_, siteAbs, err := config.ResolveSite(args, os.Environ())
+	_, err := RunInitCLI(args, &prompt.Stdio)
+	return err
+}
+
+// RunInitCLI scaffolds a site and optionally runs the setup wizard on a TTY.
+func RunInitCLI(args []string, p *prompt.Prompter) (CLIOutcome, error) {
+	res, err := config.ResolveSiteMeta(args, os.Environ())
 	if err != nil {
-		return err
+		return CLIOutcome{}, err
 	}
 
+	result, err := InitAt(res.Absolute)
+	if err != nil {
+		return CLIOutcome{}, err
+	}
+	printCreatedPaths(result)
+
+	out := CLIOutcome{SiteAbs: res.Absolute, StartMode: StartNone}
+	if !p.IsInteractive() {
+		slog.Info("site initialized", "path", res.Absolute)
+		printInitSummary(res.Absolute)
+		return out, nil
+	}
+
+	mode, err := RunSetupWizard(res.Absolute, p)
+	if err != nil {
+		return CLIOutcome{}, err
+	}
+	out.StartMode = mode
+	slog.Info("site initialized", "path", res.Absolute)
+	return out, nil
+}
+
+// InitAt scaffolds a new site at siteAbs, skipping existing files.
+func InitAt(siteAbs string) (*Result, error) {
+	result := &Result{}
+
 	if err := os.MkdirAll(siteAbs, 0o755); err != nil {
-		return fmt.Errorf("create site root: %w", err)
+		return nil, fmt.Errorf("create site root: %w", err)
 	}
 
 	for _, dir := range scaffoldDirs {
-		if err := mkdirUnder(siteAbs, dir); err != nil {
-			return err
+		created, err := mkdirUnder(siteAbs, dir)
+		if err != nil {
+			return nil, err
+		}
+		if created {
+			result.Created = append(result.Created, filepath.Join(siteAbs, dir))
 		}
 	}
 
 	for _, sf := range scaffoldFiles {
-		if err := writeScaffoldFile(siteAbs, sf.embedPath, sf.destPath); err != nil {
-			return err
+		created, err := writeScaffoldFile(siteAbs, sf.embedPath, sf.destPath)
+		if err != nil {
+			return nil, err
+		}
+		if created {
+			result.Created = append(result.Created, filepath.Join(siteAbs, sf.destPath))
 		}
 	}
 
 	for _, rel := range []string{"schema/.gitkeep", "templates/fragments/.gitkeep", "content/.gitkeep"} {
-		if err := writeKeepFile(siteAbs, rel); err != nil {
-			return err
+		created, err := writeKeepFile(siteAbs, rel)
+		if err != nil {
+			return nil, err
+		}
+		if created {
+			result.Created = append(result.Created, filepath.Join(siteAbs, rel))
 		}
 	}
 
-	if err := maybeGitInit(siteAbs); err != nil {
-		return err
+	if created, err := maybeGitInit(siteAbs); err != nil {
+		return nil, err
+	} else if created {
+		result.Created = append(result.Created, filepath.Join(siteAbs, ".git"))
 	}
 
-	if err := installPreCommitHook(siteAbs); err != nil {
-		return err
+	if created, err := installPreCommitHook(siteAbs); err != nil {
+		return nil, err
+	} else if created {
+		result.Created = append(result.Created, filepath.Join(siteAbs, ".git", "hooks", "pre-commit"))
 	}
 
-	slog.Info("site initialized", "path", siteAbs)
-	printInitSummary(siteAbs)
-	return nil
+	return result, nil
+}
+
+func printCreatedPaths(result *Result) {
+	if result == nil || len(result.Created) == 0 {
+		return
+	}
+	fmt.Fprintln(os.Stdout, "Created:")
+	for _, p := range result.Created {
+		fmt.Println(p)
+	}
 }
 
 func printInitSummary(siteAbs string) {
@@ -132,7 +200,8 @@ Scaffolded:
   schema/             Collection bootstrap JSON
   content/            Editorial export snapshots (monms content export)
   .monms/config.json  Staging publish config — edit publisherEmails and productionUrl
-  DEPLOY-DOCKER.md    Optional Docker deploy (git-on-volume model)
+
+Documentation: docs/README.md in the MonMS engine repository (user guide, operators manual, API reference).
 
 Next steps:
   1. Edit .monms/config.json (_fieldDocs describes each option)
@@ -144,62 +213,67 @@ Tip: commit config.example.json; keep config.json gitignored with site-specific 
 `, siteAbs, siteAbs)
 }
 
-func mkdirUnder(siteRoot, rel string) error {
+func mkdirUnder(siteRoot, rel string) (created bool, err error) {
 	dest := filepath.Join(siteRoot, rel)
 	if err := ensureUnderSite(siteRoot, dest); err != nil {
-		return err
+		return false, err
+	}
+	if _, err := os.Stat(dest); err == nil {
+		return false, nil
+	} else if !os.IsNotExist(err) {
+		return false, fmt.Errorf("stat %s: %w", rel, err)
 	}
 	if err := os.MkdirAll(dest, 0o755); err != nil {
-		return fmt.Errorf("mkdir %s: %w", rel, err)
+		return false, fmt.Errorf("mkdir %s: %w", rel, err)
 	}
-	return nil
+	return true, nil
 }
 
-func writeScaffoldFile(siteRoot, embedPath, destRel string) error {
+func writeScaffoldFile(siteRoot, embedPath, destRel string) (created bool, err error) {
 	dest := filepath.Join(siteRoot, destRel)
 	if err := ensureUnderSite(siteRoot, dest); err != nil {
-		return err
+		return false, err
 	}
 
 	if _, err := os.Stat(dest); err == nil {
 		slog.Info("skip existing scaffold file", "path", destRel)
-		return nil
+		return false, nil
 	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("stat %s: %w", destRel, err)
+		return false, fmt.Errorf("stat %s: %w", destRel, err)
 	}
 
 	data, err := fs.ReadFile(scaffoldFS, embedPath)
 	if err != nil {
-		return fmt.Errorf("read embed %s: %w", embedPath, err)
+		return false, fmt.Errorf("read embed %s: %w", embedPath, err)
 	}
 
 	if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
-		return fmt.Errorf("mkdir parent for %s: %w", destRel, err)
+		return false, fmt.Errorf("mkdir parent for %s: %w", destRel, err)
 	}
 	if err := os.WriteFile(dest, data, 0o644); err != nil {
-		return fmt.Errorf("write %s: %w", destRel, err)
+		return false, fmt.Errorf("write %s: %w", destRel, err)
 	}
-	return nil
+	return true, nil
 }
 
-func writeKeepFile(siteRoot, destRel string) error {
+func writeKeepFile(siteRoot, destRel string) (created bool, err error) {
 	dest := filepath.Join(siteRoot, destRel)
 	if err := ensureUnderSite(siteRoot, dest); err != nil {
-		return err
+		return false, err
 	}
 	if _, err := os.Stat(dest); err == nil {
 		slog.Info("skip existing scaffold file", "path", destRel)
-		return nil
+		return false, nil
 	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("stat %s: %w", destRel, err)
+		return false, fmt.Errorf("stat %s: %w", destRel, err)
 	}
 	if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
-		return fmt.Errorf("mkdir parent for %s: %w", destRel, err)
+		return false, fmt.Errorf("mkdir parent for %s: %w", destRel, err)
 	}
 	if err := os.WriteFile(dest, nil, 0o644); err != nil {
-		return fmt.Errorf("write %s: %w", destRel, err)
+		return false, fmt.Errorf("write %s: %w", destRel, err)
 	}
-	return nil
+	return true, nil
 }
 
 // ensureUnderSite prevents writes outside the resolved site (T-01-12).
@@ -216,61 +290,57 @@ func ensureUnderSite(siteRoot, dest string) error {
 	return nil
 }
 
-// installPreCommitHook writes the monms pre-commit hook into site/.git/hooks/pre-commit (D-40).
-// Idempotent: skips if the file already contains the monms-validate-hook marker (D-40).
-// Overwrites hooks that lack the marker, so non-monms hooks are replaced silently (T-02-07 accepted).
-func installPreCommitHook(siteRoot string) error {
+func installPreCommitHook(siteRoot string) (created bool, err error) {
 	gitDir := filepath.Join(siteRoot, ".git")
 	if _, err := os.Stat(gitDir); os.IsNotExist(err) {
 		slog.Warn("no .git directory found, skipping pre-commit hook install", "dir", gitDir)
-		return nil
+		return false, nil
 	} else if err != nil {
-		return fmt.Errorf("stat .git: %w", err)
+		return false, fmt.Errorf("stat .git: %w", err)
 	}
 
 	hooksDir := filepath.Join(gitDir, "hooks")
 	if _, err := os.Stat(hooksDir); os.IsNotExist(err) {
-		// A4: hooks/ may be absent right after git init on some systems.
 		if err := os.MkdirAll(hooksDir, 0o755); err != nil {
-			return fmt.Errorf("mkdir hooks dir: %w", err)
+			return false, fmt.Errorf("mkdir hooks dir: %w", err)
 		}
 	} else if err != nil {
-		return fmt.Errorf("stat hooks dir: %w", err)
+		return false, fmt.Errorf("stat hooks dir: %w", err)
 	}
 
 	hookPath := filepath.Join(hooksDir, "pre-commit")
 	if existing, err := os.ReadFile(hookPath); err == nil {
 		if bytes.Contains(existing, []byte("monms-validate-hook")) {
 			slog.Info("pre-commit hook already installed, skipping")
-			return nil
+			return false, nil
 		}
 	}
 
 	if err := os.WriteFile(hookPath, []byte(preCommitHookScript), 0o755); err != nil {
-		return fmt.Errorf("install pre-commit hook: %w", err)
+		return false, fmt.Errorf("install pre-commit hook: %w", err)
 	}
 	slog.Info("pre-commit hook installed", "path", hookPath)
-	return nil
+	return true, nil
 }
 
-func maybeGitInit(siteRoot string) error {
+func maybeGitInit(siteRoot string) (created bool, err error) {
 	gitDir := filepath.Join(siteRoot, ".git")
 	if _, err := os.Stat(gitDir); err == nil {
 		slog.Info("git repository already exists, skipping git init")
-		return nil
+		return false, nil
 	} else if !os.IsNotExist(err) {
-		return fmt.Errorf("stat .git: %w", err)
+		return false, fmt.Errorf("stat .git: %w", err)
 	}
 
 	if _, err := exec.LookPath("git"); err != nil {
 		slog.Warn("git not found in PATH; skipping git init")
-		return nil
+		return false, nil
 	}
 
 	cmd := exec.Command("git", "init")
 	cmd.Dir = siteRoot
 	if out, err := cmd.CombinedOutput(); err != nil {
-		return fmt.Errorf("git init: %w: %s", err, string(out))
+		return false, fmt.Errorf("git init: %w: %s", err, string(out))
 	}
-	return nil
+	return true, nil
 }

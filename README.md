@@ -49,10 +49,10 @@ Typical usage runs **two MonMS instances** for client content work:
 | **Staging** | Staging | Clients edit and preview editorial copy |
 | **Production** | Production | Audience sees the live site |
 
-**Shaping** (templates, schema) happens on a workspace Git checkout. When ready, the consultant tags the repo; an operator-chosen policy pulls that tag into **both** instances — for example GitHub Actions, cron calling `monms site sync`, or optional `shapeSync` in config at serve startup.
+**Shaping** (templates, schema) happens on a **site** Git checkout. When ready, the consultant tags the repo; an operator-chosen policy pulls that tag into **both** instances — for example GitHub Actions, cron calling `monms site sync`, or optional `shapeSync` in config at serve startup.
 
 ```
-Structure rail:  workspace Git tag  ──→  staging + production checkouts (operator policy)
+Structure rail:  site Git tag  ──→  staging + production checkouts (operator policy)
 Content rail:    editorial JSON upsert (outside Git)  ──→  production records (Publish button)
 Media rail:      shared public CDN URLs  ──→  no blob copy (URLs in content only)
 ```
@@ -68,16 +68,21 @@ Media rail:      shared public CDN URLs  ──→  no blob copy (URLs in conten
 ### Prerequisites
 
 - Go 1.25+
-- Git (for workspace versioning and pre-commit validation)
+- Git (for site versioning and pre-commit validation)
 
-### Build and initialize
+### Build and run
 
 ```bash
 git clone <repo-url> monms && cd monms
 go build -o monms .
 
-# Scaffold a Git-tracked workspace (templates, assets, schema, pre-commit hook)
-./monms init
+# First run: scaffolds site/ interactively when missing, configures listen settings,
+# and offers to start the server (or use monms init explicitly)
+./monms serve
+
+# Non-interactive / CI: scaffold first, then serve
+./monms init -s ./site
+./monms serve
 ```
 
 ### Run (local engine build)
@@ -111,13 +116,13 @@ go build -ldflags "-X main.buildMode=production" -o monms .
 2. Sign in, then visit `/` — you should see the **Live Editor Active** badge.
 3. Click the hero headline or paragraph, edit inline, and blur to save.
 
-See [site/EDITING-GUIDE.md](site/EDITING-GUIDE.md) for the full walkthrough.
+See [docs/user-guide/inline-editing.md](docs/user-guide/inline-editing.md) for the full walkthrough.
 
 ## CLI commands
 
 ```bash
 monms                          # Start the server
-monms init [--site PATH]  # Scaffold workspace (default: ./site)
+monms init [--site PATH]  # Scaffold site (default: ./site)
 monms validate [--site PATH] [files...]  # Dry-run template + HTML validation
 monms content <subcommand> [--site PATH]  # Editorial export/import/diff/publish (v2)
 monms site sync --ref TAG [--site PATH]  # Shape sync (fetch + checkout)
@@ -142,17 +147,17 @@ POST /api/monms/content/import
 
 Staging publish UI: `GET/POST /_monms/publish` (publisher allowlist in `site/.monms/config.json`).
 
-See [specs/staging.md](specs/staging.md) and [site/README.md](site/README.md) for four-layer lifecycle, dual rails, and environment setup.
+See [docs/operators/getting-started.md](docs/operators/getting-started.md) and [site/README.md](site/README.md) for four-layer lifecycle, dual rails, and environment setup.
 
 ### Configuration
 
 | Input | Precedence | Default |
 |-------|------------|---------|
-| `-w`, `--site` flag | Highest | `./site` |
+| `-s`, `--site` flag | Highest | `./site` |
 | `MONMS_SITE` env | Second | `./site` |
 | (unset) | — | `./site` |
 
-PocketBase data (SQLite, uploads, logs) lives at `{workspace}/.pb_data/` — **never commit this directory**.
+PocketBase data (SQLite, uploads, logs) lives at `{site}/.pb_data/` — **never commit this directory**.
 
 ## Architecture
 
@@ -160,14 +165,14 @@ PocketBase data (SQLite, uploads, logs) lives at `{workspace}/.pb_data/` — **n
 monms/                          # Generic Go binary (frozen at deploy)
 ├── main.go                     # PocketBase bootstrap, route registration
 ├── internal/
-│   ├── config/                 # Workspace path resolution
+│   ├── config/                 # Site path resolution
 │   ├── content/                # Editorial export/import/diff/publish (v2)
 │   ├── router/                 # SSR, assets, fragments, auth
 │   ├── schema/                 # Declarative schema sync, seed, editorial flag
 │   ├── scaffold/               # monms init + embedded templates
 │   ├── templates/              # TemplateCache, slug resolver, fsnotify watcher
 │   ├── validate/               # monms validate CLI
-│   └── site/              # Workspace structure validation
+│   └── site/                   # Site structure validation
 └── site/                  # Git-tracked site structure (mutable)
     ├── schema/                 # Collection definitions (L2 — structure rail)
     ├── content/                # Editorial record exports (L3 — content rail, v2)
@@ -207,15 +212,15 @@ Unknown slugs return a styled 404 — never a Go panic.
 
 ## Agent mutations (structure rail)
 
-AI agents modify site **structure** by editing the workspace:
+AI agents modify site **structure** by editing the `site/` tree:
 
 1. **Schema** — `POST /api/collections` (live) + write matching JSON to `schema/` (audit/bootstrap)
 2. **Templates** — edit `*.gohtml` files; changes appear on the next request
 3. **Validate** — `monms validate` runs Go template dry-run + HTML structure checks
 4. **Commit & tag** — pre-commit hook validates; consultant tags for shape deploy to staging + production
 
-Full workflow: [site/agent-guide.md](site/agent-guide.md)  
-Security policy: [site/SECURITY.md](site/SECURITY.md)
+Full workflow: [docs/operators/shaping-and-agents.md](docs/operators/shaping-and-agents.md)  
+Security policy: [docs/operators/security.md](docs/operators/security.md)
 
 ## Engine development
 
@@ -241,7 +246,7 @@ go test -ldflags "-X main.buildMode=production" ./...
 | `internal/templates` | Cache, slug resolver, fsnotify watcher |
 | `internal/schema` | Import `schema/*.json` on bootstrap; seed demo content |
 | `internal/validate` | Template dry-run mirroring production `ParseFiles` path |
-| `internal/scaffold` | `monms init` workspace bootstrap + pre-commit hook |
+| `internal/scaffold` | `monms init` site bootstrap + pre-commit hook |
 
 ### Non-functional targets (v1)
 
@@ -253,22 +258,26 @@ go test -ldflags "-X main.buildMode=production" ./...
 
 **v1 (complete):** engine, site/Git structure mutation, inline editing on a single instance.
 
-**v2 (Phase 4 — implemented):** staging/production environments, `site/content/` JSON sync, client Publish console at `/_monms/publish`, publisher role — [specs/staging.md](specs/staging.md).
+**v2 (Phase 4 — implemented):** staging/production environments, `site/content/` JSON sync, client Publish console at `/_monms/publish`, publisher role — [docs/operators/getting-started.md](docs/operators/getting-started.md).
 
 Requirements: [.planning/REQUIREMENTS.md](.planning/REQUIREMENTS.md)  
 Roadmap: [.planning/ROADMAP.md](.planning/ROADMAP.md)
 
 ## Documentation
 
+> **Bundled PocketBase:** [v0.38.1](https://github.com/pocketbase/pocketbase/releases/tag/v0.38.1)
+
+Official documentation lives in [`docs/`](docs/README.md). A GitHub Pages site will mirror this tree (URL TBD).
+
 | Document | Audience |
 |----------|----------|
-| [specs/monms-prd.md](specs/monms-prd.md) | Product vision and architecture |
-| [specs/staging.md](specs/staging.md) | Phases of work, four layers, environments, content publish |
-| [site/README.md](site/README.md) | Workspace layout, four layers, dual rails |
-| [site/MEDIA.md](site/MEDIA.md) | CDN URL policy for publishable media |
-| [site/EDITING-GUIDE.md](site/EDITING-GUIDE.md) | Human inline editing walkthrough |
-| [site/agent-guide.md](site/agent-guide.md) | AI agent structure mutation workflow |
-| [site/SECURITY.md](site/SECURITY.md) | SSH scope, token policy, git hygiene |
+| [docs/README.md](docs/README.md) | Documentation roadmap |
+| [docs/user-guide/](docs/user-guide/inline-editing.md) | Content editors and publishers |
+| [docs/operators/](docs/operators/getting-started.md) | Shapers, consultants, administrators |
+| [docs/reference/monms-api.md](docs/reference/monms-api.md) | MonMS HTTP API (not PocketBase) |
+| [site/README.md](site/README.md) | Site directory layout only |
+
+Legacy specs in [`specs/`](specs/staging.md) are deprecated.
 
 ## Out of scope
 
@@ -276,10 +285,10 @@ The following are not part of the core MonMS model (see v2 backlog in [.planning
 
 - React/Next.js frontend or Node build pipelines
 - External databases (PostgreSQL, MySQL)
-- Multi-workspace / multi-tenant routing (MULT-* backlog)
+- Multi-site / multi-tenant routing (MULT-* backlog)
 - Kubernetes-style container orchestration
 
-See [specs/staging.md](specs/staging.md) for implemented v2 lifecycle vs remaining backlog.
+See [docs/operators/getting-started.md](docs/operators/getting-started.md) for implemented v2 lifecycle vs remaining backlog.
 
 ## License
 

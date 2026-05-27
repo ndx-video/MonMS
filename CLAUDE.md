@@ -19,12 +19,13 @@ MonMS is an **agent-malleable monolithic CMS**: a single Go binary (PocketBase e
 **Core value:** Runtime malleability with < 30 MB RAM idle, no compilation step for UI changes.
 
 **Authoritative docs:**
-- Product vision: `specs/monms-prd.md`
-- Staging, environments, content publish: `specs/staging.md` (accepted v2 spec)
+- Documentation hub: `docs/README.md` (user guide, operators manual, API reference)
 - Requirements: `.planning/REQUIREMENTS.md`
 - Roadmap: `.planning/ROADMAP.md`
-- Site mutations: `site/agent-guide.md`
-- Security: `site/SECURITY.md`
+- Site mutations: `docs/operators/shaping-and-agents.md`
+- Security: `docs/operators/security.md`
+- Extensibility (Sentinel): `docs/operators/extensibility-with-sentinel.md`
+- Legacy (deprecated): `specs/monms-prd.md`, `specs/staging.md`
 
 ## Repository layout
 
@@ -41,7 +42,7 @@ internal/
   site/                    # Site directory validation (ValidateSite)
 site/                      # Git-tracked deployable state (separate git repo)
 specs/monms-prd.md         # PRD
-specs/staging.md           # Four layers, staging/prod, content publish (v2)
+specs/staging.md           # Deprecated — see docs/operators/getting-started.md
 .planning/                 # GSD planning artifacts (do not treat as runtime config)
 ```
 
@@ -76,7 +77,7 @@ go test ./... -count=1 -short                                # Skip perf/memory 
 | **D-37** | Template validation must mirror production: `html/template.ParseFiles(layoutPath, pagePath)` |
 | **D-43** | Pre-commit hook rolls back with `git checkout -- .` on validation failure |
 
-## Four layers & promotion rails (accepted v2 — see `specs/staging.md`)
+## Four layers & promotion rails (see `docs/operators/getting-started.md`)
 
 ### Phases of work (terminology)
 
@@ -87,7 +88,7 @@ go test ./... -count=1 -short                                # Skip perf/memory 
 | **Staging** | Client editors/publishers | Editorial copy on staging instance (L3) |
 | **Production** | Audience; clients publish into | Live site (L3/L4) |
 
-Product *development* ≠ compile-time `buildMode=development`. See `specs/staging.md` §2.
+Product *development* ≠ compile-time `buildMode=development`. See `docs/operators/getting-started.md`.
 
 | Layer | Artifact | Promotion |
 |-------|----------|-----------|
@@ -98,7 +99,7 @@ Product *development* ≠ compile-time `buildMode=development`. See `specs/stagi
 
 - **Structure rail** and **content rail** are independent. Git tags carry shape only — not editorial copy from `.pb_data/`.
 - **Shape deploy policy** (GitHub Actions, cron, `monms site sync`, etc.) is operator-defined; optional `shapeSync` in config runs sync at serve startup.
-- **Media:** public CDN URLs in text fields — blobs do not move between staging and production. See `site/MEDIA.md`.
+- **Media:** public CDN URLs in text fields — blobs do not move between staging and production. See `docs/user-guide/media-urls.md`.
 - **Roles:** consultants **shape** structure and tag releases; clients **stage** content and publish; consultants are not in the routine content loop.
 - **Phase 4 (v2) implemented:** `internal/content/` package, `monms content` CLI, `POST /api/monms/content/import` (JSON API), publish console at `/_monms/publish` (HTML tool — not PocketBase admin SPA at `/_/`). Publisher allowlist in gitignored `site/.monms/config.json`; commit `config.example.json` only.
 
@@ -166,14 +167,14 @@ When updating embedded scaffold files, also update the live `site/` copies if th
 
 - PocketBase admin at `/_/` — full management fallback
 - Unauthenticated PUT to collections must be rejected (SEC-02) — enforced by PocketBase API rules
-- Agent SSH keys and admin tokens scoped to site only — see `site/SECURITY.md`
+- Agent SSH keys and admin tokens scoped to site only — see `docs/operators/security.md`
 - Never log or commit `POCKETBASE_ADMIN_TOKEN`
 
 ## Out of scope (do not implement without explicit request)
 
 - React/Next.js or Node build pipelines
 - External databases (PostgreSQL, MySQL)
-- Multi-workspace / Host-header routing (v2)
+- Multi-site / Host-header routing (v2)
 - Real-time WebSocket push
 - Modifying `.planning/` unless the user asks for planning work
 
@@ -190,10 +191,10 @@ When updating embedded scaffold files, also update the live `site/` copies if th
 
 GSD milestone v1 has three phases (all verified):
 
-1. Core Go runtime & workspace foundation
+1. Core Go runtime & site foundation
 2. Agent mutation engine & safety guardrails
 3. Inline contextual editing & demonstration content
 
-**v2 Phase 4 (implemented):** staging environments, `site/content/` JSON sync, `/_monms/publish` console, publisher role — see `specs/staging.md` and `.planning/ROADMAP.md`.
+**v2 Phase 4 (implemented):** staging environments, `site/content/` JSON sync, `/_monms/publish` console, publisher role — see `docs/operators/getting-started.md` and `.planning/ROADMAP.md`.
 
 Other v2 backlog (EXT-*, MULT-*, RICH-*) is in `.planning/ROADMAP.md` — do not implement unless asked.

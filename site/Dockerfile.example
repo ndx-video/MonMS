@@ -1,16 +1,16 @@
 # Dockerfile.example — thin L1 engine image for git-on-volume deploy.
 #
 # Build the production binary in the MonMS engine repo, then copy it into this
-# workspace before building the image:
+# site directory before building the image:
 #
 #   go build -ldflags "-X main.buildMode=production" -o monms /path/to/monms
-#   cp monms ./workspace/
+#   cp monms ./site/
 #   docker build -f Dockerfile.example -t monms:production .
 #
 # Do NOT commit the monms binary to Git (see .gitignore).
 #
-# Runtime layout (see DEPLOY-DOCKER.md):
-#   /app/              bind mount — git checkout of this workspace repo (L2)
+# Runtime layout (see docs/operators/deploy-docker.md in the MonMS engine repo):
+#   /app/              bind mount — git checkout of this site repo (L2)
 #   /app/.pb_data/     named volume — PocketBase SQLite (L3, persists)
 #   /app/.monms/config.json  secret mount — site-specific config (gitignored)
 
@@ -28,4 +28,4 @@ VOLUME ["/app/.pb_data"]
 
 EXPOSE 8090
 
-ENTRYPOINT ["monms", "serve", "-w", "/app"]
+ENTRYPOINT ["monms", "serve", "-s", "/app"]

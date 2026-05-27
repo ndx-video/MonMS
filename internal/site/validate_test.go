@@ -27,7 +27,7 @@ func TestValidateSiteMissingBaseLayout(t *testing.T) {
 	if err == nil {
 		t.Fatal("ValidateSite() = nil, want error")
 	}
-	if !strings.Contains(err.Error(), "monms init") {
-		t.Errorf("error = %q, want substring %q", err.Error(), "monms init")
+	if !strings.Contains(err.Error(), "site incomplete") {
+		t.Errorf("error = %q, want site incomplete", err.Error())
 	}
 }
