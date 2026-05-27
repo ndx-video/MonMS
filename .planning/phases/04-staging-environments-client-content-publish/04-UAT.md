@@ -61,15 +61,16 @@ result: pass (verified via monms content publish CLI)
 
 ### 11. Client Documentation
 expected: `workspace/EDITING-GUIDE.md` section 6 documents the publish workflow (prerequisites, badge link, diff review, Publish now). `workspace/MEDIA.md` explains CDN URL policy for publishable assets.
-result: [pending]
+result: skip
+note: Covered by comprehensive docs work done via gsd-quick
 
 ## Summary
 
 total: 11
 passed: 6
+skipped: 1
 issues: 0
-pending: 5
-skipped: 0
+pending: 4
 blocked: 0
 
 ## Gaps
