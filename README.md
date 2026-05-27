@@ -2,7 +2,18 @@
 
 **Monolithic Management System** — an agent-malleable, single-binary CMS built on Go and PocketBase.
 
-MonMS treats database schemas, UI structures, and content as related but separable layers. AI agents and consultants shape the site in a Git-tracked `workspace/`; business clients edit copy in place on staging and publish to production themselves — no rebuild, no consultant in the loop for routine updates.
+MonMS treats database schemas, UI structures, and content as related but separable layers. AI agents and consultants **shape** the site in a Git-tracked `site/`; business clients **stage** copy edits on a staging instance and publish to production themselves — no rebuild, no consultant in the loop for routine updates.
+
+## Phases of work
+
+| Phase | Who | Focus |
+|-------|-----|-------|
+| **Development** | MonMS engine developers | Building this open-source Go project |
+| **Shaping** | Consultants, AI agents | Templates, schema, assets in `site/` Git |
+| **Staging** | Client editors/publishers | Preparing editorial copy on the staging instance |
+| **Production** | Audience; clients publish into | Live site |
+
+Full terminology and lifecycle: [specs/staging.md](specs/staging.md)
 
 ## Four layers
 
@@ -11,11 +22,11 @@ MonMS has four distinct layers. Each has different actors, artifacts, and promot
 | Layer | Who | What changes | Promoted how |
 |-------|-----|--------------|--------------|
 | **1 — Engine** | MonMS developers | Go runtime, router, validation | Semver `monms` binary release |
-| **2 — Structure** | Consultants, AI agents | Templates, CSS, schema definitions | **Git tag** on workspace repo |
-| **3 — Content** | Business clients (editors/publishers) | Copy, records, page text | **JSON upsert** via Publish button |
+| **2 — Structure** | Consultants, AI agents | Templates, CSS, schema definitions | **Git tag** → staging + production checkouts (operator policy) |
+| **3 — Content** | Business clients (editors/publishers) | Copy, records, page text | **JSON upsert outside Git** via Publish button |
 | **4 — Audience** | End users | Nothing — read/interact only | Production URL |
 
-The binary (L1) is **frozen at deploy**. Structure and content promote on **separate rails** — Git does not carry editorial copy.
+The binary (L1) is **frozen at deploy**. Structure and content promote on **separate rails** — Git carries shape only; editorial copy lives in `.pb_data/` and never commits.
 
 Full lifecycle spec: [specs/staging.md](specs/staging.md)
 
@@ -31,20 +42,22 @@ Full lifecycle spec: [specs/staging.md](specs/staging.md)
 
 ## Staging and production
 
-Typical usage runs **two MonMS instances**:
+Typical usage runs **two MonMS instances** for client content work:
 
-| Environment | Purpose |
-|-------------|---------|
-| **Staging** | Consultants shape structure; clients edit content |
-| **Production** | Audience sees the live site |
+| Instance | Phase | Purpose |
+|----------|-------|---------|
+| **Staging** | Staging | Clients edit and preview editorial copy |
+| **Production** | Production | Audience sees the live site |
+
+**Shaping** (templates, schema) happens on a workspace Git checkout. When ready, the consultant tags the repo; an operator-chosen policy pulls that tag into **both** instances — for example GitHub Actions, cron calling `monms site sync`, or optional `shapeSync` in config at serve startup.
 
 ```
-Structure rail:  workspace Git tag  ──→  production deploy
-Content rail:    editorial JSON upsert  ──→  production records (Publish button)
+Structure rail:  workspace Git tag  ──→  staging + production checkouts (operator policy)
+Content rail:    editorial JSON upsert (outside Git)  ──→  production records (Publish button)
 Media rail:      shared public CDN URLs  ──→  no blob copy (URLs in content only)
 ```
 
-- **Consultants** tag structure releases (new pages, collections, layouts) — infrequent.
+- **Consultants** shape structure and tag releases — infrequent.
 - **Clients** use **Publish to live** at `/_monms/publish` after editing on staging — frequent.
 - **Media** on public buckets: content records store CDN URLs; blobs stay put, only strings sync.
 
@@ -67,11 +80,13 @@ go build -o monms .
 ./monms init
 ```
 
-### Run (development)
+### Run (local engine build)
 
 ```bash
 ./monms
 ```
+
+This starts a server using a **development build** of the binary (`buildMode=development` — no template cache). That compile-time flag is unrelated to the product **development** phase (contributing to the MonMS engine repo).
 
 The server starts on **http://127.0.0.1:8090** (PocketBase default).
 
@@ -79,7 +94,7 @@ The server starts on **http://127.0.0.1:8090** (PocketBase default).
 |-----|---------|
 | `/` | Public homepage with hero content |
 | `/_/` | PocketBase admin dashboard |
-| `/assets/*` | Static files from `workspace/assets/` |
+| `/assets/*` | Static files from `site/assets/` |
 
 ### Run (production)
 
@@ -96,15 +111,16 @@ go build -ldflags "-X main.buildMode=production" -o monms .
 2. Sign in, then visit `/` — you should see the **Live Editor Active** badge.
 3. Click the hero headline or paragraph, edit inline, and blur to save.
 
-See [workspace/EDITING-GUIDE.md](workspace/EDITING-GUIDE.md) for the full walkthrough.
+See [site/EDITING-GUIDE.md](site/EDITING-GUIDE.md) for the full walkthrough.
 
 ## CLI commands
 
 ```bash
 monms                          # Start the server
-monms init [--workspace PATH]  # Scaffold workspace (default: ./workspace)
-monms validate [--workspace PATH] [files...]  # Dry-run template + HTML validation
-monms content <subcommand> [--workspace PATH]  # Editorial export/import/diff/publish (v2)
+monms init [--site PATH]  # Scaffold workspace (default: ./site)
+monms validate [--site PATH] [files...]  # Dry-run template + HTML validation
+monms content <subcommand> [--site PATH]  # Editorial export/import/diff/publish (v2)
+monms site sync --ref TAG [--site PATH]  # Shape sync (fetch + checkout)
 ```
 
 ### Content CLI (v2)
@@ -113,8 +129,8 @@ Editorial content promotes separately from structure Git tags. Operators and CI 
 
 | Subcommand | Purpose |
 |------------|---------|
-| `monms content export` | Snapshot editorial collections → `workspace/content/*.json` |
-| `monms content import` | Upsert from `workspace/content/*.json` → local `.pb_data/` |
+| `monms content export` | Snapshot editorial collections → `site/content/*.json` |
+| `monms content import` | Upsert from `site/content/*.json` → local `.pb_data/` |
 | `monms content diff` | Show records/fields changed since last publish (exit 1 if pending) |
 | `monms content publish` | Export staging + POST to production (CI/consultant fallback) |
 
@@ -124,17 +140,17 @@ Production import endpoint (Bearer `MONMS_PUBLISH_TOKEN`):
 POST /api/monms/content/import
 ```
 
-Staging publish UI: `GET/POST /_monms/publish` (publisher allowlist in `workspace/.monms/config.json`).
+Staging publish UI: `GET/POST /_monms/publish` (publisher allowlist in `site/.monms/config.json`).
 
-See [specs/staging.md](specs/staging.md) and [workspace/README.md](workspace/README.md) for four-layer lifecycle, dual rails, and environment setup.
+See [specs/staging.md](specs/staging.md) and [site/README.md](site/README.md) for four-layer lifecycle, dual rails, and environment setup.
 
 ### Configuration
 
 | Input | Precedence | Default |
 |-------|------------|---------|
-| `-w`, `--workspace` flag | Highest | `./workspace` |
-| `MONMS_WORKSPACE` env | Second | `./workspace` |
-| (unset) | — | `./workspace` |
+| `-w`, `--site` flag | Highest | `./site` |
+| `MONMS_SITE` env | Second | `./site` |
+| (unset) | — | `./site` |
 
 PocketBase data (SQLite, uploads, logs) lives at `{workspace}/.pb_data/` — **never commit this directory**.
 
@@ -151,8 +167,8 @@ monms/                          # Generic Go binary (frozen at deploy)
 │   ├── scaffold/               # monms init + embedded templates
 │   ├── templates/              # TemplateCache, slug resolver, fsnotify watcher
 │   ├── validate/               # monms validate CLI
-│   └── workspace/              # Workspace structure validation
-└── workspace/                  # Git-tracked site structure (mutable)
+│   └── site/              # Workspace structure validation
+└── site/                  # Git-tracked site structure (mutable)
     ├── schema/                 # Collection definitions (L2 — structure rail)
     ├── content/                # Editorial record exports (L3 — content rail, v2)
     ├── templates/
@@ -196,12 +212,14 @@ AI agents modify site **structure** by editing the workspace:
 1. **Schema** — `POST /api/collections` (live) + write matching JSON to `schema/` (audit/bootstrap)
 2. **Templates** — edit `*.gohtml` files; changes appear on the next request
 3. **Validate** — `monms validate` runs Go template dry-run + HTML structure checks
-4. **Commit & tag** — pre-commit hook validates; consultant tags for production deploy
+4. **Commit & tag** — pre-commit hook validates; consultant tags for shape deploy to staging + production
 
-Full workflow: [workspace/agent-guide.md](workspace/agent-guide.md)  
-Security policy: [workspace/SECURITY.md](workspace/SECURITY.md)
+Full workflow: [site/agent-guide.md](site/agent-guide.md)  
+Security policy: [site/SECURITY.md](site/SECURITY.md)
 
-## Development
+## Engine development
+
+Contributing to the MonMS **engine** (this Go repository):
 
 ```bash
 # Run all tests
@@ -233,9 +251,9 @@ go test -ldflags "-X main.buildMode=production" ./...
 
 ## Project status
 
-**v1 (complete):** engine, workspace/Git structure mutation, inline editing on a single instance.
+**v1 (complete):** engine, site/Git structure mutation, inline editing on a single instance.
 
-**v2 (Phase 4 — implemented):** staging/production environments, `workspace/content/` JSON sync, client Publish console at `/_monms/publish`, publisher role — [specs/staging.md](specs/staging.md).
+**v2 (Phase 4 — implemented):** staging/production environments, `site/content/` JSON sync, client Publish console at `/_monms/publish`, publisher role — [specs/staging.md](specs/staging.md).
 
 Requirements: [.planning/REQUIREMENTS.md](.planning/REQUIREMENTS.md)  
 Roadmap: [.planning/ROADMAP.md](.planning/ROADMAP.md)
@@ -245,12 +263,12 @@ Roadmap: [.planning/ROADMAP.md](.planning/ROADMAP.md)
 | Document | Audience |
 |----------|----------|
 | [specs/monms-prd.md](specs/monms-prd.md) | Product vision and architecture |
-| [specs/staging.md](specs/staging.md) | Four layers, environments, content publish |
-| [workspace/README.md](workspace/README.md) | Workspace layout, four layers, dual rails |
-| [workspace/MEDIA.md](workspace/MEDIA.md) | CDN URL policy for publishable media |
-| [workspace/EDITING-GUIDE.md](workspace/EDITING-GUIDE.md) | Human inline editing walkthrough |
-| [workspace/agent-guide.md](workspace/agent-guide.md) | AI agent structure mutation workflow |
-| [workspace/SECURITY.md](workspace/SECURITY.md) | SSH scope, token policy, git hygiene |
+| [specs/staging.md](specs/staging.md) | Phases of work, four layers, environments, content publish |
+| [site/README.md](site/README.md) | Workspace layout, four layers, dual rails |
+| [site/MEDIA.md](site/MEDIA.md) | CDN URL policy for publishable media |
+| [site/EDITING-GUIDE.md](site/EDITING-GUIDE.md) | Human inline editing walkthrough |
+| [site/agent-guide.md](site/agent-guide.md) | AI agent structure mutation workflow |
+| [site/SECURITY.md](site/SECURITY.md) | SSH scope, token policy, git hygiene |
 
 ## Out of scope
 

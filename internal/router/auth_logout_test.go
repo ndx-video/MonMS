@@ -16,7 +16,7 @@ import (
 )
 
 func TestLogout_ClearsAuthCookie(t *testing.T) {
-	ws := setupInlineEditWorkspace(t)
+	ws := setupInlineEditSite(t)
 	ts, app, _, cleanup := startTestServerWithApp(t, ws, testServerOpts{isDev: true})
 	defer cleanup()
 
@@ -58,7 +58,7 @@ func TestLogout_ClearsAuthCookie(t *testing.T) {
 }
 
 func TestLogout_ThenSSRIsGuest(t *testing.T) {
-	ws := setupInlineEditWorkspace(t)
+	ws := setupInlineEditSite(t)
 	ts, app, _, cleanup := startTestServerWithApp(t, ws, testServerOpts{isDev: true})
 	defer cleanup()
 
@@ -129,7 +129,7 @@ func TestLogout_ThenSSRIsGuest(t *testing.T) {
 }
 
 func TestLoadAuthFromCookie_InvalidTokenClearsCookie(t *testing.T) {
-	ws := setupInlineEditWorkspace(t)
+	ws := setupInlineEditSite(t)
 	_, app, _, cleanup := startTestServerWithApp(t, ws, testServerOpts{isDev: true})
 	defer cleanup()
 

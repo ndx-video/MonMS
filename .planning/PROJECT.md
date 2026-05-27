@@ -2,9 +2,9 @@
 
 ## What This Is
 
-MonMS (Monolithic Content Management System) is an agent-malleable, single-binary monolith CMS built on Go and PocketBase. It operates across **four layers** — engine, structure, content, and audience — with **two promotion rails**: consultants and AI agents shape site structure in a Git-tracked workspace; business clients edit copy on staging and publish to production themselves via **Publish to live** at `/api/monms/publish`.
+MonMS (Monolithic Content Management System) is an agent-malleable, single-binary monolith CMS built on Go and PocketBase. It operates across **four layers** — engine, structure, content, and audience — with **two promotion rails**: consultants and AI agents shape site structure in a Git-tracked **site** directory; business clients edit copy on staging and publish to production themselves via **Publish to live** at `/_monms/publish`.
 
-AI agents mutate the workspace folder tree (templates, schema, assets) with validation and Git versioning. Human editors use HTMX inline editing on staging. Structure deploys by Git tag; editorial content syncs by JSON upsert — not by copying `.pb_data/`.
+AI agents mutate the site folder tree (templates, schema, assets) with validation and Git versioning. Human editors use HTMX inline editing on staging. Structure deploys by Git tag; editorial content syncs by JSON upsert — not by copying `.pb_data/`.
 
 ## Core Value
 
@@ -38,7 +38,7 @@ High-performance runtime malleability without build or compilation overhead, com
 MonMS addresses the divide between developer-only environments (CI/CD pipelines, build steps) and restricted visual content management. The technical environment leverages:
 
 - Go embedded runtime with PocketBase integration.
-- fsnotify for watching file changes in the workspace folder.
+- fsnotify for watching file changes in the site directory.
 - HTMX for asynchronous visual content updates without page reloads.
 - Git for auditing and versioning **structure** (templates, schema, assets).
 - JSON upsert for **content** promotion between staging and production.
@@ -57,7 +57,8 @@ MonMS addresses the divide between developer-only environments (CI/CD pipelines,
 | Decision | Rationale | Outcome |
 |----------|-----------|---------|
 | SQLite Embedded Database | Embedded database within generic monolithic binary to keep RAM footprint low | Validated — Phase 1 |
-| fsnotify Cache Invalidation | Invalidate templates cache on workspace `.gohtml` changes without server restarts (D-30) | Validated — Phase 1 |
+| Site terminology (2026-05-27) | Renamed deployable tree from `workspace/` to `site/`; CLI `--site`/`-s`, env `MONMS_SITE` | Accepted — quick task |
+| fsnotify Cache Invalidation | Invalidate templates cache on site `.gohtml` changes without server restarts (D-30) | Validated — Phase 1 |
 | HTML5 contenteditable + HTMX | Native browser text-manipulation saving asynchronously on blur for simple visual content updates | Validated — Phase 3 |
 | Four-layer lifecycle (D-50) | Engine, structure, content, audience have distinct actors and artifacts | Accepted — specs/staging.md |
 | Dual promotion rails (D-51) | Git tags for structure; JSON upsert for content — independent paths | Accepted — specs/staging.md |
@@ -65,6 +66,19 @@ MonMS addresses the divide between developer-only environments (CI/CD pipelines,
 | CDN URL media policy (D-55) | Publishable media referenced by URL; no blob copy staging→prod | Accepted — specs/staging.md |
 
 ## Evolution
+
+### 2026-05-27 — Terminology: workspace → site
+
+MonMS now uses **site** for the Git-tracked deployable tree (formerly `workspace/`).
+
+| Old | New |
+|-----|-----|
+| `./workspace` default path | `./site` |
+| `--workspace` / `-w` | `--site` / `-s` |
+| `MONMS_WORKSPACE` | `MONMS_SITE` |
+| `monms workspace sync` | `monms site sync` |
+
+Historical phase docs in `.planning/phases/` retain "workspace" — read them with this mapping in mind. Authoritative runtime docs: CLAUDE.md, README, specs/.
 
 This document evolves at phase transitions and milestone boundaries.
 
@@ -82,4 +96,4 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-26 after Phase 4 execution — Milestone 2 v2 complete*
+*Last updated: 2026-05-27 after workspace→site terminology rename (quick task)*

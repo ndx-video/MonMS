@@ -15,8 +15,8 @@ type DiffResult struct {
 }
 
 // DiffExport compares live editorial export to publish-state checksum (PUB-09).
-func DiffExport(app core.App, wsAbs string) (DiffResult, error) {
-	current, err := ExportSnapshot(app, wsAbs)
+func DiffExport(app core.App, siteAbs string) (DiffResult, error) {
+	current, err := ExportSnapshot(app, siteAbs)
 	if err != nil {
 		return DiffResult{}, err
 	}
@@ -26,7 +26,7 @@ func DiffExport(app core.App, wsAbs string) (DiffResult, error) {
 		return DiffResult{}, err
 	}
 
-	state, err := ReadPublishState(wsAbs)
+	state, err := ReadPublishState(siteAbs)
 	if err != nil {
 		return DiffResult{}, err
 	}
@@ -34,7 +34,7 @@ func DiffExport(app core.App, wsAbs string) (DiffResult, error) {
 	result := DiffResult{Checksum: checksum}
 	if state.Checksum == "" || checksum != state.Checksum {
 		result.HasChanges = true
-		baseline, err := LoadContentFiles(wsAbs)
+		baseline, err := LoadContentFiles(siteAbs)
 		if err != nil {
 			return DiffResult{}, err
 		}

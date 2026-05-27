@@ -1,0 +1,45 @@
+# docker-compose.example.yml — staging + production with git-on-volume deploy.
+#
+# Copy to docker-compose.yml and adjust paths, ports, and config mounts.
+# Full walkthrough: DEPLOY-DOCKER.md
+#
+# Prerequisites:
+#   1. Production monms binary at ./monms (gitignored; see Dockerfile.example)
+#   2. docker build -f Dockerfile.example -t monms:production .
+#   3. Two workspace checkouts (or one repo, different tags checked out on host)
+#   4. .monms/config.json per environment (copy from config.example.json)
+#   5. MONMS_PUBLISH_TOKEN in a .env file (same secret on staging and production)
+
+services:
+  staging:
+    image: monms:production
+    ports:
+      - "8090:8090"
+    volumes:
+      # L2 structure — git-managed workspace checkout (active branch)
+      - ${STAGING_WORKSPACE:-./}:/app
+      # L3 runtime — separate SQLite per environment
+      - staging_pb_data:/app/.pb_data
+      # Site config — gitignored; mount staging-specific file
+      - ${STAGING_CONFIG:-./.monms/config.json}:/app/.monms/config.json:ro
+    environment:
+      MONMS_PUBLISH_TOKEN: ${MONMS_PUBLISH_TOKEN:?set MONMS_PUBLISH_TOKEN in .env}
+    restart: unless-stopped
+
+  production:
+    image: monms:production
+    ports:
+      - "8095:8090"
+    volumes:
+      # L2 structure — checkout a release tag on this path before restart:
+      #   git -C /path/to/prod-workspace fetch --tags && git checkout v1.2.0
+      - ${PRODUCTION_SITE:-../site-prod}:/app
+      - production_pb_data:/app/.pb_data
+      - ${PRODUCTION_CONFIG:-../site-prod/.monms/config.json}:/app/.monms/config.json:ro
+    environment:
+      MONMS_PUBLISH_TOKEN: ${MONMS_PUBLISH_TOKEN:?set MONMS_PUBLISH_TOKEN in .env}
+    restart: unless-stopped
+
+volumes:
+  staging_pb_data:
+  production_pb_data:

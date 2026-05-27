@@ -3,12 +3,12 @@ package testutil
 import (
 	"testing"
 
-	"github.com/monms/monms/internal/workspace"
+	"github.com/monms/monms/internal/site"
 )
 
-func TestNewEditorialWorkspace(t *testing.T) {
-	ws := NewEditorialWorkspace(t)
-	if err := workspace.ValidateWorkspace(ws); err != nil {
-		t.Fatalf("ValidateWorkspace() = %v, want nil", err)
+func TestNewEditorialSite(t *testing.T) {
+	ws := NewEditorialSite(t)
+	if err := site.ValidateSite(ws); err != nil {
+		t.Fatalf("ValidateSite() = %v, want nil", err)
 	}
 }

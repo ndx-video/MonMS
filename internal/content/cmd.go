@@ -29,69 +29,69 @@ func RunCLI(args []string) error {
 
 	sub := args[0]
 
-	_, wsAbs, err := config.ResolveWorkspace(args, os.Environ())
+	_, siteAbs, err := config.ResolveSite(args, os.Environ())
 	if err != nil {
 		return err
 	}
 
 	switch sub {
 	case "export":
-		return runExport(wsAbs)
+		return runExport(siteAbs)
 	case "import":
-		return runImport(wsAbs)
+		return runImport(siteAbs)
 	case "diff":
-		return runDiff(wsAbs)
+		return runDiff(siteAbs)
 	case "publish":
-		return runPublishCLI(args[1:], wsAbs)
+		return runPublishCLI(args[1:], siteAbs)
 	default:
 		return fmt.Errorf("unknown content subcommand %q (want export, import, diff, or publish)", sub)
 	}
 }
 
-func bootstrapApp(wsAbs string) (core.App, error) {
+func bootstrapApp(siteAbs string) (core.App, error) {
 	app := pocketbase.NewWithConfig(pocketbase.Config{
-		DefaultDataDir:  filepath.Join(wsAbs, ".pb_data"),
+		DefaultDataDir:  filepath.Join(siteAbs, ".pb_data"),
 		DefaultDev:      true,
 		HideStartBanner: true,
 	})
-	schema.RegisterBootstrapHook(app, wsAbs)
+	schema.RegisterBootstrapHook(app, siteAbs)
 	if err := app.Bootstrap(); err != nil {
 		return nil, fmt.Errorf("content bootstrap: %w", err)
 	}
 	return app, nil
 }
 
-func runExport(wsAbs string) error {
-	app, err := bootstrapApp(wsAbs)
+func runExport(siteAbs string) error {
+	app, err := bootstrapApp(siteAbs)
 	if err != nil {
 		return err
 	}
-	if err := ExportAll(app, wsAbs); err != nil {
+	if err := ExportAll(app, siteAbs); err != nil {
 		return err
 	}
-	slog.Info("content export: complete", "workspace", wsAbs)
+	slog.Info("content export: complete", "site", siteAbs)
 	return nil
 }
 
-func runImport(wsAbs string) error {
-	app, err := bootstrapApp(wsAbs)
+func runImport(siteAbs string) error {
+	app, err := bootstrapApp(siteAbs)
 	if err != nil {
 		return err
 	}
-	if err := ImportFiles(app, wsAbs); err != nil {
+	if err := ImportFiles(app, siteAbs); err != nil {
 		return err
 	}
-	slog.Info("content import: complete", "workspace", wsAbs)
+	slog.Info("content import: complete", "site", siteAbs)
 	return nil
 }
 
-func runDiff(wsAbs string) error {
-	app, err := bootstrapApp(wsAbs)
+func runDiff(siteAbs string) error {
+	app, err := bootstrapApp(siteAbs)
 	if err != nil {
 		return err
 	}
 
-	result, err := DiffExport(app, wsAbs)
+	result, err := DiffExport(app, siteAbs)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func runDiff(wsAbs string) error {
 	return ErrPendingChanges
 }
 
-func runPublishCLI(args []string, wsAbs string) error {
+func runPublishCLI(args []string, siteAbs string) error {
 	fs := flag.NewFlagSet("publish", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() {
@@ -121,7 +121,7 @@ func runPublishCLI(args []string, wsAbs string) error {
 	}
 	var toURL string
 	fs.StringVar(&toURL, "to", "", "production base URL (required)")
-	if err := fs.Parse(config.StripWorkspaceFlags(args)); err != nil {
+	if err := fs.Parse(config.StripSiteFlags(args)); err != nil {
 		if err == flag.ErrHelp {
 			fs.Usage()
 			return nil
@@ -137,12 +137,12 @@ func runPublishCLI(args []string, wsAbs string) error {
 		return fmt.Errorf("content publish: missing publish token (set MONMS_PUBLISH_TOKEN)")
 	}
 
-	app, err := bootstrapApp(wsAbs)
+	app, err := bootstrapApp(siteAbs)
 	if err != nil {
 		return err
 	}
 
-	snap, err := ExportSnapshot(app, wsAbs)
+	snap, err := ExportSnapshot(app, siteAbs)
 	if err != nil {
 		return err
 	}
@@ -169,7 +169,7 @@ func runPublishCLI(args []string, wsAbs string) error {
 		collections[i] = p.Collection
 	}
 
-	return WritePublishState(wsAbs, PublishState{
+	return WritePublishState(siteAbs, PublishState{
 		Checksum:    checksum,
 		PublishedAt: time.Now().UTC().Format(time.RFC3339),
 		Collections: collections,

@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-func TestResolveWorkspaceFlag(t *testing.T) {
+func TestResolveSiteFlag(t *testing.T) {
 	tests := []struct {
 		name       string
 		args       []string
@@ -17,58 +17,58 @@ func TestResolveWorkspaceFlag(t *testing.T) {
 	}{
 		{
 			name:       "flag space separated",
-			args:       []string{"--workspace", "/tmp/ws"},
+			args:       []string{"--site", "/tmp/ws"},
 			wantConfig: "/tmp/ws",
 			wantAbs:    "/tmp/ws",
 		},
 		{
 			name:       "flag equals form",
-			args:       []string{"--workspace=/tmp/ws-eq"},
+			args:       []string{"--site=/tmp/ws-eq"},
 			wantConfig: "/tmp/ws-eq",
 			wantAbs:    "/tmp/ws-eq",
 		},
 		{
 			name:       "env when flag absent",
 			args:       nil,
-			env:        []string{"MONMS_WORKSPACE=/env/ws"},
+			env:        []string{"MONMS_SITE=/env/ws"},
 			wantConfig: "/env/ws",
 			wantAbs:    "/env/ws",
 		},
 		{
 			name:       "flag wins over env",
-			args:       []string{"--workspace", "/flag/ws"},
-			env:        []string{"MONMS_WORKSPACE=/env/ws"},
+			args:       []string{"--site", "/flag/ws"},
+			env:        []string{"MONMS_SITE=/env/ws"},
 			wantConfig: "/flag/ws",
 			wantAbs:    "/flag/ws",
 		},
 		{
-			name:       "default workspace",
+			name:       "default site",
 			args:       nil,
 			env:        nil,
-			wantConfig: "./workspace",
+			wantConfig: "./site",
 		},
 		{
 			name:       "short flag space separated",
-			args:       []string{"-w", "/tmp/ws-short"},
+			args:       []string{"-s", "/tmp/ws-short"},
 			wantConfig: "/tmp/ws-short",
 			wantAbs:    "/tmp/ws-short",
 		},
 		{
 			name:       "short flag equals form",
-			args:       []string{"-w=/tmp/ws-short-eq"},
+			args:       []string{"-s=/tmp/ws-short-eq"},
 			wantConfig: "/tmp/ws-short-eq",
 			wantAbs:    "/tmp/ws-short-eq",
 		},
 		{
 			name:    "missing short flag value",
-			args:    []string{"-w"},
+			args:    []string{"-s"},
 			wantErr: true,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			gotConfig, gotAbs, err := ResolveWorkspace(tt.args, tt.env)
+			gotConfig, gotAbs, err := ResolveSite(tt.args, tt.env)
 			if tt.wantErr {
 				if err == nil {
 					t.Fatal("expected error, got nil")
@@ -76,7 +76,7 @@ func TestResolveWorkspaceFlag(t *testing.T) {
 				return
 			}
 			if err != nil {
-				t.Fatalf("ResolveWorkspace() error = %v", err)
+				t.Fatalf("ResolveSite() error = %v", err)
 			}
 			if gotConfig != tt.wantConfig {
 				t.Errorf("configured = %q, want %q", gotConfig, tt.wantConfig)
@@ -87,19 +87,19 @@ func TestResolveWorkspaceFlag(t *testing.T) {
 				}
 				return
 			}
-			if !strings.HasSuffix(gotAbs, filepath.Join("workspace")) && gotConfig == "./workspace" {
-				if !strings.Contains(gotAbs, "workspace") {
-					t.Errorf("absolute = %q, expected path ending in workspace", gotAbs)
+			if !strings.HasSuffix(gotAbs, filepath.Join("site")) && gotConfig == "./site" {
+				if !strings.Contains(gotAbs, "site") {
+					t.Errorf("absolute = %q, expected path ending in site", gotAbs)
 				}
 			}
 		})
 	}
 }
 
-func TestStripWorkspaceFlags(t *testing.T) {
+func TestStripSiteFlags(t *testing.T) {
 	t.Parallel()
 
-	got := StripWorkspaceFlags([]string{"serve", "-w", "ws", "--dev"})
+	got := StripSiteFlags([]string{"serve", "-s", "ws", "--dev"})
 	want := []string{"serve", "--dev"}
 	if len(got) != len(want) {
 		t.Fatalf("got %v, want %v", got, want)
@@ -110,7 +110,7 @@ func TestStripWorkspaceFlags(t *testing.T) {
 		}
 	}
 
-	got2 := StripWorkspaceFlags([]string{"content", "export", "--workspace=./ws"})
+	got2 := StripSiteFlags([]string{"content", "export", "--site=./ws"})
 	want2 := []string{"content", "export"}
 	if len(got2) != len(want2) || got2[0] != want2[0] || got2[1] != want2[1] {
 		t.Fatalf("got %v, want %v", got2, want2)

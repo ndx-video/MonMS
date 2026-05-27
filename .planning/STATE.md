@@ -80,5 +80,11 @@ See: .planning/PROJECT.md (updated 2026-05-23)
 | Plan Check | Enabled |
 | Verifier | Enabled |
 
+## Quick Tasks Completed
+
+| Date | Slug | Summary |
+|------|------|---------|
+| 2026-05-27 | workspace-to-site-rename | Renamed workspace → site (CLI `--site`/`-s`, `MONMS_SITE`, `site/` dir, `internal/site`) |
+
 ---
-*State updated: 2026-05-26 after documentation reconciliation; Phase 4 UAT open*
+*State updated: 2026-05-27 after workspace→site quick task*

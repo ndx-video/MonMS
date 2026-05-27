@@ -11,9 +11,9 @@ import (
 	"github.com/monms/monms/internal/testutil"
 )
 
-func setupPublishBadgeWorkspace(t *testing.T) string {
+func setupPublishBadgeSite(t *testing.T) string {
 	t.Helper()
-	ws := setupInlineEditWorkspace(t)
+	ws := setupInlineEditSite(t)
 	if err := os.MkdirAll(filepath.Join(ws, ".monms"), 0o755); err != nil {
 		t.Fatalf("mkdir .monms: %v", err)
 	}
@@ -23,7 +23,7 @@ func setupPublishBadgeWorkspace(t *testing.T) string {
 }
 
 func TestEditorBadge_PublishLinkForPublisher(t *testing.T) {
-	ws := setupPublishBadgeWorkspace(t)
+	ws := setupPublishBadgeSite(t)
 	ts, app, _, cleanup := startTestServerWithApp(t, ws, testServerOpts{isDev: true})
 	defer cleanup()
 
@@ -51,7 +51,7 @@ func TestEditorBadge_PublishLinkForPublisher(t *testing.T) {
 }
 
 func TestEditorBadge_NoPublishLinkForEditor(t *testing.T) {
-	ws := setupPublishBadgeWorkspace(t)
+	ws := setupPublishBadgeSite(t)
 	ts, app, _, cleanup := startTestServerWithApp(t, ws, testServerOpts{isDev: true})
 	defer cleanup()
 

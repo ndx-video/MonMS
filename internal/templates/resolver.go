@@ -10,11 +10,11 @@ import (
 // ErrNotFound is returned when no template matches the slug.
 var ErrNotFound = errors.New("template not found")
 
-// ResolveSlug maps a URL slug to a workspace template file path using mirror+index rules.
-func ResolveSlug(wsAbs, slug string) (pagePath string, err error) {
+// ResolveSlug maps a URL slug to a site template file path using mirror+index rules.
+func ResolveSlug(siteAbs, slug string) (pagePath string, err error) {
 	slug = strings.TrimSuffix(slug, "/")
 
-	templatesDir := filepath.Join(wsAbs, "templates")
+	templatesDir := filepath.Join(siteAbs, "templates")
 
 	if slug == "" {
 		pagePath = filepath.Join(templatesDir, "index.gohtml")

@@ -21,7 +21,7 @@ import (
 func TestPressReleasesOperation(t *testing.T) {
 	// Step 1 — workspace with schema fixture (AGT-01 setup, D-33).
 	// Schema written before startTestServer so Bootstrap() imports it automatically.
-	ws := testutil.NewWorkspace(t)
+	ws := testutil.NewSite(t)
 	schemaJSON := `{"name":"press_releases","type":"base","fields":[{"name":"title","type":"text"},{"name":"body","type":"text"}]}`
 	testutil.WriteFile(t, filepath.Join(ws, "schema/press_releases.json"), schemaJSON)
 
@@ -69,7 +69,7 @@ func TestPressReleasesOperation(t *testing.T) {
 // TestValidateRejectsInvalidTemplate covers AGT-05 signal: the pre-commit hook would rollback
 // a commit containing a syntactically invalid template.
 func TestValidateRejectsInvalidTemplate(t *testing.T) {
-	ws := testutil.NewWorkspace(t)
+	ws := testutil.NewSite(t)
 	badPath := filepath.Join(ws, "templates/broken.gohtml")
 	testutil.WriteFile(t, badPath, `{{define "body"}}{{if}}{{end}}`) // missing condition arg
 

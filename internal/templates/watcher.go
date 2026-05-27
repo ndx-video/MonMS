@@ -12,8 +12,8 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
-// StartWatcher recursively watches wsRoot for .gohtml changes and calls onChange after debounce.
-func StartWatcher(ctx context.Context, wsRoot string, onChange func()) error {
+// StartWatcher recursively watches siteRoot for .gohtml changes and calls onChange after debounce.
+func StartWatcher(ctx context.Context, siteRoot string, onChange func()) error {
 	w, err := fsnotify.NewWatcher()
 	if err != nil {
 		return err
@@ -77,7 +77,7 @@ func StartWatcher(ctx context.Context, wsRoot string, onChange func()) error {
 		}
 	}()
 
-	return filepath.WalkDir(wsRoot, func(path string, d fs.DirEntry, err error) error {
+	return filepath.WalkDir(siteRoot, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}

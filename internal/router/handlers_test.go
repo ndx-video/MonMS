@@ -12,7 +12,7 @@ import (
 	"github.com/monms/monms/internal/schema"
 	"github.com/monms/monms/internal/templates"
 	"github.com/monms/monms/internal/testutil"
-	"github.com/monms/monms/internal/workspace"
+	"github.com/monms/monms/internal/site"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -24,31 +24,31 @@ type testServerOpts struct {
 	productionMode bool
 }
 
-func startTestServer(t *testing.T, wsAbs string, opts testServerOpts) (*httptest.Server, *templates.TemplateCache, func()) {
-	ts, _, cache, cleanup := startTestServerWithApp(t, wsAbs, opts)
+func startTestServer(t *testing.T, siteAbs string, opts testServerOpts) (*httptest.Server, *templates.TemplateCache, func()) {
+	ts, _, cache, cleanup := startTestServerWithApp(t, siteAbs, opts)
 	return ts, cache, cleanup
 }
 
-func startTestServerWithApp(t *testing.T, wsAbs string, opts testServerOpts) (*httptest.Server, core.App, *templates.TemplateCache, func()) {
+func startTestServerWithApp(t *testing.T, siteAbs string, opts testServerOpts) (*httptest.Server, core.App, *templates.TemplateCache, func()) {
 	t.Helper()
 
-	if err := workspace.ValidateWorkspace(wsAbs); err != nil {
-		t.Fatalf("validate workspace: %v", err)
+	if err := site.ValidateSite(siteAbs); err != nil {
+		t.Fatalf("validate site: %v", err)
 	}
 
 	cache := templates.NewCache()
 	cache.SetProductionMode(opts.productionMode)
 
 	app := pocketbase.NewWithConfig(pocketbase.Config{
-		DefaultDataDir:  filepath.Join(wsAbs, ".pb_data"),
+		DefaultDataDir:  filepath.Join(siteAbs, ".pb_data"),
 		DefaultDev:      true,
 		HideStartBanner: true,
 	})
 
-	schema.RegisterBootstrapHook(app, wsAbs)
+	schema.RegisterBootstrapHook(app, siteAbs)
 	RegisterAuthHooks(app)
 
-	deps := Deps{WsAbs: wsAbs, Cache: cache, IsDev: opts.isDev}
+	deps := Deps{SiteAbs: siteAbs, Cache: cache, IsDev: opts.isDev}
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		RegisterRoutes(se, deps)
@@ -88,7 +88,7 @@ func startTestServerWithApp(t *testing.T, wsAbs string, opts testServerOpts) (*h
 }
 
 func TestServeStarts(t *testing.T) {
-	ws := testutil.NewWorkspace(t)
+	ws := testutil.NewSite(t)
 	ts, _, cleanup := startTestServer(t, ws, testServerOpts{isDev: true})
 	defer cleanup()
 
@@ -105,7 +105,7 @@ func TestServeStarts(t *testing.T) {
 }
 
 func TestAdminDashboard(t *testing.T) {
-	ws := testutil.NewWorkspace(t)
+	ws := testutil.NewSite(t)
 	ts, _, cleanup := startTestServer(t, ws, testServerOpts{isDev: true})
 	defer cleanup()
 
@@ -128,7 +128,7 @@ func TestAdminDashboard(t *testing.T) {
 }
 
 func TestAssetsHandler(t *testing.T) {
-	ws := testutil.NewWorkspace(t)
+	ws := testutil.NewSite(t)
 	ts, _, cleanup := startTestServer(t, ws, testServerOpts{isDev: true})
 	defer cleanup()
 
@@ -162,7 +162,7 @@ func TestAssetsHandler(t *testing.T) {
 }
 
 func Test404NoPanic(t *testing.T) {
-	ws := testutil.NewWorkspace(t)
+	ws := testutil.NewSite(t)
 	ts, _, cleanup := startTestServer(t, ws, testServerOpts{isDev: true})
 	defer cleanup()
 
@@ -188,7 +188,7 @@ func Test404NoPanic(t *testing.T) {
 }
 
 func TestHomepageSSR(t *testing.T) {
-	ws := testutil.NewWorkspace(t)
+	ws := testutil.NewSite(t)
 	ts, _, cleanup := startTestServer(t, ws, testServerOpts{isDev: true})
 	defer cleanup()
 
@@ -214,7 +214,7 @@ func TestHomepageSSR(t *testing.T) {
 }
 
 func TestFragmentPartial(t *testing.T) {
-	ws := testutil.NewWorkspace(t)
+	ws := testutil.NewSite(t)
 	fragPath := filepath.Join(ws, "templates/fragments", "nav.gohtml")
 	testutil.WriteFile(t, fragPath, `<nav class="fragment-nav">Nav partial</nav>`)
 
@@ -246,7 +246,7 @@ func TestFragmentPartial(t *testing.T) {
 }
 
 func TestProduction500Generic(t *testing.T) {
-	ws := testutil.NewWorkspace(t)
+	ws := testutil.NewSite(t)
 	badPage := filepath.Join(ws, "templates", "broken.gohtml")
 	testutil.WriteFile(t, badPage, `{{define "body"}}{{if}}{{end}}`)
 

@@ -11,7 +11,7 @@ import (
 // TestExportSkipsFileFields verifies MED-01: file blobs are not serialized;
 // publishable media uses CDN URLs in text fields (D-55).
 func TestExportSkipsFileFields(t *testing.T) {
-	ws := testutil.NewWorkspace(t)
+	ws := testutil.NewSite(t)
 	schemaJSON := `{
   "name": "media_items",
   "type": "base",

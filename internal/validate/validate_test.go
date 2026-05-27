@@ -10,7 +10,7 @@ import (
 )
 
 func TestValidateTemplate(t *testing.T) {
-	ws := testutil.NewWorkspace(t)
+	ws := testutil.NewSite(t)
 	pagePath := filepath.Join(ws, "templates/press/index.gohtml")
 	testutil.WriteFile(t, pagePath, `{{define "body"}}<h1>Press</h1>{{end}}`)
 
@@ -20,7 +20,7 @@ func TestValidateTemplate(t *testing.T) {
 }
 
 func TestValidateTemplateBadSyntax(t *testing.T) {
-	ws := testutil.NewWorkspace(t)
+	ws := testutil.NewSite(t)
 	pagePath := filepath.Join(ws, "templates/broken.gohtml")
 	testutil.WriteFile(t, pagePath, `{{define "body"}}{{if}}{{end}}`)
 
@@ -58,7 +58,7 @@ func TestValidateHTML(t *testing.T) {
 }
 
 func TestValidateFilesAggregatesErrors(t *testing.T) {
-	ws := testutil.NewWorkspace(t)
+	ws := testutil.NewSite(t)
 
 	broken1 := filepath.Join(ws, "templates/b1.gohtml")
 	broken2 := filepath.Join(ws, "templates/b2.gohtml")

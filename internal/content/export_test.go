@@ -29,7 +29,7 @@ func bootstrapEditorialApp(t *testing.T, ws string) core.App {
 }
 
 func TestExportAllWritesHeroContent(t *testing.T) {
-	ws := testutil.NewEditorialWorkspace(t)
+	ws := testutil.NewEditorialSite(t)
 	app := bootstrapEditorialApp(t, ws)
 
 	if err := ExportAll(app, ws); err != nil {
@@ -58,7 +58,7 @@ func TestExportAllWritesHeroContent(t *testing.T) {
 }
 
 func TestImportFilesIdempotent(t *testing.T) {
-	ws := testutil.NewEditorialWorkspace(t)
+	ws := testutil.NewEditorialSite(t)
 	app := bootstrapEditorialApp(t, ws)
 
 	if err := ExportAll(app, ws); err != nil {
@@ -100,7 +100,7 @@ func TestImportFilesIdempotent(t *testing.T) {
 }
 
 func TestImportPayloadRejectsNonEditorial(t *testing.T) {
-	ws := testutil.NewEditorialWorkspace(t)
+	ws := testutil.NewEditorialSite(t)
 	app := bootstrapEditorialApp(t, ws)
 
 	err := ImportPayload(app, ws, []CollectionPayload{{

@@ -9,14 +9,14 @@ import (
 	"github.com/monms/monms/internal/cli"
 )
 
-// ApplyServeConfigFromWorkspace injects PocketBase serve flags from workspace config
+// ApplyServeConfigFromSite injects PocketBase serve flags from site config
 // when the CLI did not already specify them. CLI flags win over config (D-26 parity).
-func ApplyServeConfigFromWorkspace(wsAbs string, args []string) ([]string, error) {
+func ApplyServeConfigFromSite(siteAbs string, args []string) ([]string, error) {
 	if cli.HasHelpFlag(args) {
 		return args, nil
 	}
 
-	cfg, err := LoadMonmsConfig(wsAbs)
+	cfg, err := LoadMonmsConfig(siteAbs)
 	if err != nil {
 		return nil, err
 	}
@@ -25,7 +25,7 @@ func ApplyServeConfigFromWorkspace(wsAbs string, args []string) ([]string, error
 
 	if !hasHTTPFlag(args) {
 		if addr, ok := bindAddress(cfg.Bind); ok {
-			slog.Info("serve bind from workspace config", "http", addr)
+			slog.Info("serve bind from site config", "http", addr)
 			out = append(out, "--http="+addr)
 		}
 	}
@@ -33,7 +33,7 @@ func ApplyServeConfigFromWorkspace(wsAbs string, args []string) ([]string, error
 	if !hasOriginsFlag(args) {
 		hosts := normalizeAllowedHosts(cfg.AllowedHosts)
 		if len(hosts) > 0 {
-			slog.Info("serve origins from workspace config", "hosts", hosts)
+			slog.Info("serve origins from site config", "hosts", hosts)
 			out = append(out, "--origins="+strings.Join(hosts, ","))
 		}
 	}

@@ -1,0 +1,24 @@
+{
+  "name": "hero_content",
+  "type": "base",
+  "editorial": true,
+  "listRule": "",
+  "viewRule": "",
+  "updateRule": "@request.auth.id != ''",
+  "createRule": "@request.auth.id != ''",
+  "deleteRule": "@request.auth.id != ''",
+  "fields": [
+    {
+      "name": "id",
+      "type": "text",
+      "required": true,
+      "primaryKey": true,
+      "system": true,
+      "min": 1,
+      "max": 50,
+      "pattern": "^[a-z][a-z0-9_]*$"
+    },
+    {"name": "title", "type": "text"},
+    {"name": "body", "type": "text"}
+  ]
+}

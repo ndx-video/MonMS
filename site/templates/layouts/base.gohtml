@@ -1,0 +1,149 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{block "title" .}}MonMS{{end}}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      corePlugins: { preflight: true },
+      theme: { extend: {} }
+    }
+  </script>
+  <link rel="stylesheet" href="/assets/main.css">
+  <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen">
+  {{if .IsLoggedIn}}
+  <div class="editor-badge" role="status" aria-live="polite">
+    <span class="editor-badge__dot" aria-hidden="true"></span>
+    Live Editor Active
+    {{if .IsPublisher}}<a href="/_monms/publish" class="editor-badge__link">Publish to live</a>{{end}}
+    <a href="/_/" class="editor-badge__link">Full Admin Dashboard</a>
+    <a href="/_monms/auth/logout?redirect=/" class="editor-badge__link" id="monms-sign-out">Sign out</a>
+  </div>
+  {{if .IsDev}}
+  <div id="editor-save-error" class="editor-save-error" role="alert" hidden></div>
+  {{end}}
+  {{end}}
+  <main class="max-w-6xl mx-auto px-6 py-12">
+    {{template "body" .}}
+  </main>
+  {{if .IsLoggedIn}}
+  <script src="https://unpkg.com/htmx.org@1.9.12/dist/ext/json-enc.js"></script>
+  <script>
+    document.body.addEventListener('htmx:configRequest', function (event) {
+      event.detail.headers['Authorization'] = 'Bearer {{.AuthToken}}';
+    });
+    {{if .IsDev}}
+    document.body.addEventListener('htmx:afterRequest', function (event) {
+      var path = event.detail.pathInfo && event.detail.pathInfo.requestPath;
+      if (!path || path.indexOf('hero_content/records/homepage') === -1) return;
+      var banner = document.getElementById('editor-save-error');
+      if (!banner) return;
+      if (event.detail.successful) {
+        banner.hidden = true;
+        banner.textContent = '';
+        return;
+      }
+      var xhr = event.detail.xhr;
+      var msg = 'Save failed (HTTP ' + xhr.status + ')';
+      try {
+        var body = JSON.parse(xhr.responseText);
+        if (body.message) msg += ': ' + body.message;
+      } catch (e) {
+        if (xhr.responseText) msg += ': ' + xhr.responseText.slice(0, 200);
+      }
+      banner.textContent = msg;
+      banner.hidden = false;
+      console.error('[MonMS inline edit]', msg, xhr.responseText);
+    });
+    {{end}}
+  </script>
+  {{end}}
+  <script>
+    (function () {
+      function isPbAuthKey(key) {
+        return key && (key.indexOf('pocketbase_auth') === 0 || key.indexOf('__pb_superusers__') === 0);
+      }
+
+      function pbToken() {
+        try {
+          for (var i = 0; i < localStorage.length; i++) {
+            var key = localStorage.key(i);
+            if (!isPbAuthKey(key)) continue;
+            var parsed = JSON.parse(localStorage.getItem(key) || '{}');
+            if (parsed && parsed.token) return parsed.token;
+          }
+        } catch (e) {}
+        return '';
+      }
+
+      function clearPbLocal() {
+        try {
+          for (var i = localStorage.length - 1; i >= 0; i--) {
+            var key = localStorage.key(i);
+            if (isPbAuthKey(key)) localStorage.removeItem(key);
+          }
+        } catch (e) {}
+      }
+
+      function clearMonmsCookie(reload) {
+        return fetch('/_monms/auth/logout', { method: 'POST', credentials: 'same-origin' })
+          .then(function () {
+            if (reload) window.location.reload();
+          });
+      }
+
+      function doSignOut() {
+        clearPbLocal();
+        return clearMonmsCookie(true);
+      }
+
+      function syncFromPb() {
+        var token = pbToken();
+        if (!token) return Promise.resolve();
+        return fetch('/_monms/auth/sync', {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: { 'Authorization': 'Bearer ' + token }
+        }).then(function (resp) {
+          if (resp.ok) window.location.reload();
+          else console.error('[MonMS] sync-auth failed:', resp.status);
+        });
+      }
+
+      if (document.querySelector('.editor-badge') && !pbToken()) {
+        clearMonmsCookie(true);
+        return;
+      }
+
+      if (!document.querySelector('.editor-badge') && pbToken()) {
+        syncFromPb();
+        return;
+      }
+
+      window.addEventListener('storage', function (event) {
+        if (!isPbAuthKey(event.key)) return;
+        if (!event.newValue) {
+          if (document.querySelector('.editor-badge')) clearMonmsCookie(true);
+          return;
+        }
+        if (!document.querySelector('.editor-badge')) syncFromPb();
+      });
+
+      var signOutEl = document.getElementById('monms-sign-out');
+      if (signOutEl) {
+        signOutEl.addEventListener('click', function (event) {
+          event.preventDefault();
+          doSignOut();
+        });
+      }
+    })();
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.14.8/dist/cdn.min.js"></script>
+</body>
+</html>
+{{end}}

@@ -13,7 +13,7 @@ func TestResolveSlug(t *testing.T) {
 	t.Parallel()
 
 	t.Run("empty slug resolves to index", func(t *testing.T) {
-		ws := testutil.NewWorkspace(t)
+		ws := testutil.NewSite(t)
 		got, err := ResolveSlug(ws, "")
 		if err != nil {
 			t.Fatalf("ResolveSlug: %v", err)
@@ -25,7 +25,7 @@ func TestResolveSlug(t *testing.T) {
 	})
 
 	t.Run("press resolves to directory index", func(t *testing.T) {
-		ws := testutil.NewWorkspace(t)
+		ws := testutil.NewSite(t)
 		writeTemplate(t, ws, "templates/press/index.gohtml", `{{define "body"}}press{{end}}`)
 
 		got, err := ResolveSlug(ws, "press")
@@ -39,7 +39,7 @@ func TestResolveSlug(t *testing.T) {
 	})
 
 	t.Run("nested slug resolves to flat file", func(t *testing.T) {
-		ws := testutil.NewWorkspace(t)
+		ws := testutil.NewSite(t)
 		writeTemplate(t, ws, "templates/press/2024.gohtml", `{{define "body"}}2024{{end}}`)
 
 		got, err := ResolveSlug(ws, "press/2024")
@@ -53,7 +53,7 @@ func TestResolveSlug(t *testing.T) {
 	})
 
 	t.Run("trailing slash stripped", func(t *testing.T) {
-		ws := testutil.NewWorkspace(t)
+		ws := testutil.NewSite(t)
 		writeTemplate(t, ws, "templates/about/index.gohtml", `{{define "body"}}about{{end}}`)
 
 		got, err := ResolveSlug(ws, "about/")
@@ -67,7 +67,7 @@ func TestResolveSlug(t *testing.T) {
 	})
 
 	t.Run("flat file wins over directory index", func(t *testing.T) {
-		ws := testutil.NewWorkspace(t)
+		ws := testutil.NewSite(t)
 		writeTemplate(t, ws, "templates/about.gohtml", `{{define "body"}}flat{{end}}`)
 		writeTemplate(t, ws, "templates/about/index.gohtml", `{{define "body"}}index{{end}}`)
 
@@ -82,7 +82,7 @@ func TestResolveSlug(t *testing.T) {
 	})
 
 	t.Run("missing template returns ErrNotFound", func(t *testing.T) {
-		ws := testutil.NewWorkspace(t)
+		ws := testutil.NewSite(t)
 
 		_, err := ResolveSlug(ws, "missing")
 		if !errors.Is(err, ErrNotFound) {
@@ -91,7 +91,7 @@ func TestResolveSlug(t *testing.T) {
 	})
 
 	t.Run("slug case preserved", func(t *testing.T) {
-		ws := testutil.NewWorkspace(t)
+		ws := testutil.NewSite(t)
 		writeTemplate(t, ws, "templates/Press/index.gohtml", `{{define "body"}}Press{{end}}`)
 
 		got, err := ResolveSlug(ws, "Press")

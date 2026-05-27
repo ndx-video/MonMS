@@ -15,7 +15,7 @@ import (
 	"github.com/monms/monms/internal/monmsroutes"
 	"github.com/monms/monms/internal/schema"
 	"github.com/monms/monms/internal/testutil"
-	"github.com/monms/monms/internal/workspace"
+	"github.com/monms/monms/internal/site"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/apis"
 	"github.com/pocketbase/pocketbase/core"
@@ -24,24 +24,24 @@ import (
 
 const testPublishToken = "test-publish-token"
 
-func startTestContentServer(t *testing.T, wsAbs, publishToken string, loadAuth func(*core.RequestEvent) error) (*httptest.Server, core.App, func()) {
+func startTestContentServer(t *testing.T, siteAbs, publishToken string, loadAuth func(*core.RequestEvent) error) (*httptest.Server, core.App, func()) {
 	t.Helper()
 
-	if err := workspace.ValidateWorkspace(wsAbs); err != nil {
-		t.Fatalf("validate workspace: %v", err)
+	if err := site.ValidateSite(siteAbs); err != nil {
+		t.Fatalf("validate site: %v", err)
 	}
 
 	app := pocketbase.NewWithConfig(pocketbase.Config{
-		DefaultDataDir:  filepath.Join(wsAbs, ".pb_data"),
+		DefaultDataDir:  filepath.Join(siteAbs, ".pb_data"),
 		DefaultDev:      true,
 		HideStartBanner: true,
 	})
 
-	schema.RegisterBootstrapHook(app, wsAbs)
+	schema.RegisterBootstrapHook(app, siteAbs)
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		RegisterRoutes(se, Deps{
-			WsAbs:        wsAbs,
+			SiteAbs:        siteAbs,
 			PublishToken: publishToken,
 			LoadAuth:     loadAuth,
 		})
@@ -111,7 +111,7 @@ func postImport(t *testing.T, client *http.Client, url, token string, body any) 
 }
 
 func TestImportAPIUnauthorized(t *testing.T) {
-	ws := testutil.NewEditorialWorkspace(t)
+	ws := testutil.NewEditorialSite(t)
 	ts, app, cleanup := startTestContentServer(t, ws, testPublishToken, nil)
 	defer cleanup()
 
@@ -207,7 +207,7 @@ func TestImportAPIUnauthorized(t *testing.T) {
 }
 
 func TestPublishUIReturns200(t *testing.T) {
-	ws := testutil.NewEditorialWorkspace(t)
+	ws := testutil.NewEditorialSite(t)
 	ts, app, cleanup := startTestContentServer(t, ws, testPublishToken, nil)
 	defer cleanup()
 
@@ -249,7 +249,7 @@ func testLoadAuthFromCookie(e *core.RequestEvent) error {
 }
 
 func TestPublishUIReturns200WithCookie(t *testing.T) {
-	ws := testutil.NewEditorialWorkspace(t)
+	ws := testutil.NewEditorialSite(t)
 	ts, app, cleanup := startTestContentServer(t, ws, testPublishToken, testLoadAuthFromCookie)
 	defer cleanup()
 
@@ -285,7 +285,7 @@ func TestPublishUIReturns200WithCookie(t *testing.T) {
 }
 
 func TestPublisherGate(t *testing.T) {
-	ws := testutil.NewEditorialWorkspace(t)
+	ws := testutil.NewEditorialSite(t)
 
 	mockProd := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.URL.Path != monmsroutes.ContentImportPath {
@@ -356,7 +356,7 @@ func TestPublisherGate(t *testing.T) {
 }
 
 func TestImportAPIFailClosedEmptyToken(t *testing.T) {
-	ws := testutil.NewEditorialWorkspace(t)
+	ws := testutil.NewEditorialSite(t)
 	ts, _, cleanup := startTestContentServer(t, ws, "", nil)
 	defer cleanup()
 

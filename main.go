@@ -17,7 +17,7 @@ import (
 	"github.com/monms/monms/internal/stop"
 	"github.com/monms/monms/internal/templates"
 	"github.com/monms/monms/internal/validate"
-	"github.com/monms/monms/internal/workspace"
+	"github.com/monms/monms/internal/site"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
 )
@@ -36,6 +36,17 @@ func main() {
 				return
 			}
 			cli.PrintHelp("content")
+			return
+		}
+	}
+
+	if len(args) >= 2 && args[0] == "site" {
+		if _, wantHelp := cli.ParseHelpRequest(args[1:]); wantHelp {
+			if text, ok := cli.SiteSubcommandHelp(args[1]); ok {
+				fmt.Print(text)
+				return
+			}
+			cli.PrintHelp("site")
 			return
 		}
 	}
@@ -73,6 +84,12 @@ func main() {
 				os.Exit(1)
 			}
 			return
+		case "site":
+			if err := site.RunCLI(args[1:]); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+			return
 		}
 	}
 
@@ -83,12 +100,12 @@ func runServe() {
 	args := os.Args[1:]
 
 	if daemon.ShouldDetach(args) {
-		configured, abs, err := config.ResolveWorkspace(os.Args, os.Environ())
+		configured, abs, err := config.ResolveSite(os.Args, os.Environ())
 		if err != nil {
-			fmt.Fprintf(os.Stderr, "workspace: %v\n", err)
+			fmt.Fprintf(os.Stderr, "site: %v\n", err)
 			os.Exit(1)
 		}
-		if err := workspace.ValidateWorkspace(abs); err != nil {
+		if err := site.ValidateSite(abs); err != nil {
 			fmt.Fprintln(os.Stderr, err)
 			os.Exit(1)
 		}
@@ -104,32 +121,37 @@ func runServe() {
 		return
 	}
 
-	configured, abs, err := config.ResolveWorkspace(os.Args, os.Environ())
+	configured, abs, err := config.ResolveSite(os.Args, os.Environ())
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "workspace: %v\n", err)
+		fmt.Fprintf(os.Stderr, "site: %v\n", err)
 		os.Exit(1)
 	}
 
-	if err := workspace.ValidateWorkspace(abs); err != nil {
+	if err := site.ValidateSite(abs); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		os.Exit(1)
 	}
 
-	if err := os.Setenv("MONMS_WORKSPACE", abs); err != nil {
-		fmt.Fprintf(os.Stderr, "workspace env: %v\n", err)
+	if err := content.ApplyShapeSyncFromSite(abs); err != nil {
+		fmt.Fprintf(os.Stderr, "site sync: %v\n", err)
 		os.Exit(1)
 	}
-	os.Args = append([]string{os.Args[0]}, config.StripWorkspaceFlags(os.Args[1:])...)
+
+	if err := os.Setenv("MONMS_SITE", abs); err != nil {
+		fmt.Fprintf(os.Stderr, "site env: %v\n", err)
+		os.Exit(1)
+	}
+	os.Args = append([]string{os.Args[0]}, config.StripSiteFlags(os.Args[1:])...)
 	os.Args = append([]string{os.Args[0]}, cli.EnsureServeSubcommand(os.Args[1:])...)
 
-	serveArgs, err := content.ApplyServeConfigFromWorkspace(abs, os.Args[1:])
+	serveArgs, err := content.ApplyServeConfigFromSite(abs, os.Args[1:])
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "monms config: %v\n", err)
 		os.Exit(1)
 	}
 	os.Args = append([]string{os.Args[0]}, serveArgs...)
 
-	slog.Info("workspace configured",
+	slog.Info("site configured",
 		"path", configured,
 		"absolute", abs,
 		"mode", buildMode,
@@ -153,12 +175,12 @@ func runServe() {
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		content.RegisterRoutes(se, content.Deps{
-			WsAbs:        abs,
+			SiteAbs:        abs,
 			PublishToken: os.Getenv("MONMS_PUBLISH_TOKEN"),
 			LoadAuth:     router.LoadAuthFromCookie,
 		})
 		router.RegisterRoutes(se, router.Deps{
-			WsAbs: abs,
+			SiteAbs: abs,
 			Cache: tplCache,
 			IsDev: buildMode != "production",
 		})

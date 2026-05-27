@@ -17,7 +17,7 @@ func TestInitInstallsPreCommitHook(t *testing.T) {
 	}
 
 	ws := t.TempDir()
-	if err := scaffold.RunInit([]string{"--workspace=" + ws}); err != nil {
+	if err := scaffold.RunInit([]string{"--site=" + ws}); err != nil {
 		t.Fatalf("RunInit: %v", err)
 	}
 
@@ -36,8 +36,8 @@ func TestInitInstallsPreCommitHook(t *testing.T) {
 	if !strings.Contains(string(data), "git checkout -- .") {
 		t.Fatal("hook missing rollback command 'git checkout -- .' (AGT-05)")
 	}
-	if !strings.Contains(string(data), `validate -w "$WS_ROOT"`) {
-		t.Fatal("hook missing workspace-scoped validate -w")
+	if !strings.Contains(string(data), `validate -s "$SITE_ROOT"`) {
+		t.Fatal("hook missing site-scoped validate -s")
 	}
 
 	fi, err := os.Stat(hookPath)
@@ -62,7 +62,7 @@ func TestInitPreCommitHookIdempotent(t *testing.T) {
 		t.Fatalf("write hook: %v", err)
 	}
 
-	if err := scaffold.RunInit([]string{"--workspace=" + ws}); err != nil {
+	if err := scaffold.RunInit([]string{"--site=" + ws}); err != nil {
 		t.Fatalf("RunInit: %v", err)
 	}
 
@@ -87,7 +87,7 @@ func TestInitPreCommitHookOverwritesNonMonmsHook(t *testing.T) {
 		t.Fatalf("write non-monms hook: %v", err)
 	}
 
-	if err := scaffold.RunInit([]string{"--workspace=" + ws}); err != nil {
+	if err := scaffold.RunInit([]string{"--site=" + ws}); err != nil {
 		t.Fatalf("RunInit: %v", err)
 	}
 
@@ -109,7 +109,7 @@ func TestPreCommitHookRollback(t *testing.T) {
 		t.Fatalf("setup hooks dir: %v", err)
 	}
 
-	if err := scaffold.RunInit([]string{"--workspace=" + ws}); err != nil {
+	if err := scaffold.RunInit([]string{"--site=" + ws}); err != nil {
 		t.Fatalf("RunInit: %v", err)
 	}
 

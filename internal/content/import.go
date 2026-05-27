@@ -55,8 +55,8 @@ func UpsertRecord(app core.App, collectionName string, data map[string]any) erro
 }
 
 // ImportPayload upserts editorial collections from an in-memory payload (T-04-04).
-func ImportPayload(app core.App, wsAbs string, payloads []CollectionPayload) error {
-	allowed, err := LoadEditorialCollectionNames(wsAbs)
+func ImportPayload(app core.App, siteAbs string, payloads []CollectionPayload) error {
+	allowed, err := LoadEditorialCollectionNames(siteAbs)
 	if err != nil {
 		return err
 	}
@@ -81,9 +81,9 @@ func ImportPayload(app core.App, wsAbs string, payloads []CollectionPayload) err
 	return nil
 }
 
-// ImportFiles reads workspace/content/*.json and upserts records (PUB-04).
-func ImportFiles(app core.App, wsAbs string) error {
-	contentDir := filepath.Join(wsAbs, "content")
+// ImportFiles reads site/content/*.json and upserts records (PUB-04).
+func ImportFiles(app core.App, siteAbs string) error {
+	contentDir := filepath.Join(siteAbs, "content")
 	entries, err := os.ReadDir(contentDir)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -98,7 +98,7 @@ func ImportFiles(app core.App, wsAbs string) error {
 			continue
 		}
 		path := filepath.Join(contentDir, entry.Name())
-		if err := ensureUnderWorkspace(wsAbs, path); err != nil {
+		if err := ensureUnderSite(siteAbs, path); err != nil {
 			return err
 		}
 
@@ -120,5 +120,5 @@ func ImportFiles(app core.App, wsAbs string) error {
 		})
 	}
 
-	return ImportPayload(app, wsAbs, payloads)
+	return ImportPayload(app, siteAbs, payloads)
 }

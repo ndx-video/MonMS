@@ -12,6 +12,7 @@ var MonmsCommands = map[string]bool{
 	"init":     true,
 	"validate": true,
 	"content":  true,
+	"site":     true,
 	"stop":     true,
 }
 
@@ -55,6 +56,8 @@ func PrintHelp(command string) {
 		printValidateHelp(os.Stdout)
 	case "content":
 		printContentHelp(os.Stdout)
+	case "site":
+		printSiteHelp(os.Stdout)
 	case "stop":
 		printStopHelp(os.Stdout)
 	default:
@@ -79,9 +82,10 @@ Usage:
   monms [flags]                 Start the web server (same as monms serve)
 
 MonMS commands:
-  init       Scaffold a new workspace (templates, schema, assets, git hook)
-  validate   Lint workspace templates (*.gohtml)
+  init       Scaffold a new site (templates, schema, assets, git hook)
+  validate   Lint site templates (*.gohtml)
   content    Export, import, diff, or publish editorial content (JSON rail)
+  site       Sync site Git shape (fetch + checkout ref)
   stop       Stop running monms serve processes for this binary
 
 Server commands (PocketBase):
@@ -89,13 +93,14 @@ Server commands (PocketBase):
   superuser  Manage admin accounts
 
 Configuration:
-  -w, --workspace PATH    Workspace directory (default: ./workspace or MONMS_WORKSPACE)
-  workspace/.monms/config.json — productionUrl, publisherEmails, allowedHosts, bind
+  -s, --site PATH    Site directory (default: ./site or MONMS_SITE)
+  site/.monms/config.json — productionUrl, publisherEmails, allowedHosts, bind, shapeSync
 
 Examples:
-  monms init -w ./my-site
-  monms validate --workspace ./workspace templates/index.gohtml
-  monms content export --workspace ./workspace
+  monms init -s ./my-site
+  monms validate --site ./site templates/index.gohtml
+  monms content export --site ./site
+  monms site sync --site ./site --ref v1.2.0
   monms serve --http=127.0.0.1:8090
   monms stop
 
@@ -104,9 +109,9 @@ Run "monms <command> --help" for command-specific help.`)
 
 func printInitHelp(w io.Writer) {
 	fmt.Fprintln(w, `Usage:
-  monms init [-w|--workspace PATH]
+  monms init [-s|--site PATH]
 
-Scaffold a new MonMS workspace at PATH (default: ./workspace or MONMS_WORKSPACE).
+Scaffold a new MonMS site at PATH (default: ./site or MONMS_SITE).
 
 Creates:
   templates/layouts/base.gohtml   Site shell + HTMX inline editing
@@ -124,12 +129,12 @@ is on PATH. Installs or refreshes the pre-commit hook when safe.
 
 Examples:
   monms init
-  monms init --workspace /var/www/staging`)
+  monms init --site /var/www/staging`)
 }
 
 func printValidateHelp(w io.Writer) {
 	fmt.Fprintln(w, `Usage:
-  monms validate [-w|--workspace PATH] [files...]
+  monms validate [-s|--site PATH] [files...]
 
 Parse and lint Go HTML templates using the same rules as production SSR.
 
@@ -139,18 +144,18 @@ mode). If git is unavailable, pass explicit paths.
 Examples:
   monms validate
   monms validate templates/index.gohtml
-  monms validate --workspace ./workspace templates/press/index.gohtml`)
+  monms validate --site ./site templates/press/index.gohtml`)
 }
 
 func printContentHelp(w io.Writer) {
 	fmt.Fprintln(w, `Usage:
-  monms content <export|import|diff|publish> [-w|--workspace PATH] [flags]
+  monms content <export|import|diff|publish> [-s|--site PATH] [flags]
 
 Editorial content rail — sync PocketBase records marked editorial in schema JSON.
 
 Subcommands:
-  export    Write workspace/content/{collection}.json from live records
-  import    Upsert workspace/content/*.json into local .pb_data/
+  export    Write site/content/{collection}.json from live records
+  import    Upsert site/content/*.json into local .pb_data/
   diff      Show pending changes vs last publish; exit 1 if any (for CI)
   publish   Export staging and POST to production (requires --to and MONMS_PUBLISH_TOKEN)
 
@@ -158,11 +163,30 @@ Publish flags:
   --to URL  Production MonMS base URL (required for publish)
 
 Examples:
-  monms content export --workspace ./workspace
-  monms content diff --workspace ./workspace
-  monms content publish --workspace ./workspace --to https://production.example.com
+  monms content export --site ./site
+  monms content diff --site ./site
+  monms content publish --site ./site --to https://production.example.com
 
 Clients normally publish via the web console at /_monms/publish.`)
+}
+
+func printSiteHelp(w io.Writer) {
+	fmt.Fprintln(w, `Usage:
+  monms site sync [-s|--site PATH] --ref REF [--remote origin] [--force]
+
+Fetch tags from a Git remote and checkout a shape ref (tag or branch) in the
+site repository. Uses fetch + checkout — not git pull.
+
+Flags:
+  --ref REF       Git ref to checkout (required)
+  --remote NAME   Remote to fetch from (default: origin)
+  --force         Checkout even when the worktree has local changes
+
+Examples:
+  monms site sync --site ./site --ref v1.2.0
+  monms site sync -s /var/www/staging --ref main --remote origin
+
+Optional startup sync: set shapeSync.enabled in site/.monms/config.json.`)
 }
 
 func printStopHelp(w io.Writer) {
@@ -197,13 +221,23 @@ func StripHelpFlags(args []string) []string {
 func ContentSubcommandHelp(sub string) (string, bool) {
 	switch strings.ToLower(sub) {
 	case "export":
-		return "Usage: monms content export [-w|--workspace PATH]\n\nExport editorial collections to workspace/content/*.json.\n", true
+		return "Usage: monms content export [-s|--site PATH]\n\nExport editorial collections to site/content/*.json.\n", true
 	case "import":
-		return "Usage: monms content import [-w|--workspace PATH]\n\nImport workspace/content/*.json into local .pb_data/ (idempotent upsert).\n", true
+		return "Usage: monms content import [-s|--site PATH]\n\nImport site/content/*.json into local .pb_data/ (idempotent upsert).\n", true
 	case "diff":
-		return "Usage: monms content diff [-w|--workspace PATH]\n\nPrint field-level changes since last publish. Exit 1 if pending.\n", true
+		return "Usage: monms content diff [-s|--site PATH]\n\nPrint field-level changes since last publish. Exit 1 if pending.\n", true
 	case "publish":
-		return "Usage: monms content publish [-w|--workspace PATH] --to URL\n\nPOST editorial export to production import API. Requires MONMS_PUBLISH_TOKEN.\n", true
+		return "Usage: monms content publish [-s|--site PATH] --to URL\n\nPOST editorial export to production import API. Requires MONMS_PUBLISH_TOKEN.\n", true
+	default:
+		return "", false
+	}
+}
+
+// SiteSubcommandHelp returns help text for a site subcommand, or false.
+func SiteSubcommandHelp(sub string) (string, bool) {
+	switch strings.ToLower(sub) {
+	case "sync":
+		return "Usage: monms site sync [-s|--site PATH] --ref REF [--remote origin] [--force]\n\nFetch tags and checkout a site shape ref.\n", true
 	default:
 		return "", false
 	}

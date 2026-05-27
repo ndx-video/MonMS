@@ -31,7 +31,7 @@ func TestChecksumStable(t *testing.T) {
 }
 
 func TestDiffExportDetectsTitleChange(t *testing.T) {
-	ws := testutil.NewEditorialWorkspace(t)
+	ws := testutil.NewEditorialSite(t)
 	app := bootstrapEditorialApp(t, ws)
 
 	if err := ExportAll(app, ws); err != nil {
@@ -82,7 +82,7 @@ func TestDiffExportDetectsTitleChange(t *testing.T) {
 }
 
 func TestDiffExportNoChangesWhenChecksumMatches(t *testing.T) {
-	ws := testutil.NewEditorialWorkspace(t)
+	ws := testutil.NewEditorialSite(t)
 	app := bootstrapEditorialApp(t, ws)
 
 	snap, err := ExportSnapshot(app, ws)
@@ -138,7 +138,7 @@ func TestDiffSnapshotsDetectsDeletedRecord(t *testing.T) {
 }
 
 func TestWritePublishStateUnderMonms(t *testing.T) {
-	ws := testutil.NewEditorialWorkspace(t)
+	ws := testutil.NewEditorialSite(t)
 	if err := WritePublishState(ws, PublishState{
 		Checksum:    "sha256:abc",
 		PublishedAt: "2026-05-23T12:00:00Z",
@@ -161,7 +161,7 @@ func TestWritePublishStateUnderMonms(t *testing.T) {
 }
 
 func TestReadPublishStateMissingReturnsZero(t *testing.T) {
-	ws := testutil.NewEditorialWorkspace(t)
+	ws := testutil.NewEditorialSite(t)
 	state, err := ReadPublishState(ws)
 	if err != nil {
 		t.Fatalf("read: %v", err)

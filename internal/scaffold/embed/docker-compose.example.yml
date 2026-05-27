@@ -33,9 +33,9 @@ services:
     volumes:
       # L2 structure — checkout a release tag on this path before restart:
       #   git -C /path/to/prod-workspace fetch --tags && git checkout v1.2.0
-      - ${PRODUCTION_WORKSPACE:-../workspace-prod}:/app
+      - ${PRODUCTION_SITE:-../site-prod}:/app
       - production_pb_data:/app/.pb_data
-      - ${PRODUCTION_CONFIG:-../workspace-prod/.monms/config.json}:/app/.monms/config.json:ro
+      - ${PRODUCTION_CONFIG:-../site-prod/.monms/config.json}:/app/.monms/config.json:ro
     environment:
       MONMS_PUBLISH_TOKEN: ${MONMS_PUBLISH_TOKEN:?set MONMS_PUBLISH_TOKEN in .env}
     restart: unless-stopped

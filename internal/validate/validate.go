@@ -26,8 +26,8 @@ var voidElements = map[string]bool{
 
 // ValidateTemplate performs a dry-run parse mirroring the production ssr.go loader (D-37).
 // It uses template.ParseFiles(layoutPath, filePath) — identical two-arg call, layout first.
-func ValidateTemplate(wsAbs, filePath string) error {
-	layoutPath := filepath.Join(wsAbs, "templates", "layouts", "base.gohtml")
+func ValidateTemplate(siteAbs, filePath string) error {
+	layoutPath := filepath.Join(siteAbs, "templates", "layouts", "base.gohtml")
 	if _, err := template.ParseFiles(layoutPath, filePath); err != nil {
 		return fmt.Errorf("%s: template parse error: %w", filepath.Base(filePath), err)
 	}
@@ -83,17 +83,17 @@ done:
 
 // ValidateFiles orchestrates template and HTML validation for a list of files,
 // accumulating all errors before returning (continue-on-error pattern from sync.go).
-// T-02-01: file paths are verified to be under wsAbs before reading.
-func ValidateFiles(wsAbs string, files []string) error {
-	wsAbs = filepath.Clean(wsAbs)
+// T-02-01: file paths are verified to be under siteAbs before reading.
+func ValidateFiles(siteAbs string, files []string) error {
+	siteAbs = filepath.Clean(siteAbs)
 	var errs []string
 
 	for _, f := range files {
-		// T-02-01: path traversal guard — reject files outside workspace.
+		// T-02-01: path traversal guard — reject files outside site.
 		cleanF := filepath.Clean(f)
-		rel, err := filepath.Rel(wsAbs, cleanF)
+		rel, err := filepath.Rel(siteAbs, cleanF)
 		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-			errs = append(errs, fmt.Sprintf("%s: refusing to read file outside workspace", filepath.Base(f)))
+			errs = append(errs, fmt.Sprintf("%s: refusing to read file outside site", filepath.Base(f)))
 			continue
 		}
 
@@ -102,7 +102,7 @@ func ValidateFiles(wsAbs string, files []string) error {
 			errs = append(errs, fmt.Sprintf("%s: read error: %v", filepath.Base(f), err))
 			continue
 		}
-		if err := ValidateTemplate(wsAbs, cleanF); err != nil {
+		if err := ValidateTemplate(siteAbs, cleanF); err != nil {
 			errs = append(errs, err.Error())
 		}
 		if err := ValidateHTML(cleanF, content); err != nil {

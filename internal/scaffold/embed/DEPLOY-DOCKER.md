@@ -15,7 +15,7 @@ Full lifecycle spec: [../specs/staging.md](../specs/staging.md)
 | **L3** Content | `.pb_data/` SQLite | No | Named volume at `/app/.pb_data` |
 | **L4** Audience | Public URL | No | Reverse proxy in front of production service |
 
-Structure promotes via **git tag + checkout on the mounted workspace**, not by rebuilding the image. Content promotes via **Publish to live** (`/_monms/publish`) — unchanged from non-Docker deploys.
+Structure promotes via **git tag + checkout on the mounted site** on **both** staging and production hosts (operator policy). Content promotes via **Publish to live** (`/_monms/publish`) — JSON outside Git, unchanged from non-Docker deploys.
 
 ## Prerequisites
 
@@ -25,7 +25,7 @@ Structure promotes via **git tag + checkout on the mounted workspace**, not by r
    go build -ldflags "-X main.buildMode=production" -o monms .
    ```
 
-   Copy `monms` into this workspace root (gitignored). Do not commit it.
+   Copy `monms` into this site root (gitignored). Do not commit it.
 
 2. **Build the engine image**:
 
@@ -64,24 +64,48 @@ Each service needs:
 
 | Concern | Staging | Production |
 |---------|---------|------------|
-| Workspace mount | Active branch (e.g. `main`) | Tagged release (e.g. `v1.2.0`) |
+| Workspace mount | Tagged shape (e.g. `v1.2.0`) — same tag as production | Tagged shape (e.g. `v1.2.0`) |
 | `.pb_data/` volume | `staging_pb_data` | `production_pb_data` |
 | `.monms/config.json` | `productionUrl` → live site | `productionUrl` empty; import API only |
 | `MONMS_PUBLISH_TOKEN` | Same secret as production | Same secret as staging |
 
-Consultants typically maintain **two workspace clones** (or two host paths) so staging and production can run different git refs simultaneously.
+Consultants **shape** on a site checkout and tag releases. Operators maintain **two workspace clones** (or two host paths) so staging and production can run as separate instances; a deploy policy pulls the same tag to both when shape changes ship.
 
-## Structure deploy (L2 rail)
+## Structure deploy (L2 rail — shaping)
 
-When a structure release is tagged:
+When a shape release is tagged, operator policy updates **both** site checkouts. Examples:
+
+**Built-in CLI (cron/CI):**
 
 ```bash
-git -C /path/to/production-workspace fetch --tags
-git -C /path/to/production-workspace checkout v1.2.0
-docker compose restart production
+monms site sync --site /path/to/staging --ref v1.2.0
+monms site sync --site /path/to/production --ref v1.2.0
+docker compose restart staging production
 ```
 
-Production builds enable fsnotify on the workspace tree — template changes after checkout may reload without restart, but restarting the container is the safe default.
+**Optional startup sync** — set in each instance's `.monms/config.json`:
+
+```json
+"shapeSync": {
+  "enabled": true,
+  "ref": "v1.2.0",
+  "remote": "origin",
+  "force": false,
+  "failOnError": false
+}
+```
+
+When `failOnError` is false (default), serve continues with the current checkout if sync fails.
+
+**Manual git (equivalent):**
+
+```bash
+git -C /path/to/staging-site fetch --tags && git -C /path/to/staging-site checkout v1.2.0
+git -C /path/to/production-site fetch --tags && git -C /path/to/production-site checkout v1.2.0
+docker compose restart staging production
+```
+
+Production builds enable fsnotify on the site tree — template changes after checkout may reload without restart, but restarting the container is the safe default.
 
 **Do not** rebuild the Docker image for structure-only changes unless you also upgrade the engine (L1).
 
@@ -104,7 +128,7 @@ Unchanged — clients use **Publish to live** on staging. No container steps req
 - Bake `.pb_data/` into the image.
 - Use one container for both staging and production.
 - Rebuild the image on every structure tag — Git checkout on the volume is the promotion mechanism.
-- Multi-stage-build the MonMS engine source inside this workspace repo — keep engine and workspace repos separate.
+- Multi-stage-build the MonMS engine source inside this site repo — keep engine and site repos separate.
 
 ## Files
 

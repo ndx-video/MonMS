@@ -8,18 +8,20 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/monms/monms/internal/site"
 	"github.com/pocketbase/pocketbase/core"
 )
 
-// MonmsConfig is staging workspace config (workspace/.monms/config.json).
+// MonmsConfig is staging site config (site/.monms/config.json).
 type MonmsConfig struct {
-	ProductionURL   string      `json:"productionUrl"`
-	PublisherEmails []string    `json:"publisherEmails"`
-	AllowedHosts    []string    `json:"allowedHosts"`
-	Bind            *BindConfig `json:"bind,omitempty"`
+	ProductionURL   string                    `json:"productionUrl"`
+	PublisherEmails []string                  `json:"publisherEmails"`
+	AllowedHosts    []string                  `json:"allowedHosts"`
+	Bind            *BindConfig               `json:"bind,omitempty"`
+	ShapeSync       *site.ShapeSyncConfig `json:"shapeSync,omitempty"`
 }
 
-// BindConfig is the workspace listen address for monms serve (maps to PocketBase --http).
+// BindConfig is the site listen address for monms serve (maps to PocketBase --http).
 type BindConfig struct {
 	Host string `json:"host"`
 	Port string `json:"port"`
@@ -42,10 +44,10 @@ func RequirePublishToken(expected string) func(*core.RequestEvent) error {
 	}
 }
 
-// LoadMonmsConfig reads workspace/.monms/config.json; missing file returns zero config.
-func LoadMonmsConfig(wsAbs string) (MonmsConfig, error) {
-	path := filepath.Join(wsAbs, ".monms", "config.json")
-	if err := ensureUnderWorkspace(wsAbs, path); err != nil {
+// LoadMonmsConfig reads site/.monms/config.json; missing file returns zero config.
+func LoadMonmsConfig(siteAbs string) (MonmsConfig, error) {
+	path := filepath.Join(siteAbs, ".monms", "config.json")
+	if err := ensureUnderSite(siteAbs, path); err != nil {
 		return MonmsConfig{}, err
 	}
 

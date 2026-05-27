@@ -38,17 +38,17 @@ const heroContentSchema = `{
   ]
 }`
 
-func setupInlineEditWorkspace(t *testing.T) string {
+func setupInlineEditSite(t *testing.T) string {
 	t.Helper()
 
-	ws := testutil.NewWorkspace(t)
+	ws := testutil.NewSite(t)
 	testutil.WriteFile(t, filepath.Join(ws, "schema/hero_content.json"), heroContentSchema)
 
 	// Copy Phase 3 templates from repo workspace fixtures.
 	repoRoot := filepath.Join("..", "..")
-	baseSrc := filepath.Join(repoRoot, "workspace/templates/layouts/base.gohtml")
-	indexSrc := filepath.Join(repoRoot, "workspace/templates/index.gohtml")
-	cssSrc := filepath.Join(repoRoot, "workspace/assets/main.css")
+	baseSrc := filepath.Join(repoRoot, "site/templates/layouts/base.gohtml")
+	indexSrc := filepath.Join(repoRoot, "site/templates/index.gohtml")
+	cssSrc := filepath.Join(repoRoot, "site/assets/main.css")
 
 	copyFile(t, baseSrc, filepath.Join(ws, "templates/layouts/base.gohtml"))
 	copyFile(t, indexSrc, filepath.Join(ws, "templates/index.gohtml"))
@@ -67,7 +67,7 @@ func copyFile(t *testing.T, src, dest string) {
 }
 
 func TestInlineEdit_UnauthenticatedHidesEdit(t *testing.T) {
-	ws := setupInlineEditWorkspace(t)
+	ws := setupInlineEditSite(t)
 	ts, _, cleanup := startTestServer(t, ws, testServerOpts{isDev: true})
 	defer cleanup()
 
@@ -95,7 +95,7 @@ func TestInlineEdit_UnauthenticatedHidesEdit(t *testing.T) {
 }
 
 func TestInlineEdit_AuthenticatedShowsBadge(t *testing.T) {
-	ws := setupInlineEditWorkspace(t)
+	ws := setupInlineEditSite(t)
 	ts, app, _, cleanup := startTestServerWithApp(t, ws, testServerOpts{isDev: true})
 	defer cleanup()
 
@@ -142,7 +142,7 @@ func TestInlineEdit_AuthenticatedShowsBadge(t *testing.T) {
 }
 
 func TestAuthCookieBridge_LoginThenSSR(t *testing.T) {
-	ws := setupInlineEditWorkspace(t)
+	ws := setupInlineEditSite(t)
 	ts, app, _, cleanup := startTestServerWithApp(t, ws, testServerOpts{isDev: true})
 	defer cleanup()
 
@@ -198,7 +198,7 @@ func TestAuthCookieBridge_LoginThenSSR(t *testing.T) {
 }
 
 func TestHeroContent_AuthenticatedPatchPersists(t *testing.T) {
-	ws := setupInlineEditWorkspace(t)
+	ws := setupInlineEditSite(t)
 	ts, app, _, cleanup := startTestServerWithApp(t, ws, testServerOpts{isDev: true})
 	defer cleanup()
 
@@ -231,7 +231,7 @@ func TestHeroContent_AuthenticatedPatchPersists(t *testing.T) {
 }
 
 func TestHeroContent_GuestPutForbidden(t *testing.T) {
-	ws := setupInlineEditWorkspace(t)
+	ws := setupInlineEditSite(t)
 	ts, _, cleanup := startTestServer(t, ws, testServerOpts{isDev: true})
 	defer cleanup()
 

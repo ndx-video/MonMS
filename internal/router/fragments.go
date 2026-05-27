@@ -11,8 +11,8 @@ import (
 )
 
 // FragmentsHandler renders HTMX partials from templates/fragments/{name}.gohtml (D-15).
-func FragmentsHandler(wsAbs string, cache *templates.TemplateCache) func(*core.RequestEvent) error {
-	fragDir := filepath.Join(wsAbs, "templates", "fragments")
+func FragmentsHandler(siteAbs string, cache *templates.TemplateCache) func(*core.RequestEvent) error {
+	fragDir := filepath.Join(siteAbs, "templates", "fragments")
 	return func(e *core.RequestEvent) error {
 		name := e.Request.PathValue("name")
 		fragPath := filepath.Join(fragDir, name+".gohtml")

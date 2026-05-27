@@ -11,7 +11,7 @@ import (
 )
 
 func TestIdleMemory(t *testing.T) {
-	ws := testutil.NewWorkspace(t)
+	ws := testutil.NewSite(t)
 	ts, _, cleanup := startTestServer(t, ws, testServerOpts{isDev: false, productionMode: true})
 	defer cleanup()
 
@@ -38,7 +38,7 @@ func TestIdleMemory(t *testing.T) {
 }
 
 func TestTTFB(t *testing.T) {
-	ws := testutil.NewWorkspace(t)
+	ws := testutil.NewSite(t)
 	ts, _, cleanup := startTestServer(t, ws, testServerOpts{isDev: false, productionMode: true})
 	defer cleanup()
 

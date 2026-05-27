@@ -2,7 +2,7 @@
 
 ## **Project Name: MonMS — The Agent-Malleable Monolithic CMS**
 
-> **Document note:** v1 vision and illustrative code below. **v2 lifecycle** (four layers, staging/production, content publish) is specified in [`specs/staging.md`](staging.md) and implemented in Phase 4 (2026-05-26). Where this PRD conflicts with the codebase, prefer `CLAUDE.md`, `specs/staging.md`, and `.planning/` verification artifacts.
+> **Document note:** v1 vision and illustrative code below. **v2 lifecycle** (four layers, phases of work — development / shaping / staging / production — content publish) is specified in [`specs/staging.md`](staging.md) and implemented in Phase 4 (2026-05-26). Where this PRD conflicts with the codebase, prefer `CLAUDE.md`, `specs/staging.md`, and `.planning/` verification artifacts.
 
 ## **1\. Executive Summary & Vision**
 
@@ -23,17 +23,17 @@ For clients, MonMS provides **Inline Contextual Editing**—the ability to safel
 1. **Single-Binary Monolith:** An entire production-grade CMS, database, file server, and web server compiled into a single executable using \< 30MB RAM.  
 2. **Zero-Compilation Malleability:** The application UI/UX, routing, and database schemas are modified on the fly without restarting or rebuilding the Go binary.  
 3. **Git-Managed Structure:** Every AI structural adjustment (new page, updated CSS, modified collection layout) is tracked, versioned, and rolled back via Git. Editorial copy promotes separately via JSON upsert (v2 — see [`specs/staging.md`](staging.md)).  
-4. **Inline Contextual Editing:** Clients log in and click to type directly on the staging site, instantly updating SQLite records behind the scenes. Publishers push approved copy to production via **Publish to live** (`/_monms/publish`).
+4. **Inline Contextual Editing:** Clients log in on the **staging** instance and click to type directly on the site, instantly updating SQLite records in `.pb_data/` (not Git). Publishers push approved copy to **production** via **Publish to live** (`/_monms/publish`) — JSON outside Git.
 
 ## **2\. Architectural Design & Folder Topology**
 
-The system uses PocketBase as an embedded Go framework. The Go binary remains completely frozen and generic. All application logic, assets, templates, and schemas live in a sibling folder (/workspace) which is a tracked Git repository.
+The system uses PocketBase as an embedded Go framework. The Go binary remains completely frozen and generic. All application logic, assets, templates, and schemas live in a sibling folder (/site) which is a tracked Git repository.
 
 ### **Directory Structure**
 
 ```
 monms/                    # Pre-compiled Go monolithic executable (L1 engine)
-└── workspace/            # Git-tracked site structure + runtime (per deployment)
+└── site/            # Git-tracked site structure + runtime (per deployment)
     ├── schema/           # L2 — collection definitions (JSON; may include "editorial": true)
     ├── content/          # L3 — editorial export snapshots (gitignored by default)
     ├── templates/        # L2 — Go HTML templates parsed on demand
@@ -97,7 +97,7 @@ func main() {
 	app.OnServe().BindFunc(func(se \*core.ServeEvent) error {  
 		// Static asset serving directly from the Git-managed workspace  
 		se.Router.GET("/assets/{path...}", func(e \*core.RequestEvent) error {  
-			filePath := filepath.Join("./workspace/assets", e.Request.PathValue("path"))  
+			filePath := filepath.Join("./site/assets", e.Request.PathValue("path"))  
 			return e.File(filePath)  
 		})
 
@@ -134,8 +134,8 @@ func main() {
 }
 
 func getTemplate(slug string) (\*template.Template, error) {  
-	templatePath := filepath.Join("./workspace/templates", slug+".gohtml")  
-	layoutPath := filepath.Join("./workspace/templates/layouts/base.gohtml")
+	templatePath := filepath.Join("./site/templates", slug+".gohtml")  
+	layoutPath := filepath.Join("./site/templates/layouts/base.gohtml")
 
 	tplCache.mu.RLock()  
 	if tplCache.active {  
@@ -168,7 +168,7 @@ func watchWorkspace(c \*TemplateCache) {
 	}  
 	defer watcher.Close()
 
-	\_ \= watcher.Add("./workspace/templates")
+	\_ \= watcher.Add("./site/templates")
 
 	for {  
 		select {  
@@ -227,7 +227,7 @@ The Agent accesses the template directory, modifies markup, and creates CSS rule
 
 *Example Agent Operation:*\* Add a layout block displaying the newly created press\_releases.
 
-* **Agent Execution:** Rewrites ./workspace/templates/press.gohtml injecting an HTMX layout fetching from /api/collections/press\_releases/records.  
+* **Agent Execution:** Rewrites ./site/templates/press.gohtml injecting an HTMX layout fetching from /api/collections/press\_releases/records.  
 * **Result:** On the next browser reload, Go detects the template change, parses the raw .gohtml file, and outputs the brand-new component.
 
 ### **3\. Safety Guardrails for Agent Code**
@@ -244,9 +244,9 @@ While the AI handles high-level structural and design mutations, human clients r
 
 When an authenticated client views the site, MonMS injects editability directly into the SSR layout.
 
-> **Implementation note:** HTMX Bearer auth uses server-injected `AuthToken` in `htmx:configRequest` — not `document.cookie` (session cookie is HttpOnly; SEC-04). See `workspace/templates/layouts/base.gohtml`.
+> **Implementation note:** HTMX Bearer auth uses server-injected `AuthToken` in `htmx:configRequest` — not `document.cookie` (session cookie is HttpOnly; SEC-04). See `site/templates/layouts/base.gohtml`.
 
-### **Global Base Layout Layout (/workspace/templates/layouts/base.gohtml)**
+### **Global Base Layout Layout (/site/templates/layouts/base.gohtml)**
 
 This template automatically enables inline saving functionality if the client is logged in.
 
@@ -296,7 +296,7 @@ This template automatically enables inline saving functionality if the client is
 \</html\>  
 {{end}}
 
-### **Page Template Implementation (/workspace/templates/index.gohtml)**
+### **Page Template Implementation (/site/templates/index.gohtml)**
 
 This template uses HTMX attributes to trigger REST API requests back to the dynamic PocketBase collection on edit blur.
 
@@ -373,7 +373,7 @@ MonMS v2 adds a **four-layer lifecycle** and **dual promotion rails** without ch
 | Layer | Artifact | Promotion |
 |-------|----------|-----------|
 | L1 Engine | `monms` binary | Semver release |
-| L2 Structure | `workspace/` Git — templates, schema, assets | Git tag → production deploy |
+| L2 Structure | `site/` Git — templates, schema, assets | Git tag → production deploy |
 | L3 Content | `.pb_data/` records; export to `content/*.json` | **Publish to live** → JSON upsert |
 | L4 Audience | Production URL | Read-only |
 
@@ -384,7 +384,7 @@ MonMS v2 adds a **four-layer lifecycle** and **dual promotion rails** without ch
 - `monms content export|import|diff|publish` — operator/CI content rail
 - `POST /api/monms/content/import` — production import (Bearer `MONMS_PUBLISH_TOKEN`)
 - `/_monms/publish` — staging publish console with diff preview and publisher gate
-- `"editorial": true` in `workspace/schema/*.json` — collections eligible for content sync
-- [`workspace/MEDIA.md`](../workspace/MEDIA.md) — CDN URL policy (no blob copy between environments)
+- `"editorial": true` in `site/schema/*.json` — collections eligible for content sync
+- [`site/MEDIA.md`](../site/MEDIA.md) — CDN URL policy (no blob copy between environments)
 
 Consultants own structure Git tags; clients own routine content publish. Full `.pb_data/` backup is **not** the primary publish path (D-56).

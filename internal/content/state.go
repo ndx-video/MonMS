@@ -14,15 +14,15 @@ type PublishState struct {
 	Collections   []string `json:"collections"`
 }
 
-// publishStatePath returns workspace/.monms/publish-state.json.
-func publishStatePath(wsAbs string) string {
-	return filepath.Join(wsAbs, ".monms", "publish-state.json")
+// publishStatePath returns site/.monms/publish-state.json.
+func publishStatePath(siteAbs string) string {
+	return filepath.Join(siteAbs, ".monms", "publish-state.json")
 }
 
 // ReadPublishState loads publish state; missing file returns zero state (PUB-08).
-func ReadPublishState(wsAbs string) (PublishState, error) {
-	path := publishStatePath(wsAbs)
-	if err := ensureUnderWorkspace(wsAbs, path); err != nil {
+func ReadPublishState(siteAbs string) (PublishState, error) {
+	path := publishStatePath(siteAbs)
+	if err := ensureUnderSite(siteAbs, path); err != nil {
 		return PublishState{}, err
 	}
 
@@ -44,10 +44,10 @@ func ReadPublishState(wsAbs string) (PublishState, error) {
 	return state, nil
 }
 
-// WritePublishState writes publish state under workspace/.monms/ only (PUB-08).
-func WritePublishState(wsAbs string, state PublishState) error {
-	path := publishStatePath(wsAbs)
-	if err := ensureUnderWorkspace(wsAbs, path); err != nil {
+// WritePublishState writes publish state under site/.monms/ only (PUB-08).
+func WritePublishState(siteAbs string, state PublishState) error {
+	path := publishStatePath(siteAbs)
+	if err := ensureUnderSite(siteAbs, path); err != nil {
 		return err
 	}
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {

@@ -25,9 +25,9 @@ func RunCLI(args []string) error {
 	fs := flag.NewFlagSet("validate", flag.ContinueOnError)
 	fs.SetOutput(io.Discard)
 	fs.Usage = func() { cli.PrintHelp("validate") }
-	var wsFlag string
-	fs.StringVar(&wsFlag, "workspace", "", "workspace path (default: MONMS_WORKSPACE or ./workspace)")
-	if err := fs.Parse(config.StripWorkspaceFlags(args)); err != nil {
+	var siteFlag string
+	fs.StringVar(&siteFlag, "site", "", "site path (default: MONMS_SITE or ./site)")
+	if err := fs.Parse(config.StripSiteFlags(args)); err != nil {
 		if err == flag.ErrHelp {
 			cli.PrintHelp("validate")
 			return nil
@@ -35,7 +35,7 @@ func RunCLI(args []string) error {
 		return err
 	}
 
-	_, wsAbs, err := config.ResolveWorkspace(args, os.Environ())
+	_, siteAbs, err := config.ResolveSite(args, os.Environ())
 	if err != nil {
 		return err
 	}
@@ -43,7 +43,7 @@ func RunCLI(args []string) error {
 	files := fs.Args()
 
 	if len(files) == 0 {
-		staged, err := getStagedGohtml(wsAbs)
+		staged, err := getStagedGohtml(siteAbs)
 		if err != nil {
 			// D-42 graceful: git may be unavailable — warn but don't fail
 			slog.Warn("validate: git not available, --files required", "err", err)
@@ -57,14 +57,14 @@ func RunCLI(args []string) error {
 		return nil
 	}
 
-	return ValidateFiles(wsAbs, files)
+	return ValidateFiles(siteAbs, files)
 }
 
-// getStagedGohtml returns absolute paths of staged .gohtml files in wsAbs.
-// Uses git diff --cached with .Dir set to wsAbs (T-02-04: no user-supplied git args).
-func getStagedGohtml(wsAbs string) ([]string, error) {
+// getStagedGohtml returns absolute paths of staged .gohtml files in siteAbs.
+// Uses git diff --cached with .Dir set to siteAbs (T-02-04: no user-supplied git args).
+func getStagedGohtml(siteAbs string) ([]string, error) {
 	cmd := exec.Command("git", "diff", "--cached", "--name-only", "--diff-filter=ACM")
-	cmd.Dir = wsAbs
+	cmd.Dir = siteAbs
 	out, err := cmd.Output()
 	if err != nil {
 		return nil, fmt.Errorf("git diff: %w", err)
@@ -73,7 +73,7 @@ func getStagedGohtml(wsAbs string) ([]string, error) {
 	var result []string
 	for _, line := range strings.Split(strings.TrimSpace(string(out)), "\n") {
 		if line != "" && strings.HasSuffix(line, ".gohtml") {
-			result = append(result, filepath.Join(wsAbs, line))
+			result = append(result, filepath.Join(siteAbs, line))
 		}
 	}
 	return result, nil

@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/monms/monms/internal/workspace"
+	"github.com/monms/monms/internal/site"
 )
 
 func runInitInDir(t *testing.T, dir string) {
@@ -21,7 +21,7 @@ func runInitInDir(t *testing.T, dir string) {
 	if err := os.Chdir(dir); err != nil {
 		t.Fatalf("chdir: %v", err)
 	}
-	if err := RunInit([]string{"--workspace", dir}); err != nil {
+	if err := RunInit([]string{"--site", dir}); err != nil {
 		t.Fatalf("RunInit: %v", err)
 	}
 }
@@ -69,8 +69,8 @@ func TestInitScaffold(t *testing.T) {
 		}
 	}
 
-	if err := workspace.ValidateWorkspace(dir); err != nil {
-		t.Fatalf("ValidateWorkspace: %v", err)
+	if err := site.ValidateSite(dir); err != nil {
+		t.Fatalf("ValidateSite: %v", err)
 	}
 
 	cfg, err := os.ReadFile(filepath.Join(dir, ".monms/config.json"))

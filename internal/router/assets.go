@@ -12,9 +12,9 @@ import (
 
 var errForbidden = errors.New("path outside assets root")
 
-// AssetsHandler serves files from workspace/assets with root-jail validation (D-29).
-func AssetsHandler(wsAbs string) func(*core.RequestEvent) error {
-	assetsRoot := filepath.Join(wsAbs, "assets")
+// AssetsHandler serves files from site/assets with root-jail validation (D-29).
+func AssetsHandler(siteAbs string) func(*core.RequestEvent) error {
+	assetsRoot := filepath.Join(siteAbs, "assets")
 	return func(e *core.RequestEvent) error {
 		requestPath := e.Request.PathValue("path")
 		absPath, err := safeAssetPath(assetsRoot, requestPath)

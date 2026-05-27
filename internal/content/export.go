@@ -63,9 +63,9 @@ func ExportCollection(app core.App, name string) ([]map[string]any, error) {
 	return out, nil
 }
 
-// ExportAll writes workspace/content/{collection}.json for each editorial collection (PUB-02).
-func ExportAll(app core.App, wsAbs string) error {
-	names, err := LoadEditorialCollectionNames(wsAbs)
+// ExportAll writes site/content/{collection}.json for each editorial collection (PUB-02).
+func ExportAll(app core.App, siteAbs string) error {
+	names, err := LoadEditorialCollectionNames(siteAbs)
 	if err != nil {
 		return err
 	}
@@ -73,7 +73,7 @@ func ExportAll(app core.App, wsAbs string) error {
 		return nil
 	}
 
-	contentDir := filepath.Join(wsAbs, "content")
+	contentDir := filepath.Join(siteAbs, "content")
 	if err := os.MkdirAll(contentDir, 0o755); err != nil {
 		return fmt.Errorf("content export: mkdir content: %w", err)
 	}
@@ -92,7 +92,7 @@ func ExportAll(app core.App, wsAbs string) error {
 		}
 
 		dest := filepath.Join(contentDir, name+".json")
-		if err := ensureUnderWorkspace(wsAbs, dest); err != nil {
+		if err := ensureUnderSite(siteAbs, dest); err != nil {
 			return err
 		}
 		if err := os.WriteFile(dest, merged, 0o644); err != nil {
@@ -104,8 +104,8 @@ func ExportAll(app core.App, wsAbs string) error {
 }
 
 // ExportSnapshot builds in-memory editorial payloads for checksum/diff (sorted).
-func ExportSnapshot(app core.App, wsAbs string) ([]CollectionFile, error) {
-	names, err := LoadEditorialCollectionNames(wsAbs)
+func ExportSnapshot(app core.App, siteAbs string) ([]CollectionFile, error) {
+	names, err := LoadEditorialCollectionNames(siteAbs)
 	if err != nil {
 		return nil, err
 	}
@@ -122,9 +122,9 @@ func ExportSnapshot(app core.App, wsAbs string) ([]CollectionFile, error) {
 	return files, nil
 }
 
-// LoadContentFiles reads workspace/content/*.json as baseline snapshots.
-func LoadContentFiles(wsAbs string) ([]CollectionFile, error) {
-	contentDir := filepath.Join(wsAbs, "content")
+// LoadContentFiles reads site/content/*.json as baseline snapshots.
+func LoadContentFiles(siteAbs string) ([]CollectionFile, error) {
+	contentDir := filepath.Join(siteAbs, "content")
 	entries, err := os.ReadDir(contentDir)
 	if err != nil {
 		if os.IsNotExist(err) {
@@ -139,7 +139,7 @@ func LoadContentFiles(wsAbs string) ([]CollectionFile, error) {
 			continue
 		}
 		path := filepath.Join(contentDir, entry.Name())
-		if err := ensureUnderWorkspace(wsAbs, path); err != nil {
+		if err := ensureUnderSite(siteAbs, path); err != nil {
 			return nil, err
 		}
 		data, err := os.ReadFile(path)

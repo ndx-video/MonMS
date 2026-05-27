@@ -17,7 +17,7 @@ var deniedSystemCollections = map[string]struct{}{
 
 // Deps configures content HTTP routes.
 type Deps struct {
-	WsAbs        string
+	SiteAbs        string
 	PublishToken string
 	// LoadAuth hydrates e.Auth from browser session (e.g. monms_auth cookie) before RequireSuperuserAuth.
 	LoadAuth func(*core.RequestEvent) error
@@ -58,7 +58,7 @@ func importHandler(deps Deps) func(*core.RequestEvent) error {
 			return e.BadRequestError("import failed", err)
 		}
 
-		if err := ImportPayload(e.App, deps.WsAbs, payloads); err != nil {
+		if err := ImportPayload(e.App, deps.SiteAbs, payloads); err != nil {
 			return e.BadRequestError("import failed", err)
 		}
 

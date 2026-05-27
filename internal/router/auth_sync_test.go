@@ -12,7 +12,7 @@ import (
 )
 
 func TestSyncAuth_SetsCookieFromBearer(t *testing.T) {
-	ws := setupInlineEditWorkspace(t)
+	ws := setupInlineEditSite(t)
 	ts, app, _, cleanup := startTestServerWithApp(t, ws, testServerOpts{isDev: true})
 	defer cleanup()
 
@@ -51,7 +51,7 @@ func TestSyncAuth_SetsCookieFromBearer(t *testing.T) {
 }
 
 func TestSyncAuth_GuestHomepageScriptContainsSync(t *testing.T) {
-	ws := setupInlineEditWorkspace(t)
+	ws := setupInlineEditSite(t)
 	ts, _, cleanup := startTestServer(t, ws, testServerOpts{isDev: true})
 	defer cleanup()
 

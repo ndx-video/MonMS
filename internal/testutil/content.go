@@ -31,12 +31,12 @@ const heroContentSchemaWithEditorial = `{
   ]
 }`
 
-// NewEditorialWorkspace creates a temp workspace with editorial hero_content schema
+// NewEditorialSite creates a temp site with editorial hero_content schema
 // and staging publish config for content export/import tests.
-func NewEditorialWorkspace(t *testing.T) string {
+func NewEditorialSite(t *testing.T) string {
 	t.Helper()
 
-	ws := NewWorkspace(t)
+	ws := NewSite(t)
 	WriteFile(t, filepath.Join(ws, "schema/hero_content.json"), heroContentSchemaWithEditorial)
 
 	if err := os.MkdirAll(filepath.Join(ws, ".monms"), 0o755); err != nil {

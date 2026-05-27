@@ -5,11 +5,11 @@ import "testing"
 func TestStripDaemonFlag(t *testing.T) {
 	t.Parallel()
 
-	clean, requested := StripDaemonFlag([]string{"serve", "-d", "--workspace", "ws"})
+	clean, requested := StripDaemonFlag([]string{"serve", "-d", "--site", "ws"})
 	if !requested {
 		t.Fatal("expected daemon flag")
 	}
-	want := []string{"serve", "--workspace", "ws"}
+	want := []string{"serve", "--site", "ws"}
 	if len(clean) != len(want) {
 		t.Fatalf("clean = %v, want %v", clean, want)
 	}

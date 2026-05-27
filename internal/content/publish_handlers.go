@@ -42,7 +42,7 @@ func publishPageHandler(deps Deps) func(*core.RequestEvent) error {
 	tmpl := template.Must(template.New("publish").Parse(publishPageTemplate))
 
 	return func(e *core.RequestEvent) error {
-		cfg, err := LoadMonmsConfig(deps.WsAbs)
+		cfg, err := LoadMonmsConfig(deps.SiteAbs)
 		if err != nil {
 			return e.InternalServerError("failed to load config", err)
 		}
@@ -59,7 +59,7 @@ func publishPageHandler(deps Deps) func(*core.RequestEvent) error {
 
 func publishDiffHandler(deps Deps) func(*core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
-		diff, err := DiffExport(e.App, deps.WsAbs)
+		diff, err := DiffExport(e.App, deps.SiteAbs)
 		if err != nil {
 			return e.InternalServerError("diff export", err)
 		}
@@ -69,7 +69,7 @@ func publishDiffHandler(deps Deps) func(*core.RequestEvent) error {
 
 func publishPostHandler(deps Deps) func(*core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
-		cfg, err := LoadMonmsConfig(deps.WsAbs)
+		cfg, err := LoadMonmsConfig(deps.SiteAbs)
 		if err != nil {
 			return e.InternalServerError("failed to load config", err)
 		}
@@ -89,7 +89,7 @@ func publishPostHandler(deps Deps) func(*core.RequestEvent) error {
 			return e.InternalServerError("MONMS_PUBLISH_TOKEN is not configured on staging", nil)
 		}
 
-		snap, err := ExportSnapshot(e.App, deps.WsAbs)
+		snap, err := ExportSnapshot(e.App, deps.SiteAbs)
 		if err != nil {
 			return e.InternalServerError("export snapshot", err)
 		}
@@ -122,7 +122,7 @@ func publishPostHandler(deps Deps) func(*core.RequestEvent) error {
 			PublishedAt: time.Now().UTC().Format(time.RFC3339),
 			Collections: collections,
 		}
-		if err := WritePublishState(deps.WsAbs, state); err != nil {
+		if err := WritePublishState(deps.SiteAbs, state); err != nil {
 			return e.InternalServerError("write publish state", err)
 		}
 
@@ -150,7 +150,7 @@ func buildPublishPageData(e *core.RequestEvent, deps Deps, cfg MonmsConfig, mess
 		return data, nil
 	}
 
-	state, err := ReadPublishState(deps.WsAbs)
+	state, err := ReadPublishState(deps.SiteAbs)
 	if err != nil {
 		return publishPageData{}, err
 	}
@@ -158,7 +158,7 @@ func buildPublishPageData(e *core.RequestEvent, deps Deps, cfg MonmsConfig, mess
 		data.LastPublished = state.PublishedAt
 	}
 
-	diff, err := DiffExport(e.App, deps.WsAbs)
+	diff, err := DiffExport(e.App, deps.SiteAbs)
 	if err != nil {
 		return publishPageData{}, err
 	}
@@ -229,9 +229,9 @@ func parseDiffLine(line string) (collection, field, summary string, ok bool) {
 	return segments[0], segments[2], summary, true
 }
 
-func requirePublisherFromWorkspace(wsAbs string) func(*core.RequestEvent) error {
+func requirePublisherFromSite(siteAbs string) func(*core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
-		cfg, err := LoadMonmsConfig(wsAbs)
+		cfg, err := LoadMonmsConfig(siteAbs)
 		if err != nil {
 			return e.InternalServerError("failed to load config", err)
 		}
@@ -249,7 +249,7 @@ func bindLoadAuth(loadAuth func(*core.RequestEvent) error) func(*core.RequestEve
 }
 
 func registerPublishRoutes(se *core.ServeEvent, deps Deps) {
-	publisherBind := requirePublisherFromWorkspace(deps.WsAbs)
+	publisherBind := requirePublisherFromSite(deps.SiteAbs)
 	authBind := bindLoadAuth(deps.LoadAuth)
 
 	se.Router.GET(monmsroutes.PublishPath, publishPageHandler(deps)).

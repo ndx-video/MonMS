@@ -15,9 +15,9 @@ import (
 )
 
 func TestContentExportCLI(t *testing.T) {
-	ws := testutil.NewEditorialWorkspace(t)
+	ws := testutil.NewEditorialSite(t)
 
-	if err := RunCLI([]string{"export", "--workspace", ws}); err != nil {
+	if err := RunCLI([]string{"export", "--site", ws}); err != nil {
 		t.Fatalf("RunCLI export: %v", err)
 	}
 
@@ -27,11 +27,11 @@ func TestContentExportCLI(t *testing.T) {
 	}
 }
 
-func TestContentExportCLIWithShortWorkspaceFlag(t *testing.T) {
-	ws := testutil.NewEditorialWorkspace(t)
+func TestContentExportCLIWithShortSiteFlag(t *testing.T) {
+	ws := testutil.NewEditorialSite(t)
 
-	if err := RunCLI([]string{"export", "-w", ws}); err != nil {
-		t.Fatalf("RunCLI export -w: %v", err)
+	if err := RunCLI([]string{"export", "-s", ws}); err != nil {
+		t.Fatalf("RunCLI export -s: %v", err)
 	}
 
 	path := filepath.Join(ws, "content", "hero_content.json")
@@ -41,23 +41,23 @@ func TestContentExportCLIWithShortWorkspaceFlag(t *testing.T) {
 }
 
 func TestContentImportCLIIdempotent(t *testing.T) {
-	ws := testutil.NewEditorialWorkspace(t)
+	ws := testutil.NewEditorialSite(t)
 
-	if err := RunCLI([]string{"export", "--workspace", ws}); err != nil {
+	if err := RunCLI([]string{"export", "--site", ws}); err != nil {
 		t.Fatalf("export: %v", err)
 	}
-	if err := RunCLI([]string{"import", "--workspace", ws}); err != nil {
+	if err := RunCLI([]string{"import", "--site", ws}); err != nil {
 		t.Fatalf("first import: %v", err)
 	}
-	if err := RunCLI([]string{"import", "--workspace", ws}); err != nil {
+	if err := RunCLI([]string{"import", "--site", ws}); err != nil {
 		t.Fatalf("second import: %v", err)
 	}
 }
 
 func TestContentDiffCLI(t *testing.T) {
-	ws := testutil.NewEditorialWorkspace(t)
+	ws := testutil.NewEditorialSite(t)
 
-	if err := RunCLI([]string{"export", "--workspace", ws}); err != nil {
+	if err := RunCLI([]string{"export", "--site", ws}); err != nil {
 		t.Fatalf("export: %v", err)
 	}
 
@@ -74,7 +74,7 @@ func TestContentDiffCLI(t *testing.T) {
 		t.Fatalf("save: %v", err)
 	}
 
-	err = RunCLI([]string{"diff", "--workspace", ws})
+	err = RunCLI([]string{"diff", "--site", ws})
 	if !errors.Is(err, ErrPendingChanges) {
 		t.Fatalf("diff err = %v, want ErrPendingChanges", err)
 	}
@@ -103,10 +103,10 @@ func TestContentPublishCLI(t *testing.T) {
 	}))
 	defer srv.Close()
 
-	ws := testutil.NewEditorialWorkspace(t)
+	ws := testutil.NewEditorialSite(t)
 	t.Setenv("MONMS_PUBLISH_TOKEN", wantToken)
 
-	if err := RunCLI([]string{"publish", "--workspace", ws, "--to", srv.URL}); err != nil {
+	if err := RunCLI([]string{"publish", "--site", ws, "--to", srv.URL}); err != nil {
 		t.Fatalf("publish: %v", err)
 	}
 
@@ -127,10 +127,10 @@ func TestContentPublishCLI(t *testing.T) {
 }
 
 func TestContentPublishCLIMissingToken(t *testing.T) {
-	ws := testutil.NewEditorialWorkspace(t)
+	ws := testutil.NewEditorialSite(t)
 	t.Setenv("MONMS_PUBLISH_TOKEN", "")
 
-	err := RunCLI([]string{"publish", "--workspace", ws, "--to", "http://127.0.0.1:1"})
+	err := RunCLI([]string{"publish", "--site", ws, "--to", "http://127.0.0.1:1"})
 	if err == nil {
 		t.Fatal("publish without token: want error")
 	}

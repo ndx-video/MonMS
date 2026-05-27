@@ -13,25 +13,25 @@ import (
 	"github.com/monms/monms/internal/config"
 )
 
-// preCommitHookScript is installed into workspace/.git/hooks/pre-commit (D-40).
+// preCommitHookScript is installed into site/.git/hooks/pre-commit (D-40).
 // The monms-validate-hook comment is the idempotency marker — do not remove it.
 const preCommitHookScript = `#!/bin/sh
 # monms-validate-hook — DO NOT REMOVE THIS COMMENT (idempotency marker)
 
 HOOK_DIR="$(cd "$(dirname "$0")" && pwd)"
-WS_ROOT="$(cd "$HOOK_DIR/../.." && pwd)"
+SITE_ROOT="$(cd "$HOOK_DIR/../.." && pwd)"
 
 if [ -n "$MONMS_BIN" ]; then
   MONMS="$MONMS_BIN"
 elif command -v monms >/dev/null 2>&1; then
   MONMS="monms"
 else
-  CANDIDATE="$WS_ROOT/monms"
+  CANDIDATE="$SITE_ROOT/monms"
   if [ -x "$CANDIDATE" ]; then
     MONMS="$CANDIDATE"
   else
     echo "monms: binary not found" >&2
-    echo "  Set MONMS_BIN, add monms to PATH, or place binary at $WS_ROOT/monms" >&2
+    echo "  Set MONMS_BIN, add monms to PATH, or place binary at $SITE_ROOT/monms" >&2
     exit 1
   fi
 fi
@@ -41,11 +41,11 @@ if [ -z "$STAGED" ]; then
   exit 0
 fi
 
-if ! echo "$STAGED" | tr '\n' '\0' | xargs -0 "$MONMS" validate -w "$WS_ROOT"; then
+if ! echo "$STAGED" | tr '\n' '\0' | xargs -0 "$MONMS" validate -s "$SITE_ROOT"; then
   echo "" >&2
-  echo "Pre-commit validation failed. Rolling back workspace to last stable state..." >&2
+  echo "Pre-commit validation failed. Rolling back site to last stable state..." >&2
   git checkout -- .
-  echo "Workspace restored. Fix the errors above, then re-apply your changes." >&2
+  echo "Site restored. Fix the errors above, then re-apply your changes." >&2
   exit 1
 fi
 
@@ -80,51 +80,51 @@ var scaffoldDirs = []string{
 	"content",
 }
 
-// RunInit scaffolds a new workspace at the resolved path (D-05, D-07).
+// RunInit scaffolds a new site at the resolved path (D-05, D-07).
 func RunInit(args []string) error {
-	_, wsAbs, err := config.ResolveWorkspace(args, os.Environ())
+	_, siteAbs, err := config.ResolveSite(args, os.Environ())
 	if err != nil {
 		return err
 	}
 
-	if err := os.MkdirAll(wsAbs, 0o755); err != nil {
-		return fmt.Errorf("create workspace root: %w", err)
+	if err := os.MkdirAll(siteAbs, 0o755); err != nil {
+		return fmt.Errorf("create site root: %w", err)
 	}
 
 	for _, dir := range scaffoldDirs {
-		if err := mkdirUnder(wsAbs, dir); err != nil {
+		if err := mkdirUnder(siteAbs, dir); err != nil {
 			return err
 		}
 	}
 
 	for _, sf := range scaffoldFiles {
-		if err := writeScaffoldFile(wsAbs, sf.embedPath, sf.destPath); err != nil {
+		if err := writeScaffoldFile(siteAbs, sf.embedPath, sf.destPath); err != nil {
 			return err
 		}
 	}
 
 	for _, rel := range []string{"schema/.gitkeep", "templates/fragments/.gitkeep", "content/.gitkeep"} {
-		if err := writeKeepFile(wsAbs, rel); err != nil {
+		if err := writeKeepFile(siteAbs, rel); err != nil {
 			return err
 		}
 	}
 
-	if err := maybeGitInit(wsAbs); err != nil {
+	if err := maybeGitInit(siteAbs); err != nil {
 		return err
 	}
 
-	if err := installPreCommitHook(wsAbs); err != nil {
+	if err := installPreCommitHook(siteAbs); err != nil {
 		return err
 	}
 
-	slog.Info("workspace initialized", "path", wsAbs)
-	printInitSummary(wsAbs)
+	slog.Info("site initialized", "path", siteAbs)
+	printInitSummary(siteAbs)
 	return nil
 }
 
-func printInitSummary(wsAbs string) {
+func printInitSummary(siteAbs string) {
 	fmt.Fprintf(os.Stdout, `
-MonMS workspace ready at %s
+MonMS site ready at %s
 
 Scaffolded:
   templates/          Page shells and layouts (HTMX inline editing)
@@ -136,17 +136,17 @@ Scaffolded:
 
 Next steps:
   1. Edit .monms/config.json (_fieldDocs describes each option)
-  2. monms serve -w %s
+  2. monms serve -s %s
   3. Open http://127.0.0.1:8090/_/ and create a PocketBase admin
   4. Add admin email(s) to publisherEmails in .monms/config.json for Publish to live
 
 Tip: commit config.example.json; keep config.json gitignored with site-specific URLs.
-`, wsAbs, wsAbs)
+`, siteAbs, siteAbs)
 }
 
-func mkdirUnder(wsRoot, rel string) error {
-	dest := filepath.Join(wsRoot, rel)
-	if err := ensureUnderWorkspace(wsRoot, dest); err != nil {
+func mkdirUnder(siteRoot, rel string) error {
+	dest := filepath.Join(siteRoot, rel)
+	if err := ensureUnderSite(siteRoot, dest); err != nil {
 		return err
 	}
 	if err := os.MkdirAll(dest, 0o755); err != nil {
@@ -155,9 +155,9 @@ func mkdirUnder(wsRoot, rel string) error {
 	return nil
 }
 
-func writeScaffoldFile(wsRoot, embedPath, destRel string) error {
-	dest := filepath.Join(wsRoot, destRel)
-	if err := ensureUnderWorkspace(wsRoot, dest); err != nil {
+func writeScaffoldFile(siteRoot, embedPath, destRel string) error {
+	dest := filepath.Join(siteRoot, destRel)
+	if err := ensureUnderSite(siteRoot, dest); err != nil {
 		return err
 	}
 
@@ -182,9 +182,9 @@ func writeScaffoldFile(wsRoot, embedPath, destRel string) error {
 	return nil
 }
 
-func writeKeepFile(wsRoot, destRel string) error {
-	dest := filepath.Join(wsRoot, destRel)
-	if err := ensureUnderWorkspace(wsRoot, dest); err != nil {
+func writeKeepFile(siteRoot, destRel string) error {
+	dest := filepath.Join(siteRoot, destRel)
+	if err := ensureUnderSite(siteRoot, dest); err != nil {
 		return err
 	}
 	if _, err := os.Stat(dest); err == nil {
@@ -202,25 +202,25 @@ func writeKeepFile(wsRoot, destRel string) error {
 	return nil
 }
 
-// ensureUnderWorkspace prevents writes outside the resolved workspace (T-01-12).
-func ensureUnderWorkspace(wsRoot, dest string) error {
-	wsRoot = filepath.Clean(wsRoot)
+// ensureUnderSite prevents writes outside the resolved site (T-01-12).
+func ensureUnderSite(siteRoot, dest string) error {
+	siteRoot = filepath.Clean(siteRoot)
 	dest = filepath.Clean(dest)
-	rel, err := filepath.Rel(wsRoot, dest)
+	rel, err := filepath.Rel(siteRoot, dest)
 	if err != nil {
-		return fmt.Errorf("resolve path under workspace: %w", err)
+		return fmt.Errorf("resolve path under site: %w", err)
 	}
 	if rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-		return fmt.Errorf("refusing write outside workspace: %s", dest)
+		return fmt.Errorf("refusing write outside site: %s", dest)
 	}
 	return nil
 }
 
-// installPreCommitHook writes the monms pre-commit hook into workspace/.git/hooks/pre-commit (D-40).
+// installPreCommitHook writes the monms pre-commit hook into site/.git/hooks/pre-commit (D-40).
 // Idempotent: skips if the file already contains the monms-validate-hook marker (D-40).
 // Overwrites hooks that lack the marker, so non-monms hooks are replaced silently (T-02-07 accepted).
-func installPreCommitHook(wsRoot string) error {
-	gitDir := filepath.Join(wsRoot, ".git")
+func installPreCommitHook(siteRoot string) error {
+	gitDir := filepath.Join(siteRoot, ".git")
 	if _, err := os.Stat(gitDir); os.IsNotExist(err) {
 		slog.Warn("no .git directory found, skipping pre-commit hook install", "dir", gitDir)
 		return nil
@@ -253,8 +253,8 @@ func installPreCommitHook(wsRoot string) error {
 	return nil
 }
 
-func maybeGitInit(wsRoot string) error {
-	gitDir := filepath.Join(wsRoot, ".git")
+func maybeGitInit(siteRoot string) error {
+	gitDir := filepath.Join(siteRoot, ".git")
 	if _, err := os.Stat(gitDir); err == nil {
 		slog.Info("git repository already exists, skipping git init")
 		return nil
@@ -268,7 +268,7 @@ func maybeGitInit(wsRoot string) error {
 	}
 
 	cmd := exec.Command("git", "init")
-	cmd.Dir = wsRoot
+	cmd.Dir = siteRoot
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Errorf("git init: %w: %s", err, string(out))
 	}

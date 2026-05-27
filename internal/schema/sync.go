@@ -12,14 +12,14 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 )
 
-// RegisterBootstrapHook syncs workspace/schema/*.json into PocketBase after bootstrap.
-func RegisterBootstrapHook(app core.App, wsAbs string) {
+// RegisterBootstrapHook syncs site/schema/*.json into PocketBase after bootstrap.
+func RegisterBootstrapHook(app core.App, siteAbs string) {
 	app.OnBootstrap().BindFunc(func(e *core.BootstrapEvent) error {
 		if err := e.Next(); err != nil {
 			return err
 		}
 
-		raw, err := loadSchemaJSONFiles(filepath.Join(wsAbs, "schema"))
+		raw, err := loadSchemaJSONFiles(filepath.Join(siteAbs, "schema"))
 		if err != nil {
 			return err
 		}

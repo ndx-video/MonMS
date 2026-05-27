@@ -52,17 +52,17 @@ func ShouldDetach(args []string) bool {
 	}
 }
 
-// Start forks a detached serve process and writes workspace runtime files.
-func Start(wsAbs string, args []string) error {
+// Start forks a detached serve process and writes site runtime files.
+func Start(siteAbs string, args []string) error {
 	childArgs, _ := StripDaemonFlag(args)
-	childArgs = config.StripWorkspaceFlags(childArgs)
+	childArgs = config.StripSiteFlags(childArgs)
 	childArgs = cli.EnsureServeSubcommand(childArgs)
 	exe, err := executablePath()
 	if err != nil {
 		return err
 	}
 
-	monmsDir := filepath.Join(wsAbs, ".monms")
+	monmsDir := filepath.Join(siteAbs, ".monms")
 	if err := os.MkdirAll(monmsDir, 0o755); err != nil {
 		return fmt.Errorf("daemon: create runtime dir: %w", err)
 	}
@@ -77,7 +77,7 @@ func Start(wsAbs string, args []string) error {
 	cmd.Stdout = logFile
 	cmd.Stderr = logFile
 	cmd.Stdin = nil
-	cmd.Env = append(os.Environ(), daemonEnv+"=1", "MONMS_WORKSPACE="+wsAbs)
+	cmd.Env = append(os.Environ(), daemonEnv+"=1", "MONMS_SITE="+siteAbs)
 	if err := setDetached(cmd); err != nil {
 		_ = logFile.Close()
 		return err
@@ -113,12 +113,12 @@ func executablePath() (string, error) {
 	return filepath.Abs(exe)
 }
 
-func PIDFilePath(wsAbs string) string {
-	return filepath.Join(wsAbs, ".monms", "monms.pid")
+func PIDFilePath(siteAbs string) string {
+	return filepath.Join(siteAbs, ".monms", "monms.pid")
 }
 
-func LogFilePath(wsAbs string) string {
-	return filepath.Join(wsAbs, ".monms", "serve.log")
+func LogFilePath(siteAbs string) string {
+	return filepath.Join(siteAbs, ".monms", "serve.log")
 }
 
 func ReadPIDFile(path string) (int, error) {
