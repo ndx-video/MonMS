@@ -1,7 +1,18 @@
+# the output binary for the project
 /monms
 
+# these sites are used for testing
 site-stage/
 site-prod/
+_site/
 
+# site runtime (site/ is a nested repo; engine tracks structure only)
+site/.pb_data/
+site/.monms/config.json
+site/.monms/publish-state.json
+site/.monms/monms.pid
+site/.monms/logs/
+site/content/*
+!site/content/.gitkeep
 
-
+.pb_data/
