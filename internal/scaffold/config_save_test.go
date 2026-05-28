@@ -21,7 +21,7 @@ func TestSaveMonmsServeSettings(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if err := SaveMonmsServeSettings(dir, ServeBindConfig{Host: "0.0.0.0", Port: "8090"}, []string{"localhost", "127.0.0.1"}); err != nil {
+	if err := SaveMonmsServeSettings(dir, "https://example.com", ServeBindConfig{Host: "0.0.0.0", Port: "8090"}, []string{"localhost", "127.0.0.1"}); err != nil {
 		t.Fatal(err)
 	}
 

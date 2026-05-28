@@ -22,6 +22,22 @@ func TestParseAllowedHosts(t *testing.T) {
 	}
 }
 
+func TestDefaultSiteURL(t *testing.T) {
+	t.Parallel()
+	if got := defaultSiteURL([]string{"staging.example.com", "other.example.com"}, ""); got != "https://staging.example.com" {
+		t.Fatalf("got %q", got)
+	}
+	if got := defaultSiteURL([]string{"localhost", "127.0.0.1"}, ""); got != "https://localhost" {
+		t.Fatalf("got %q", got)
+	}
+	if got := defaultSiteURL(nil, "https://existing.example.com"); got != "https://existing.example.com" {
+		t.Fatalf("got %q", got)
+	}
+	if got := defaultSiteURL([]string{""}, "https://existing.example.com/"); got != "https://existing.example.com" {
+		t.Fatalf("got %q", got)
+	}
+}
+
 func TestRunSetupWizardDefaults(t *testing.T) {
 	dir := t.TempDir()
 	if err := os.MkdirAll(filepath.Join(dir, ".monms"), 0o755); err != nil {
@@ -35,7 +51,7 @@ func TestRunSetupWizardDefaults(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	in := strings.NewReader("\n\n\n3\n")
+	in := strings.NewReader("\n\n\n\n3\n")
 	p := &prompt.Prompter{In: in, Out: ioDiscard{}}
 	mode, err := RunSetupWizard(dir, p)
 	if err != nil {
@@ -60,6 +76,14 @@ func TestRunSetupWizardDefaults(t *testing.T) {
 	var allowed []string
 	if err := json.Unmarshal(doc["allowedHosts"], &allowed); err != nil || len(allowed) != 2 {
 		t.Fatalf("allowedHosts = %v, err = %v", allowed, err)
+	}
+	var siteURL string
+	if err := json.Unmarshal(doc["siteUrl"], &siteURL); err != nil || siteURL != "https://localhost" {
+		t.Fatalf("siteUrl = %q, err = %v", siteURL, err)
+	}
+	var productionURL string
+	if err := json.Unmarshal(doc["productionUrl"], &productionURL); err != nil || productionURL != "https://example.com" {
+		t.Fatalf("productionUrl = %q, err = %v", productionURL, err)
 	}
 }
 

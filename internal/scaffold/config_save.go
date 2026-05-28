@@ -13,9 +13,9 @@ type ServeBindConfig struct {
 	Port string `json:"port"`
 }
 
-// SaveMonmsServeSettings updates bind and allowedHosts in site/.monms/config.json,
-// preserving other keys such as _comment and _fieldDocs.
-func SaveMonmsServeSettings(siteAbs string, bind ServeBindConfig, allowedHosts []string) error {
+// SaveMonmsServeSettings updates siteUrl, bind, and allowedHosts in site/.monms/config.json,
+// preserving other keys such as productionUrl, _comment and _fieldDocs.
+func SaveMonmsServeSettings(siteAbs string, siteURL string, bind ServeBindConfig, allowedHosts []string) error {
 	path := filepath.Join(siteAbs, ".monms", "config.json")
 	if err := ensureUnderSite(siteAbs, path); err != nil {
 		return err
@@ -39,10 +39,15 @@ func SaveMonmsServeSettings(siteAbs string, bind ServeBindConfig, allowedHosts [
 	if err != nil {
 		return fmt.Errorf("monms config: encode bind: %w", err)
 	}
+	siteJSON, err := json.Marshal(siteURL)
+	if err != nil {
+		return fmt.Errorf("monms config: encode siteUrl: %w", err)
+	}
 	hostsJSON, err := json.Marshal(allowedHosts)
 	if err != nil {
 		return fmt.Errorf("monms config: encode allowedHosts: %w", err)
 	}
+	doc["siteUrl"] = siteJSON
 	doc["bind"] = bindJSON
 	doc["allowedHosts"] = hostsJSON
 

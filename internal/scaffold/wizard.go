@@ -1,7 +1,10 @@
 package scaffold
 
 import (
+	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 
@@ -41,6 +44,15 @@ func RunSetupWizard(siteAbs string, p *prompt.Prompter) (StartMode, error) {
 	}
 	allowedHosts := parseAllowedHosts(hostsInput)
 
+	siteURL, err := p.ReadDefault(
+		"Public site URL for this instance (optional, no trailing slash)",
+		defaultSiteURL(allowedHosts, existingSiteURL(siteAbs)),
+	)
+	if err != nil {
+		return StartNone, err
+	}
+	siteURL = strings.TrimRight(strings.TrimSpace(siteURL), "/")
+
 	bindHost, err := p.ReadDefault("Bind host", defaultBind)
 	if err != nil {
 		return StartNone, err
@@ -50,7 +62,7 @@ func RunSetupWizard(siteAbs string, p *prompt.Prompter) (StartMode, error) {
 		bindHost = defaultBind
 	}
 
-	if err := SaveMonmsServeSettings(siteAbs, ServeBindConfig{
+	if err := SaveMonmsServeSettings(siteAbs, siteURL, ServeBindConfig{
 		Host: bindHost,
 		Port: strconv.Itoa(port),
 	}, allowedHosts); err != nil {
@@ -73,6 +85,30 @@ func RunSetupWizard(siteAbs string, p *prompt.Prompter) (StartMode, error) {
 	default:
 		return StartForeground, nil
 	}
+}
+
+func defaultSiteURL(allowedHosts []string, existing string) string {
+	if len(allowedHosts) > 0 {
+		if host := strings.TrimSpace(allowedHosts[0]); host != "" {
+			return "https://" + host
+		}
+	}
+	return strings.TrimRight(strings.TrimSpace(existing), "/")
+}
+
+func existingSiteURL(siteAbs string) string {
+	path := filepath.Join(siteAbs, ".monms", "config.json")
+	data, err := os.ReadFile(path)
+	if err != nil || len(data) == 0 {
+		return ""
+	}
+	var doc struct {
+		SiteURL string `json:"siteUrl"`
+	}
+	if err := json.Unmarshal(data, &doc); err != nil {
+		return ""
+	}
+	return strings.TrimSpace(doc.SiteURL)
 }
 
 func parsePort(s string) (int, error) {
