@@ -53,13 +53,24 @@ Optional startup: `shapeSync` in `.monms/config.json`.
 
 ## `monms serve` (default)
 
-Start PocketBase + MonMS routes. PocketBase subcommands (`superuser`, etc.) pass through.
+Start PocketBase + MonMS routes. On a TTY, prints site/admin/publish URLs after startup. When `siteUrl` is set in config, the banner and PocketBase superuser installer link use that origin (no port); otherwise they use the first `allowedHosts` entry (or `localhost`) with the listen port. `productionUrl` is for publish-to-live only.
 
 ```bash
 monms serve --http=127.0.0.1:8090
 ```
 
 Production binary: `go build -ldflags "-X main.buildMode=production" -o monms .`
+
+File logging defaults follow `buildMode` when `logging` is omitted from config — see [File logging](logging.md).
+
+## `monms restart`
+
+Stop running monms serve processes for this binary, then start serve again with the same flags.
+
+```bash
+monms restart -s ./site
+monms restart -d
+```
 
 ## `monms stop`
 

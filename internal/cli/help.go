@@ -14,6 +14,7 @@ var MonmsCommands = map[string]bool{
 	"content":  true,
 	"site":     true,
 	"stop":     true,
+	"restart":  true,
 }
 
 // ParseHelpRequest reports whether args ask for help and which command's help to show.
@@ -60,6 +61,8 @@ func PrintHelp(command string) {
 		printSiteHelp(os.Stdout)
 	case "stop":
 		printStopHelp(os.Stdout)
+	case "restart":
+		printRestartHelp(os.Stdout)
 	default:
 		printRootHelp(os.Stdout)
 	}
@@ -87,6 +90,7 @@ MonMS commands:
   content    Export, import, diff, or publish editorial content (JSON rail)
   site       Sync site Git shape (fetch + checkout ref)
   stop       Stop running monms serve processes for this binary
+  restart    Stop running instances, then start serve again
 
 Server commands (PocketBase):
   serve      Start the HTTP/HTTPS server (default when no command is given)
@@ -94,7 +98,7 @@ Server commands (PocketBase):
 
 Configuration:
   -s, --site PATH    Site directory (default: ./site or MONMS_SITE)
-  site/.monms/config.json — productionUrl, publisherEmails, allowedHosts, bind, shapeSync
+  site/.monms/config.json — siteUrl, productionUrl, publisherEmails, allowedHosts, bind, shapeSync
 
 Examples:
   monms init -s ./my-site
@@ -103,6 +107,7 @@ Examples:
   monms site sync --site ./site --ref v1.2.0
   monms serve --http=127.0.0.1:8090
   monms stop
+  monms restart -s ./site
 
 Run "monms <command> --help" for command-specific help.`)
 }
@@ -189,6 +194,19 @@ Examples:
   monms site sync -s /var/www/staging --ref main --remote origin
 
 Optional startup sync: set shapeSync.enabled in site/.monms/config.json.`)
+}
+
+func printRestartHelp(w io.Writer) {
+	fmt.Fprintln(w, `Usage:
+  monms restart [-s|--site PATH] [serve flags]
+
+Stop all running monms processes that use this binary, then start serve with
+the same flags (including -d/--daemon for background mode).
+
+Examples:
+  monms restart
+  monms restart -s ./site --http=127.0.0.1:8090
+  monms restart -d`)
 }
 
 func printStopHelp(w io.Writer) {

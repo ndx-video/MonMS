@@ -14,29 +14,20 @@ import (
 
 const shutdownGrace = 2 * time.Second
 
-// RunCLI stops all running processes that share the invoked monms binary path.
-func RunCLI(args []string) error {
-	if _, wantHelp := cli.ParseHelpRequest(append([]string{"stop"}, args...)); wantHelp {
-		cli.PrintHelp("stop")
-		return nil
-	}
-	if len(args) > 0 {
-		cli.PrintHelp("stop")
-		return fmt.Errorf("unknown arguments: %s", strings.Join(args, " "))
-	}
-
+// StopAll sends SIGTERM (then SIGKILL) to all monms processes using this binary,
+// excluding the current process. Returns stopped PIDs.
+func StopAll() ([]int, error) {
 	exe, err := resolveExecutable()
 	if err != nil {
-		return fmt.Errorf("stop: %w", err)
+		return nil, err
 	}
 
 	pids, err := findMatchingPIDs(exe, os.Getpid())
 	if err != nil {
-		return fmt.Errorf("stop: %w", err)
+		return nil, err
 	}
 	if len(pids) == 0 {
-		fmt.Println("no running monms instances")
-		return nil
+		return nil, nil
 	}
 
 	targets := append([]int(nil), pids...)
@@ -50,8 +41,7 @@ func RunCLI(args []string) error {
 	deadline := time.Now().Add(shutdownGrace)
 	for time.Now().Before(deadline) {
 		if len(alivePIDs(targets)) == 0 {
-			fmt.Printf("stopped %d instance(s): %v\n", len(targets), targets)
-			return nil
+			return targets, nil
 		}
 		time.Sleep(100 * time.Millisecond)
 	}
@@ -60,6 +50,29 @@ func RunCLI(args []string) error {
 		if err := syscall.Kill(pid, syscall.SIGKILL); err != nil && err != syscall.ESRCH {
 			slog.Warn("stop: sigkill failed", "pid", pid, "err", err)
 		}
+	}
+
+	return targets, nil
+}
+
+// RunCLI stops all running processes that share the invoked monms binary path.
+func RunCLI(args []string) error {
+	if _, wantHelp := cli.ParseHelpRequest(append([]string{"stop"}, args...)); wantHelp {
+		cli.PrintHelp("stop")
+		return nil
+	}
+	if len(args) > 0 {
+		cli.PrintHelp("stop")
+		return fmt.Errorf("unknown arguments: %s", strings.Join(args, " "))
+	}
+
+	targets, err := StopAll()
+	if err != nil {
+		return fmt.Errorf("stop: %w", err)
+	}
+	if len(targets) == 0 {
+		fmt.Println("no running monms instances")
+		return nil
 	}
 
 	fmt.Printf("stopped %d instance(s): %v\n", len(targets), targets)

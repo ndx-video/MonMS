@@ -8,11 +8,15 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/mattn/go-isatty"
+
 	"github.com/monms/monms/internal/cli"
 	"github.com/monms/monms/internal/cli/prompt"
 	"github.com/monms/monms/internal/config"
 	"github.com/monms/monms/internal/content"
 	"github.com/monms/monms/internal/daemon"
+	"github.com/monms/monms/internal/logging"
+	"github.com/monms/monms/internal/restart"
 	"github.com/monms/monms/internal/router"
 	"github.com/monms/monms/internal/schema"
 	"github.com/monms/monms/internal/scaffold"
@@ -29,6 +33,7 @@ var buildMode = "development"
 var tplCache = templates.NewCache()
 
 func main() {
+	logging.SetProductionBuild(buildMode == "production")
 	args := os.Args[1:]
 
 	if len(args) >= 2 && args[0] == "content" {
@@ -100,6 +105,12 @@ func main() {
 				os.Exit(1)
 			}
 			return
+		case "restart":
+			if err := restart.RunCLI(args[1:]); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+			return
 		case "site":
 			if err := site.RunCLI(args[1:]); err != nil {
 				fmt.Fprintln(os.Stderr, err)
@@ -149,6 +160,18 @@ func startDaemon(siteAbs string, args []string) error {
 		"path", siteAbs,
 		"mode", buildMode,
 	)
+	if isatty.IsTerminal(os.Stdout.Fd()) {
+		previewArgs, err := content.ApplyServeConfigFromSite(siteAbs, args)
+		if err == nil {
+			if urls, err := content.ResolveServeURLs(siteAbs, previewArgs); err == nil {
+				fmt.Fprintf(os.Stdout, "Starting MonMS in background\n")
+				fmt.Fprintf(os.Stdout, "  Site:     %s\n", urls.SiteURL)
+				fmt.Fprintf(os.Stdout, "  Admin:    %s\n", urls.AdminURL)
+				fmt.Fprintf(os.Stdout, "  Options:  edit %s\n", urls.ConfigPath)
+				fmt.Fprintln(os.Stdout)
+			}
+		}
+	}
 	return daemon.Start(siteAbs, args)
 }
 
@@ -168,6 +191,11 @@ func runServeAt(abs string) {
 		os.Exit(1)
 	}
 
+	if _, err := logging.Configure(abs); err != nil {
+		fmt.Fprintf(os.Stderr, "logging: %v\n", err)
+		os.Exit(1)
+	}
+
 	if err := os.Setenv("MONMS_SITE", abs); err != nil {
 		fmt.Fprintf(os.Stderr, "site env: %v\n", err)
 		os.Exit(1)
@@ -181,6 +209,8 @@ func runServeAt(abs string) {
 		os.Exit(1)
 	}
 	os.Args = append([]string{os.Args[0]}, serveArgs...)
+
+	finalServeArgs := append([]string(nil), serveArgs...)
 
 	configured := abs
 	if res, err := config.ResolveSiteMeta(os.Args[1:], os.Environ()); err == nil {
@@ -202,11 +232,13 @@ func runServeAt(abs string) {
 	}
 
 	app := pocketbase.NewWithConfig(pocketbase.Config{
-		DefaultDataDir: filepath.Join(abs, ".pb_data"),
-		DefaultDev:     buildMode != "production",
+		DefaultDataDir:  filepath.Join(abs, ".pb_data"),
+		DefaultDev:      false,
+		HideStartBanner: true,
 	})
 
 	schema.RegisterBootstrapHook(app, abs)
+	logging.RegisterPocketBaseHook(app)
 	router.RegisterAuthHooks(app)
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
@@ -221,10 +253,33 @@ func runServeAt(abs string) {
 			Cache:   tplCache,
 			IsDev:   buildMode != "production",
 		})
-		return se.Next()
+		se.InstallerFunc = content.WrapInstallerFunc(se.InstallerFunc, abs, finalServeArgs)
+		if err := se.Next(); err != nil {
+			return err
+		}
+		if isatty.IsTerminal(os.Stdout.Fd()) {
+			if urls, err := content.ResolveServeURLs(abs, finalServeArgs); err == nil {
+				content.PrintServeBanner(urls, os.Stdout)
+			}
+		}
+		return nil
 	})
 
 	if err := app.Start(); err != nil {
+		if restart.IsAddrInUse(err) {
+			if prompt.Stdio.IsInteractive() {
+				ok, confirmErr := prompt.Stdio.Confirm("Listen address already in use. Restart monms now?")
+				if confirmErr == nil && ok {
+					if execErr := restart.ExecCurrentProcess(); execErr != nil {
+						fmt.Fprintf(os.Stderr, "restart: %v\n", execErr)
+					}
+					return
+				}
+			}
+			fmt.Fprintf(os.Stderr, "serve: %v\n", err)
+			fmt.Fprintln(os.Stderr, "Hint: run `monms restart` to stop the existing instance and start again.")
+			os.Exit(1)
+		}
 		fmt.Fprintf(os.Stderr, "serve: %v\n", err)
 		os.Exit(1)
 	}

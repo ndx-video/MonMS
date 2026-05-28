@@ -33,7 +33,7 @@ func TestRootHelp(t *testing.T) {
 	var buf bytes.Buffer
 	printRootHelp(&buf)
 	out := buf.String()
-	for _, needle := range []string{"init", "validate", "content", "stop", "serve", "monms init"} {
+	for _, needle := range []string{"init", "validate", "content", "stop", "restart", "serve", "monms init"} {
 		if !strings.Contains(out, needle) {
 			t.Errorf("root help missing %q", needle)
 		}

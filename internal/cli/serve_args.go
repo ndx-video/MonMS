@@ -7,7 +7,7 @@ func EnsureServeSubcommand(args []string) []string {
 		return []string{"serve"}
 	}
 	switch args[0] {
-	case "serve", "init", "validate", "content", "stop", "superuser", "migrate":
+	case "serve", "init", "validate", "content", "stop", "restart", "superuser", "migrate":
 		return args
 	default:
 		return append([]string{"serve"}, args...)
