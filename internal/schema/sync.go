@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/monms/monms/internal/logging"
 	"github.com/pocketbase/pocketbase/core"
 )
 
@@ -27,6 +28,7 @@ func RegisterBootstrapHook(app core.App, siteAbs string) {
 			if err := e.App.ImportCollectionsByMarshaledJSON(raw, false); err != nil {
 				return err
 			}
+			logging.Schema("schema sync: imported collections from site/schema")
 		}
 
 		if err := seedHeroHomepage(e.App); err != nil {

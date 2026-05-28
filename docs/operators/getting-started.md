@@ -49,7 +49,7 @@ Consultants **shape** structure and tag releases. Clients **stage** content and 
 
 ## One-time consultant setup
 
-1. Edit `site/.monms/config.json`: `productionUrl`, `publisherEmails`, optional `allowedHosts` (CORS when `--origins` omitted).
+1. Edit `site/.monms/config.json`: `siteUrl` (this instance), `productionUrl` (publish target), `publisherEmails`, optional `allowedHosts` (CORS when `--origins` omitted), optional `logging` (see [File logging](../reference/logging.md)).
 2. Set `MONMS_PUBLISH_TOKEN` on **both** staging (outbound publish) and production (import API gate) — same secret, never commit.
 
 ## Site directory layout
@@ -60,7 +60,8 @@ site/
 ├── content/          # L3 — editorial exports (optional, often gitignored)
 ├── templates/        # L2 — Go HTML templates
 ├── assets/           # L2 — CSS, static files
-├── .monms/           # Publish config (example committed; config.json gitignored)
+├── .monms/           # Publish config + file logs (example committed; config.json gitignored)
+│   └── logs/         # Rotated log files (gitignored)
 └── .pb_data/         # L3 runtime — DO NOT COMMIT
 ```
 

@@ -1,8 +1,7 @@
 package schema
 
 import (
-	"log/slog"
-
+	"github.com/monms/monms/internal/logging"
 	"github.com/pocketbase/pocketbase/core"
 )
 
@@ -40,6 +39,6 @@ func seedHeroHomepage(app core.App) error {
 		return err
 	}
 
-	slog.Info("schema seed: created hero homepage record", "id", heroRecordID)
+	logging.Schema("schema seed: created hero homepage record", "id", heroRecordID)
 	return nil
 }

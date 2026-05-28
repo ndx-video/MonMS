@@ -17,6 +17,8 @@ See example files in the site repo: `Dockerfile.example`, `docker-compose.exampl
 
 Structure promotes via **git tag + checkout** on the mount. Content promotes via **Publish to live** — unchanged from bare-metal.
 
+Production binaries default file logging to `error`, `warn`, and `schema` when `logging` is omitted from config. Logs land in `.monms/logs/` on the site mount — see [File logging](../reference/logging.md).
+
 ## Build
 
 ```bash

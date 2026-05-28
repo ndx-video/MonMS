@@ -8,8 +8,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/monms/monms/internal/config"
 	"github.com/monms/monms/internal/cli"
+	"github.com/monms/monms/internal/config"
+	"github.com/monms/monms/internal/logging"
 )
 
 const daemonEnv = "MONMS_DAEMON"
@@ -45,7 +46,7 @@ func ShouldDetach(args []string) bool {
 		return true
 	}
 	switch clean[0] {
-	case "init", "validate", "content", "stop":
+	case "init", "validate", "content", "stop", "restart":
 		return false
 	default:
 		return true
@@ -67,29 +68,17 @@ func Start(siteAbs string, args []string) error {
 		return fmt.Errorf("daemon: create runtime dir: %w", err)
 	}
 
-	logPath := filepath.Join(monmsDir, "serve.log")
-	logFile, err := os.OpenFile(logPath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o644)
-	if err != nil {
-		return fmt.Errorf("daemon: open log: %w", err)
-	}
+	logDir := logging.LogDirForSite(siteAbs)
 
 	cmd := exec.Command(exe, childArgs...)
-	cmd.Stdout = logFile
-	cmd.Stderr = logFile
 	cmd.Stdin = nil
 	cmd.Env = append(os.Environ(), daemonEnv+"=1", "MONMS_SITE="+siteAbs)
 	if err := setDetached(cmd); err != nil {
-		_ = logFile.Close()
 		return err
 	}
 
 	if err := cmd.Start(); err != nil {
-		_ = logFile.Close()
 		return fmt.Errorf("daemon: start: %w", err)
-	}
-
-	if err := logFile.Close(); err != nil {
-		return fmt.Errorf("daemon: close log: %w", err)
 	}
 
 	pidPath := filepath.Join(monmsDir, "monms.pid")
@@ -97,7 +86,7 @@ func Start(siteAbs string, args []string) error {
 		return fmt.Errorf("daemon: write pid file: %w", err)
 	}
 
-	fmt.Printf("daemon started (pid %d, log %s)\n", cmd.Process.Pid, logPath)
+	fmt.Printf("daemon started (pid %d, logs %s)\n", cmd.Process.Pid, logDir)
 	return nil
 }
 
@@ -118,7 +107,7 @@ func PIDFilePath(siteAbs string) string {
 }
 
 func LogFilePath(siteAbs string) string {
-	return filepath.Join(siteAbs, ".monms", "serve.log")
+	return logging.LogDirForSite(siteAbs)
 }
 
 func ReadPIDFile(path string) (int, error) {

@@ -12,6 +12,7 @@ import (
 
 	"github.com/monms/monms/internal/cli"
 	"github.com/monms/monms/internal/config"
+	"github.com/monms/monms/internal/logging"
 	"github.com/monms/monms/internal/schema"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
@@ -31,6 +32,10 @@ func RunCLI(args []string) error {
 
 	_, siteAbs, err := config.ResolveSite(args, os.Environ())
 	if err != nil {
+		return err
+	}
+
+	if _, err := logging.Configure(siteAbs); err != nil {
 		return err
 	}
 

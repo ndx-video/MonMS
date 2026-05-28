@@ -14,11 +14,22 @@ import (
 
 // MonmsConfig is staging site config (site/.monms/config.json).
 type MonmsConfig struct {
-	ProductionURL   string                    `json:"productionUrl"`
-	PublisherEmails []string                  `json:"publisherEmails"`
-	AllowedHosts    []string                  `json:"allowedHosts"`
-	Bind            *BindConfig               `json:"bind,omitempty"`
-	ShapeSync       *site.ShapeSyncConfig `json:"shapeSync,omitempty"`
+	ProductionURL     string                   `json:"productionUrl"`
+	SiteURL           string                   `json:"siteUrl"`
+	PublisherEmails   []string                 `json:"publisherEmails"`
+	AllowedHosts      []string                 `json:"allowedHosts"`
+	Bind              *BindConfig              `json:"bind,omitempty"`
+	ShapeSync         *site.ShapeSyncConfig    `json:"shapeSync,omitempty"`
+	Logging           []string                 `json:"logging,omitempty"`
+	LoggingRotation   *LoggingRotationConfig   `json:"loggingRotation,omitempty"`
+}
+
+// LoggingRotationConfig controls lumberjack rotation for site log files.
+type LoggingRotationConfig struct {
+	MaxSizeMB  int  `json:"maxSizeMB"`
+	MaxBackups int  `json:"maxBackups"`
+	MaxAgeDays int  `json:"maxAgeDays"`
+	Compress   bool `json:"compress"`
 }
 
 // BindConfig is the site listen address for monms serve (maps to PocketBase --http).

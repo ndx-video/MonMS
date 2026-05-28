@@ -1,21 +1,19 @@
 {
   "_comment": "Committed template — copy to config.json for local staging. Live config.json and publish-state.json are gitignored.",
   "_fieldDocs": {
-    "productionUrl": "HTTPS origin of the live production site, no trailing slash. Used by Publish to live and by monms content publish when --to is omitted.",
+    "siteUrl": "Public URL of this MonMS instance, no trailing slash. Shown in the serve startup banner (Site, Admin, Publish links). Example: https://staging.example.com",
+    "productionUrl": "HTTPS origin of the live production site, no trailing slash. Used by Publish to live and by monms content publish when --to is omitted — not the running instance URL.",
     "publisherEmails": "PocketBase superuser emails allowed to open /_monms/publish. Create users at /_/ first, then list their emails here.",
     "allowedHosts": "Hostnames passed to monms serve as --origins when the CLI flag is omitted. CLI --origins always wins. Example: staging.example.com",
     "bind": "Listen address for monms serve as --http when the CLI flag is omitted. CLI --http always wins. Example: { \"host\": \"0.0.0.0\", \"port\": \"8090\" }",
-    "shapeSync": "Optional shape sync at serve startup: fetch tags and checkout ref (not git pull). Example: { \"enabled\": true, \"ref\": \"v1.2.0\", \"remote\": \"origin\", \"force\": false, \"failOnError\": false }"
+    "logging": "Optional. File log levels under .monms/logs/. Omit to use build-mode defaults (production binary: error, warn, schema; development binary: all levels). ERROR is always written. Values: error, warn, info, debug, schema.",
+    "loggingRotation": "Optional lumberjack rotation for log files. Example: { \"maxSizeMB\": 10, \"maxBackups\": 5, \"maxAgeDays\": 30, \"compress\": true }",
+    "devLogging": "Not stored in config.json. Verbose PocketBase console/SQL logs: run monms serve --dev (CLI flag only)."
   },
+  "siteUrl": "https://staging.example.com",
   "productionUrl": "https://production.example.com",
   "publisherEmails": ["publisher@client.com"],
   "bind": { "host": "0.0.0.0", "port": "8090" },
   "allowedHosts": ["staging.example.com"],
-  "shapeSync": {
-    "enabled": false,
-    "ref": "v1.2.0",
-    "remote": "origin",
-    "force": false,
-    "failOnError": false
-  }
+  "logging": ["error", "warn", "schema"]
 }

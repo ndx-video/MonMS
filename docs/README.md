@@ -38,6 +38,7 @@ MonMS is an agent-malleable, single-binary CMS. Consultants and agents **shape**
 |----------|---------------------|
 | [MonMS HTTP API](reference/monms-api.md) | `/api/monms/*` and `/_monms/*` only |
 | [CLI reference](reference/cli.md) | `monms init`, `validate`, `content`, `site sync`, `serve` |
+| [File logging](reference/logging.md) | `.monms/logs/` levels, build-mode defaults, rotation |
 | [External dependencies](reference/external-dependencies.md) | PocketBase version, PocketBase API, Go templates |
 
 ---
