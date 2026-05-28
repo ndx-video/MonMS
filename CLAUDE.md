@@ -110,7 +110,7 @@ Product *development* ≠ compile-time `buildMode=development`. See `docs/operat
 | `/api/monms/*` | **JSON REST only** — machine clients, Bearer tokens | `POST /api/monms/content/import` |
 | `/_monms/*` | **Operator tools** — HTML pages and browser session helpers | `GET /_monms/publish`, `POST /_monms/auth/sync`, `GET /_monms/auth/logout` |
 
-`site/.monms/config.json` fields: `productionUrl`, `publisherEmails`, `allowedHosts` (injects `monms serve --origins` when CLI flag omitted; CLI wins if set), `bind` (injects `--http=host:port` when CLI `--http` omitted), `shapeSync` (optional fetch + checkout at serve startup).
+`site/.monms/config.json` fields: `siteUrl` (startup banner links for this instance), `productionUrl` (publish-to-live target only), `publisherEmails`, `allowedHosts` (injects `monms serve --origins` when CLI flag omitted; CLI wins if set), `bind` (injects `--http=host:port` when CLI `--http` omitted), `logging` / `loggingRotation` (file logs under `.monms/logs/` — see `docs/reference/logging.md`; omit `logging` for build-mode defaults: production → error/warn/schema, development → all levels), `shapeSync` (optional fetch + checkout at serve startup).
 | `/api/` (other) | PocketBase collection REST | `/api/collections/...` |
 | `/_/` | PocketBase admin SPA | Full management fallback |
 
@@ -138,7 +138,7 @@ When modifying the site as an agent:
 
 1. **Schema:** dual-write — POST `/api/collections` then write `schema/{name}.json`
 2. **Templates:** edit `*.gohtml`, run `monms validate`, commit with `agent:` prefix
-3. **Never commit:** `.pb_data/`, `.monms/config.json`, `.monms/publish-state.json`, tokens, secrets, `.env`
+3. **Never commit:** `.pb_data/`, `.monms/config.json`, `.monms/publish-state.json`, `.monms/logs/`, tokens, secrets, `.env`
 4. **Rollback caveat:** `git checkout -- .` does not remove newly added untracked files after failed validation — clean up manually
 
 ## What to change vs leave alone

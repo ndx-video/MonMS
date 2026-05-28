@@ -23,10 +23,10 @@ MonMS has four distinct layers. Each has different actors, artifacts, and promot
 |-------|-----|--------------|--------------|
 | **1 — Engine** | MonMS developers | Go runtime, router, validation | Semver `monms` binary release |
 | **2 — Structure** | Consultants, AI agents | Templates, CSS, schema definitions | **Git tag** → staging + production checkouts (operator policy) |
-| **3 — Content** | Business clients (editors/publishers) | Copy, records, page text | **JSON upsert outside Git** via Publish button |
+| **3 — Content** | Business clients (editors/publishers) | Copy, records, page text | **JSON upsert outside Git** from stage site to production site via Publish button |
 | **4 — Audience** | End users | Nothing — read/interact only | Production URL |
 
-The binary (L1) is **frozen at deploy**. Structure and content promote on **separate rails** — Git carries shape only; editorial copy lives in `.pb_data/` and never commits.
+The binary (engine) is **frozen at deploy**. end users of this product are not concerned with Layer 1. Structure and content promote on **separate rails**, ie. "staging" to "production" site instances — Git carries shape only (between instances); editorial copy lives in `.pb_data/` and never commits. Content does not live in the repo.
 
 Full lifecycle spec: [specs/staging.md](specs/staging.md)
 
@@ -34,7 +34,7 @@ Full lifecycle spec: [specs/staging.md](specs/staging.md)
 
 | Pillar | What it means |
 |--------|---------------|
-| **Single-binary monolith** | CMS, SQLite database, file server, and web server in one executable targeting **< 30 MB RAM** idle |
+| **Single-binary monolith** | CMS, API server, file server, and web server in one executable targeting **< 30 MB RAM** idle |
 | **Zero-compilation malleability** | Templates and schemas change on disk and load on the next request — no Node build step, no binary rebuild |
 | **Git-managed structure** | Layout and schema changes are versioned, validated, and tagged for production |
 | **Client-driven content publish** | Editors push approved copy from staging to live via an admin button — consultants aren't pinged every time |
@@ -158,6 +158,23 @@ See [docs/operators/getting-started.md](docs/operators/getting-started.md) and [
 | (unset) | — | `./site` |
 
 PocketBase data (SQLite, uploads, logs) lives at `{site}/.pb_data/` — **never commit this directory**.
+
+### File logging
+
+MonMS writes rotated logs to `{site}/.monms/logs/`. Configure levels in `site/.monms/config.json`:
+
+```json
+"logging": ["error", "warn", "schema"]
+```
+
+| Build | Default when `logging` omitted |
+|-------|-------------------------------|
+| Production (`buildMode=production`) | `error`, `warn`, `schema` |
+| Development (`go build`) | all levels (`error`, `warn`, `info`, `debug`, `schema`) |
+
+ERROR is always written to `error.log`; PocketBase output always goes to `pocketbase.log`. Full level reference: [docs/reference/logging.md](docs/reference/logging.md).
+
+Console/SQL verbosity is separate: `monms serve --dev` (CLI flag only).
 
 ## Architecture
 
