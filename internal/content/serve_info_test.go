@@ -26,6 +26,9 @@ func TestResolveServeURLsUsesSiteURL(t *testing.T) {
 	if urls.AdminURL != "https://staging.example.com/_/" {
 		t.Fatalf("AdminURL = %q", urls.AdminURL)
 	}
+	if urls.DashboardURL != "https://staging.example.com/_monms/" {
+		t.Fatalf("DashboardURL = %q", urls.DashboardURL)
+	}
 	if urls.PublishURL != "https://staging.example.com/_monms/publish" {
 		t.Fatalf("PublishURL = %q", urls.PublishURL)
 	}

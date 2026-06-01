@@ -1,0 +1,20 @@
+@import "tailwindcss";
+
+@source "../../templates/**/*.gohtml";
+
+@theme {
+  --color-monms-bg: #020a0c;
+  --color-monms-surface: #061a1f;
+  --color-monms-surface-2: #0a242b;
+  --color-monms-border: #006673;
+  --color-monms-accent: #0df2f2;
+  --color-monms-warning: #d4ff00;
+  --color-monms-danger: #ff003c;
+  --color-monms-text: #e5ffff;
+  --color-monms-muted: #6cb2bd;
+  --color-monms-dim: #3d7d86;
+  --font-display: "Inter", system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, monospace;
+  --tracking-ops: 0.12em;
+  --radius-none: 0px;
+}

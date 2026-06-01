@@ -1,0 +1,187 @@
+/* MonMS dashboard component styles — adapted from Sentinel ops console */
+:root {
+  color-scheme: dark;
+  --background: #020a0c;
+  --surface: #061a1f;
+  --surface-elevated: #0a242b;
+  --border: #006673;
+  --border-strong: #0df2f2;
+  --text-main: #e5ffff;
+  --text-muted: #6cb2bd;
+  --text-dim: #3d7d86;
+  --primary: #0df2f2;
+  --accent: #d4ff00;
+  --error: #ff003c;
+  --warning: #d4ff00;
+  --success: #0df2f2;
+}
+
+html,
+body {
+  background-color: var(--background);
+  color: var(--text-main);
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+.monms-grid-bg {
+  background-image:
+    linear-gradient(rgba(0, 102, 115, 0.22) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 102, 115, 0.22) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: -1px -1px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.45) 0%, rgba(0, 0, 0, 0) 100%);
+}
+
+.monms-panel {
+  border: 1px solid var(--border);
+  background: var(--surface);
+  border-radius: 0;
+}
+
+.monms-panel:hover {
+  border-color: var(--border-strong);
+}
+
+.monms-page-hero {
+  padding: 1rem;
+}
+
+@media (min-width: 768px) {
+  .monms-page-hero {
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+  }
+}
+
+.nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.2rem 0.85rem;
+  border-left: 4px solid transparent;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-decoration: none;
+}
+
+.nav-link:hover {
+  background: rgba(13, 242, 242, 0.08);
+  border-left-color: var(--border);
+  color: var(--text-main);
+}
+
+.nav-link.active {
+  background: var(--surface);
+  border-left-color: var(--primary);
+  color: var(--primary);
+}
+
+.nav-link .material-symbols-outlined {
+  font-size: 1rem;
+}
+
+.monms-btn-primary,
+.monms-btn-secondary,
+.monms-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 2rem;
+  padding: 0 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  font-size: 0.72rem;
+  font-weight: 800;
+  border-radius: 0;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.monms-btn-primary {
+  border: 1px solid var(--primary);
+  background: rgba(13, 242, 242, 0.12);
+  color: var(--primary);
+}
+
+.monms-btn-primary:hover {
+  background: rgba(13, 242, 242, 0.22);
+}
+
+.monms-btn-secondary {
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+}
+
+.monms-btn-secondary:hover {
+  border-color: var(--border-strong);
+  color: var(--text-main);
+}
+
+.monms-btn-danger {
+  border: 1px solid var(--error);
+  background: rgba(255, 0, 60, 0.12);
+  color: var(--error);
+}
+
+.monms-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  border: 1px solid var(--border);
+  padding: 0.15rem 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  font-size: 0.68rem;
+  font-weight: 800;
+}
+
+.monms-status-pill::before {
+  content: "";
+  width: 0.45rem;
+  height: 0.45rem;
+  background: currentColor;
+  display: inline-block;
+}
+
+.monms-status-ready { color: var(--primary); }
+.monms-status-warning { color: var(--warning); }
+.monms-status-error { color: var(--error); }
+
+.monms-alert {
+  border: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+}
+
+.monms-alert-warning {
+  border-color: var(--warning);
+  background: rgba(212, 255, 0, 0.08);
+  color: var(--text-main);
+}
+
+.monms-alert-success {
+  border-color: var(--success);
+  background: rgba(13, 242, 242, 0.08);
+}
+
+.monms-alert-error {
+  border-color: var(--error);
+  background: rgba(255, 0, 60, 0.08);
+}
+
+@keyframes monms-flash-white {
+  0% { background-color: rgba(255, 255, 255, 0.35); }
+  100% { background-color: transparent; }
+}
+
+[x-cloak] { display: none !important; }
+
+#app-sidebar { display: none; }
+@media (min-width: 768px) {
+  #app-sidebar { display: flex; }
+}

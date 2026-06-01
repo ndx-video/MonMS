@@ -15,4 +15,6 @@ site/.monms/logs/
 site/content/*
 !site/content/.gitkeep
 
-.pb_data/
+# dashboard Tailwind build tooling (committed output: monms-dash.css)
+internal/monmsdash/ui/static/node_modules/
+internal/monmsdash/ui/static/package-lock.json

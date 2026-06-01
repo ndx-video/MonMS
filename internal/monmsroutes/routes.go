@@ -5,6 +5,12 @@
 package monmsroutes
 
 const (
+	// DashboardHomePath is the operator dashboard entry point.
+	DashboardHomePath = "/_monms/"
+
+	// AdminPath is the PocketBase superuser admin SPA.
+	AdminPath = "/_/"
+
 	// ContentImportPath is the production editorial upsert API (Bearer MONMS_PUBLISH_TOKEN).
 	ContentImportPath = "/api/monms/content/import"
 

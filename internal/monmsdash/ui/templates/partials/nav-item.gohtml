@@ -1,0 +1,6 @@
+{{define "partials/nav-item.gohtml"}}
+<a href="{{.Href}}" class="nav-link {{if .Active}}active{{end}}">
+  <span class="material-symbols-outlined">{{.Icon}}</span>
+  <span>{{.Label}}</span>
+</a>
+{{end}}

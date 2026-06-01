@@ -1,31 +1,26 @@
-package content
+package monmsdash
 
 import (
-	_ "embed"
-	"html/template"
 	"log/slog"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/monms/monms/internal/monmsroutes"
-	"github.com/pocketbase/pocketbase/apis"
+	"github.com/monms/monms/internal/content"
 	"github.com/pocketbase/pocketbase/core"
 )
 
-//go:embed embed/publish.gohtml
-var publishPageTemplate string
-
 type publishPageData struct {
-	LastPublished   string
-	HasChanges      bool
-	StatusLabel     string
-	Changes         []string
-	ChangeGroups    []publishChangeGroup
+	PageData
+	LastPublished    string
+	HasChanges       bool
+	StatusLabel      string
+	Changes          []string
+	ChangeGroups     []publishChangeGroup
 	ProductionURLSet bool
-	SetupMode       bool
-	Message         string
-	MessageError    bool
+	SetupMode        bool
+	Message          string
+	MessageError     bool
 }
 
 type publishChangeGroup struct {
@@ -38,28 +33,30 @@ type publishFieldChange struct {
 	Summary string
 }
 
-func publishPageHandler(deps Deps) func(*core.RequestEvent) error {
-	tmpl := template.Must(template.New("publish").Parse(publishPageTemplate))
-
+func publishPageHandler(deps Deps, tmpl *templates) func(*core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
-		cfg, err := LoadMonmsConfig(deps.SiteAbs)
+		cfg, err := content.LoadMonmsConfig(deps.SiteAbs)
 		if err != nil {
 			return e.InternalServerError("failed to load config", err)
 		}
 
-		data, err := buildPublishPageData(e, deps, cfg, "", false)
+		base, err := buildPageData(e, deps.SiteAbs, "publish", "Publish to live")
+		if err != nil {
+			return e.InternalServerError("dashboard", err)
+		}
+
+		data, err := buildPublishPageData(e, deps, cfg, base, "", false)
 		if err != nil {
 			return e.InternalServerError("publish page", err)
 		}
 
-		e.Response.Header().Set("Content-Type", "text/html; charset=utf-8")
-		return tmpl.Execute(e.Response, data)
+		return tmpl.renderPage(e.Response, "publish", data)
 	}
 }
 
 func publishDiffHandler(deps Deps) func(*core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
-		diff, err := DiffExport(e.App, deps.SiteAbs)
+		diff, err := content.DiffExport(e.App, deps.SiteAbs)
 		if err != nil {
 			return e.InternalServerError("diff export", err)
 		}
@@ -67,11 +64,16 @@ func publishDiffHandler(deps Deps) func(*core.RequestEvent) error {
 	}
 }
 
-func publishPostHandler(deps Deps) func(*core.RequestEvent) error {
+func publishPostHandler(deps Deps, tmpl *templates) func(*core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
-		cfg, err := LoadMonmsConfig(deps.SiteAbs)
+		cfg, err := content.LoadMonmsConfig(deps.SiteAbs)
 		if err != nil {
 			return e.InternalServerError("failed to load config", err)
+		}
+
+		base, err := buildPageData(e, deps.SiteAbs, "publish", "Publish to live")
+		if err != nil {
+			return e.InternalServerError("dashboard", err)
 		}
 
 		email := ""
@@ -89,25 +91,23 @@ func publishPostHandler(deps Deps) func(*core.RequestEvent) error {
 			return e.InternalServerError("MONMS_PUBLISH_TOKEN is not configured on staging", nil)
 		}
 
-		snap, err := ExportSnapshot(e.App, deps.SiteAbs)
+		snap, err := content.ExportSnapshot(e.App, deps.SiteAbs)
 		if err != nil {
 			return e.InternalServerError("export snapshot", err)
 		}
 
 		payloads := snapshotToPayloads(snap)
-		if err := PublishToProduction(cfg.ProductionURL, deps.PublishToken, payloads); err != nil {
+		if err := content.PublishToProduction(cfg.ProductionURL, deps.PublishToken, payloads); err != nil {
 			slog.Info("content publish attempt", "email", email, "outcome", "failed", "error", err.Error())
-			tmpl := template.Must(template.New("publish").Parse(publishPageTemplate))
-			data, buildErr := buildPublishPageData(e, deps, cfg, err.Error(), true)
+			data, buildErr := buildPublishPageData(e, deps, cfg, base, err.Error(), true)
 			if buildErr != nil {
 				return e.InternalServerError("publish page", buildErr)
 			}
 			e.Response.WriteHeader(http.StatusBadGateway)
-			e.Response.Header().Set("Content-Type", "text/html; charset=utf-8")
-			return tmpl.Execute(e.Response, data)
+			return tmpl.renderPage(e.Response, "publish", data)
 		}
 
-		checksum, err := ChecksumExport(payloads)
+		checksum, err := content.ChecksumExport(payloads)
 		if err != nil {
 			return e.InternalServerError("checksum", err)
 		}
@@ -117,40 +117,44 @@ func publishPostHandler(deps Deps) func(*core.RequestEvent) error {
 			collections[i] = p.Collection
 		}
 
-		state := PublishState{
+		state := content.PublishState{
 			Checksum:    checksum,
 			PublishedAt: time.Now().UTC().Format(time.RFC3339),
 			Collections: collections,
 		}
-		if err := WritePublishState(deps.SiteAbs, state); err != nil {
+		if err := content.WritePublishState(deps.SiteAbs, state); err != nil {
 			return e.InternalServerError("write publish state", err)
 		}
 
 		slog.Info("content publish attempt", "email", email, "outcome", "success")
-		tmpl := template.Must(template.New("publish").Parse(publishPageTemplate))
-		data, err := buildPublishPageData(e, deps, cfg, "Content published successfully.", false)
+		data, err := buildPublishPageData(e, deps, cfg, base, "Content published successfully.", false)
 		if err != nil {
 			return e.InternalServerError("publish page", err)
 		}
-		e.Response.Header().Set("Content-Type", "text/html; charset=utf-8")
-		return tmpl.Execute(e.Response, data)
+		return tmpl.renderPage(e.Response, "publish", data)
 	}
 }
 
-func buildPublishPageData(e *core.RequestEvent, deps Deps, cfg MonmsConfig, message string, messageError bool) (publishPageData, error) {
+func buildPublishPageData(e *core.RequestEvent, deps Deps, cfg content.MonmsConfig, base PageData, message string, messageError bool) (publishPageData, error) {
 	productionURLSet := strings.TrimSpace(cfg.ProductionURL) != ""
 	data := publishPageData{
+		PageData:         base,
 		ProductionURLSet: productionURLSet,
 		SetupMode:        !productionURLSet,
 		Message:          message,
 		MessageError:     messageError,
 	}
 
+	if message != "" {
+		data.FlashMessage = message
+		data.FlashError = messageError
+	}
+
 	if !productionURLSet {
 		return data, nil
 	}
 
-	state, err := ReadPublishState(deps.SiteAbs)
+	state, err := content.ReadPublishState(deps.SiteAbs)
 	if err != nil {
 		return publishPageData{}, err
 	}
@@ -158,7 +162,7 @@ func buildPublishPageData(e *core.RequestEvent, deps Deps, cfg MonmsConfig, mess
 		data.LastPublished = state.PublishedAt
 	}
 
-	diff, err := DiffExport(e.App, deps.SiteAbs)
+	diff, err := content.DiffExport(e.App, deps.SiteAbs)
 	if err != nil {
 		return publishPageData{}, err
 	}
@@ -175,10 +179,10 @@ func buildPublishPageData(e *core.RequestEvent, deps Deps, cfg MonmsConfig, mess
 	return data, nil
 }
 
-func snapshotToPayloads(snap []CollectionFile) []CollectionPayload {
-	payloads := make([]CollectionPayload, len(snap))
+func snapshotToPayloads(snap []content.CollectionFile) []content.CollectionPayload {
+	payloads := make([]content.CollectionPayload, len(snap))
 	for i, f := range snap {
-		payloads[i] = CollectionPayload{
+		payloads[i] = content.CollectionPayload{
 			Collection: f.Collection,
 			Records:    f.Records,
 		}
@@ -212,7 +216,6 @@ func groupDiffChanges(changes []string) []publishChangeGroup {
 }
 
 func parseDiffLine(line string) (collection, field, summary string, ok bool) {
-	// hero_content/homepage/title: "a" → "b"
 	parts := strings.SplitN(line, ": ", 2)
 	if len(parts) != 2 {
 		return "", "", "", false
@@ -227,43 +230,4 @@ func parseDiffLine(line string) (collection, field, summary string, ok bool) {
 		return "", "", "", false
 	}
 	return segments[0], segments[2], summary, true
-}
-
-func requirePublisherFromSite(siteAbs string) func(*core.RequestEvent) error {
-	return func(e *core.RequestEvent) error {
-		cfg, err := LoadMonmsConfig(siteAbs)
-		if err != nil {
-			return e.InternalServerError("failed to load config", err)
-		}
-		return RequirePublisher(cfg.PublisherEmails)(e)
-	}
-}
-
-func bindLoadAuth(loadAuth func(*core.RequestEvent) error) func(*core.RequestEvent) error {
-	return func(e *core.RequestEvent) error {
-		if loadAuth != nil {
-			_ = loadAuth(e)
-		}
-		return e.Next()
-	}
-}
-
-func registerPublishRoutes(se *core.ServeEvent, deps Deps) {
-	publisherBind := requirePublisherFromSite(deps.SiteAbs)
-	authBind := bindLoadAuth(deps.LoadAuth)
-
-	se.Router.GET(monmsroutes.PublishPath, publishPageHandler(deps)).
-		BindFunc(authBind).
-		Bind(apis.RequireSuperuserAuth()).
-		BindFunc(publisherBind)
-
-	se.Router.GET(monmsroutes.PublishDiffPath, publishDiffHandler(deps)).
-		BindFunc(authBind).
-		Bind(apis.RequireSuperuserAuth()).
-		BindFunc(publisherBind)
-
-	se.Router.POST(monmsroutes.PublishPath, publishPostHandler(deps)).
-		BindFunc(authBind).
-		Bind(apis.RequireSuperuserAuth()).
-		BindFunc(publisherBind)
 }

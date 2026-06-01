@@ -128,7 +128,7 @@ func TestAdminDashboard(t *testing.T) {
 	}
 }
 
-func TestAdminUIExtension_ViewSiteLink(t *testing.T) {
+func TestAdminUIExtension_HeaderLinks(t *testing.T) {
 	if ui.DistDirFS == nil {
 		t.Skip("admin UI not bundled")
 	}
@@ -157,6 +157,12 @@ func TestAdminUIExtension_ViewSiteLink(t *testing.T) {
 	}
 	if !strings.Contains(bodyStr, `href: "/"`) {
 		t.Fatalf("extensions.js missing home href: %q", bodyStr)
+	}
+	if !strings.Contains(bodyStr, "MonMS Console") {
+		t.Fatalf("extensions.js missing MonMS Console link: %q", bodyStr)
+	}
+	if !strings.Contains(bodyStr, `href: "/_monms/"`) {
+		t.Fatalf("extensions.js missing dashboard href: %q", bodyStr)
 	}
 }
 

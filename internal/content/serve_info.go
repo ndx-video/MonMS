@@ -7,15 +7,18 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/monms/monms/internal/monmsroutes"
 )
 
 // ServeURLs are operator-facing links shown at serve startup.
 type ServeURLs struct {
-	SiteURL    string
-	AdminURL   string
-	PublishURL string
-	ConfigPath string
-	LogsDir    string
+	SiteURL      string
+	AdminURL     string
+	DashboardURL string
+	PublishURL   string
+	ConfigPath   string
+	LogsDir      string
 }
 
 // ResolveServeURLs builds operator-facing links for the startup banner.
@@ -36,11 +39,12 @@ func ResolveServeURLs(siteAbs string, serveArgs []string) (ServeURLs, error) {
 	}
 
 	return ServeURLs{
-		SiteURL:    base + "/",
-		AdminURL:   base + "/_/",
-		PublishURL: base + "/_monms/publish",
-		ConfigPath: configPath,
-		LogsDir:    filepath.Join(siteAbs, ".monms", "logs"),
+		SiteURL:      base + "/",
+		AdminURL:     base + "/_/",
+		DashboardURL: base + monmsroutes.DashboardHomePath,
+		PublishURL:   base + monmsroutes.PublishPath,
+		ConfigPath:   configPath,
+		LogsDir:      filepath.Join(siteAbs, ".monms", "logs"),
 	}, nil
 }
 
@@ -60,9 +64,10 @@ func PrintServeBanner(urls ServeURLs, out io.Writer) {
 	}
 	fmt.Fprintln(out)
 	fmt.Fprintf(out, "MonMS is running\n")
-	fmt.Fprintf(out, "  Site:     %s\n", urls.SiteURL)
-	fmt.Fprintf(out, "  Admin:    %s\n", urls.AdminURL)
-	fmt.Fprintf(out, "  Publish:  %s\n", urls.PublishURL)
+	fmt.Fprintf(out, "  Site:      %s\n", urls.SiteURL)
+	fmt.Fprintf(out, "  Dashboard: %s\n", urls.DashboardURL)
+	fmt.Fprintf(out, "  Admin:     %s\n", urls.AdminURL)
+	fmt.Fprintf(out, "  Publish:   %s\n", urls.PublishURL)
 	fmt.Fprintf(out, "  Options:  edit %s\n", urls.ConfigPath)
 	fmt.Fprintf(out, "  Logs:     %s\n", urls.LogsDir)
 	fmt.Fprintln(out)

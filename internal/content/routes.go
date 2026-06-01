@@ -39,11 +39,11 @@ type importCollection struct {
 	Records []map[string]any `json:"records"`
 }
 
-// RegisterRoutes wires MonMS content API routes on the PocketBase router.
+// RegisterRoutes wires MonMS content JSON API routes on the PocketBase router.
+// Operator HTML (dashboard, publish console) lives in internal/monmsdash.
 func RegisterRoutes(se *core.ServeEvent, deps Deps) {
 	se.Router.POST(monmsroutes.ContentImportPath, importHandler(deps)).
 		BindFunc(RequirePublishToken(deps.PublishToken))
-	registerPublishRoutes(se, deps)
 }
 
 func importHandler(deps Deps) func(*core.RequestEvent) error {

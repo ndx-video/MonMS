@@ -1,0 +1,68 @@
+{{define "content"}}
+<div class="monms-page-hero">
+  <div class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Content rail</div>
+  <h1 class="text-2xl font-extrabold uppercase tracking-[0.12em] text-monms-accent">Publish to live</h1>
+  <p class="mt-2 max-w-2xl text-sm text-monms-muted">Push editorial content from staging to production.</p>
+</div>
+
+<div class="p-4 md:p-6 space-y-6">
+  {{if .SetupMode}}
+  <section class="monms-panel monms-alert-warning p-5" role="status">
+    <h2 class="text-lg font-bold uppercase tracking-[0.12em] text-monms-text mb-2">Staging setup required</h2>
+    <p class="text-sm text-monms-muted mb-2">Set <code class="font-mono text-monms-accent">productionUrl</code> in <code class="font-mono text-monms-accent">site/.monms/config.json</code>.</p>
+    <p class="text-sm text-monms-dim">Publishing is disabled until production URL is configured.</p>
+  </section>
+  {{else}}
+  <section class="monms-panel p-5">
+    <p class="text-sm text-monms-muted mb-2">
+      <span class="font-bold uppercase tracking-[0.12em] text-monms-dim">Last published:</span>
+      {{if .LastPublished}}{{.LastPublished}}{{else}}Never{{end}}
+    </p>
+    <p class="flex items-center gap-2 text-sm">
+      <span class="monms-status-pill {{if .HasChanges}}monms-status-warning{{else}}monms-status-ready{{end}}">{{.StatusLabel}}</span>
+    </p>
+  </section>
+
+  <section class="monms-panel p-5">
+    <h2 class="text-lg font-bold uppercase tracking-[0.12em] text-monms-text mb-3">Pending changes</h2>
+    {{if .HasChanges}}
+    <ul class="space-y-4 list-none p-0 m-0">
+      {{range .ChangeGroups}}
+      <li class="border border-monms-border bg-monms-surface-2 p-4">
+        <h3 class="font-bold uppercase tracking-[0.12em] text-monms-accent mb-2">{{.Collection}}</h3>
+        <dl class="space-y-1 text-sm text-monms-muted">
+          {{range .Fields}}
+          <div>
+            <dt class="inline font-bold text-monms-text">{{.Field}}:</dt>
+            <dd class="inline">{{.Summary}}</dd>
+          </div>
+          {{end}}
+        </dl>
+      </li>
+      {{end}}
+    </ul>
+    {{if not .ChangeGroups}}
+    <ul class="list-disc pl-5 text-sm text-monms-muted">
+      {{range .Changes}}
+      <li>{{.}}</li>
+      {{end}}
+    </ul>
+    {{end}}
+    {{else}}
+    <p class="text-sm text-monms-muted">No pending changes — production matches staging editorial content.</p>
+    {{end}}
+  </section>
+
+  <section class="monms-alert monms-alert-warning">
+    Publish updates and adds editorial records on production. Deleting content on staging does <strong>not</strong> remove records from production.
+  </section>
+
+  <div class="flex flex-wrap items-center gap-4">
+    <a href="/_monms/publish/diff" class="monms-btn-secondary">Preview diff (JSON)</a>
+    <form method="post" action="/_monms/publish" class="inline">
+      <button type="submit" class="monms-btn-primary">Publish now</button>
+    </form>
+  </div>
+  {{end}}
+</div>
+{{end}}

@@ -16,6 +16,7 @@ import (
 	"github.com/monms/monms/internal/content"
 	"github.com/monms/monms/internal/daemon"
 	"github.com/monms/monms/internal/logging"
+	"github.com/monms/monms/internal/monmsdash"
 	"github.com/monms/monms/internal/restart"
 	"github.com/monms/monms/internal/router"
 	"github.com/monms/monms/internal/schema"
@@ -243,11 +244,13 @@ func runServeAt(abs string) {
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
 		router.RegisterAdminUIExtension(se)
-		content.RegisterRoutes(se, content.Deps{
+		dashDeps := monmsdash.Deps{
 			SiteAbs:      abs,
 			PublishToken: os.Getenv("MONMS_PUBLISH_TOKEN"),
 			LoadAuth:     router.LoadAuthFromCookie,
-		})
+		}
+		monmsdash.RegisterRoutes(se, dashDeps)
+		content.RegisterRoutes(se, monmsdash.PublishDeps(dashDeps))
 		router.RegisterRoutes(se, router.Deps{
 			SiteAbs: abs,
 			Cache:   tplCache,

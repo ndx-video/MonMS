@@ -1,16 +1,9 @@
-# CLAUDE.md — MonMS Agent Instructions
+# PROJECT.md — MonMS Agent Cold Start overview
 
-This file guides AI assistants working in the MonMS repository. Read it before making changes.
+This file guides AI assistants working in the MonMS repository.
 
-## Terminology migration (2026-05-27)
 
-**Site** replaced **workspace** everywhere in runtime code and active docs.
-
-- Default path: `site/` (was `workspace/`)
-- CLI: `-s` / `--site` (was `-w` / `--workspace`); env `MONMS_SITE` (was `MONMS_WORKSPACE`)
-- Package: `internal/site` (was `internal/workspace`); command: `monms site sync` (was `monms workspace sync`)
-
-If you see "workspace" in `.planning/phases/` or old commits, map it to **site**. Do not reintroduce old flag names or paths.
+If you see **workspace** mentioned anywhere in `.planning/phases/` or old commits, map it to **site**. Do not reintroduce old "workpspace" flag names or paths.
 
 ## Project summary
 

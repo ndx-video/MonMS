@@ -11,7 +11,21 @@ Canonical path constants: `internal/monmsroutes/routes.go`.
 | Prefix | Content type | Audience |
 |--------|--------------|----------|
 | `/api/monms/*` | JSON only | Machine clients, CI, Sentinel flows |
-| `/_monms/*` | HTML + session helpers | Browser operators |
+| `/_monms/*` | HTML + session helpers | Browser operators (dashboard, publish console, auth bridge) |
+
+Static assets for the operator dashboard are served at `/_monms/static/*` (embedded, offline-capable — no CDN).
+
+## `GET /_monms/` and `GET /_monms`
+
+Operator **dashboard home**. Requires PocketBase superuser session (`monms_auth` cookie or Bearer via auth middleware).
+
+Role-aware navigation:
+
+- **All signed-in superusers:** view site, PocketBase admin link
+- **`publisherEmails` allowlist:** publish console
+- **Consultants (superusers):** structure/admin tools section
+
+Unauthenticated requests redirect to PocketBase admin at `/_/` (`monmsroutes.AdminPath`).
 
 ## `POST /api/monms/content/import`
 
@@ -47,7 +61,7 @@ Used by staging **Publish to live** and `monms content publish`.
 
 ## `GET /_monms/publish`
 
-HTML **Publish to live** console.
+HTML **Publish to live** console (rendered inside the dashboard shell).
 
 **Auth:** PocketBase superuser session + email in `site/.monms/config.json` `publisherEmails`.
 

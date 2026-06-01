@@ -1,0 +1,33 @@
+{{define "partials/sidebar.gohtml"}}
+<nav id="app-sidebar" class="hidden md:flex w-64 shrink-0 flex-col bg-monms-bg border-r border-monms-border/70">
+  <div id="app-sidebar-inner" class="flex flex-1 flex-col gap-1 overflow-y-auto p-0 min-h-0">
+    {{template "partials/nav-item.gohtml" dict "Icon" "dashboard" "Label" "Dashboard" "Href" "/_monms/" "Active" (eq .ActivePage "home")}}
+    {{template "partials/nav-item.gohtml" dict "Icon" "public" "Label" "View site" "Href" "/" "Active" false}}
+
+    {{if .IsPublisher}}
+    <div class="my-3 border-t border-monms-border/70"></div>
+    <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Content</div>
+    {{template "partials/nav-item.gohtml" dict "Icon" "publish" "Label" "Publish" "Href" "/_monms/publish" "Active" (eq .ActivePage "publish")}}
+    {{end}}
+
+    {{if .IsSuperuser}}
+    <div class="my-3 border-t border-monms-border/70"></div>
+    <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Consultant</div>
+    {{template "partials/nav-item.gohtml" dict "Icon" "admin_panel_settings" "Label" "PocketBase admin" "Href" "/_/" "Active" false}}
+    {{end}}
+
+    <div class="flex-1"></div>
+
+    {{if .IsSuperuser}}
+    {{template "partials/nav-item.gohtml" dict "Icon" "logout" "Label" "Sign out" "Href" "/_monms/auth/logout?redirect=/_/" "Active" false}}
+    {{end}}
+
+    {{if .UserEmail}}
+    <div class="shrink-0 border-t border-monms-border/70 px-3 py-3">
+      <div class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Signed in</div>
+      <div class="mt-1 truncate font-mono text-xs text-monms-muted" title="{{.UserEmail}}">{{.UserEmail}}</div>
+    </div>
+    {{end}}
+  </div>
+</nav>
+{{end}}

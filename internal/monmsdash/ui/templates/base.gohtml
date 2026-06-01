@@ -1,0 +1,52 @@
+{{define "base"}}
+<!DOCTYPE html>
+<html class="dark" lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{if .Title}}{{.Title}} — {{end}}MonMS Console</title>
+  <link href="/_monms/static/fonts/inter.css" rel="stylesheet">
+  <link href="/_monms/static/fonts/material-symbols.css" rel="stylesheet">
+  <link href="/_monms/static/monms-dash.css" rel="stylesheet">
+  <link href="/_monms/static/components.css" rel="stylesheet">
+  <script defer src="/_monms/static/alpine.min.js"></script>
+  <script defer src="/_monms/static/htmx.min.js"></script>
+</head>
+<body class="bg-monms-bg text-monms-text font-display h-screen overflow-hidden antialiased selection:bg-monms-accent selection:text-monms-bg">
+  <div class="fixed inset-0 pointer-events-none z-0 monms-grid-bg opacity-30"></div>
+
+  <div class="relative z-10 flex h-full flex-col overflow-hidden">
+    <header id="app-topbar" class="mb-2 grid h-12 shrink-0 grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-4 border-b border-monms-border bg-monms-surface px-4 md:px-6">
+      <div class="flex items-center gap-3 text-monms-accent min-w-0">
+        <span class="material-symbols-outlined text-xl" aria-hidden="true">dashboard</span>
+        <span class="text-sm font-extrabold uppercase tracking-[0.12em]">MonMS Console</span>
+      </div>
+      <div id="monms-msg-strip" class="min-w-0 flex items-center overflow-hidden"{{if .FlashMessage}} data-flash="{{.FlashMessage}}" data-flash-type="{{if .FlashError}}error{{else}}success{{end}}"{{end}}></div>
+      <div class="flex items-center gap-3 justify-self-end">
+        {{if .IsSuperuser}}
+        <div class="inline-flex items-center gap-2 border border-monms-accent bg-monms-accent/10 px-3 py-1">
+          <span class="h-2 w-2 bg-monms-accent animate-pulse"></span>
+          <span class="text-[10px] font-extrabold uppercase tracking-[0.12em] text-monms-accent">Signed in</span>
+        </div>
+        {{end}}
+      </div>
+    </header>
+
+    <div id="app-shell" class="flex min-h-0 flex-1 overflow-hidden">
+      {{template "partials/sidebar.gohtml" .}}
+
+      <main id="app-main" class="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <div id="app-main-scroll" class="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-monms-bg">
+          <div id="app-main-frame" class="mx-auto flex min-h-0 min-w-0 w-full max-w-[1840px] flex-col p-0">
+            {{template "content" .}}
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script src="/_monms/static/js/messages.js"></script>
+  <script src="/_monms/static/js/auth-sync.js"></script>
+</body>
+</html>
+{{end}}

@@ -20,7 +20,7 @@ Walkthrough for MonMS **inline contextual editing** on the **staging** instance 
 3. Navigate to `/` — the page auto-syncs your admin session and should show **Live Editor Active**.
 4. If the editor badge is missing after admin login, hard-refresh `/` once.
 
-Use **View site** in the PocketBase admin header (MonMS UI extension) to open the public homepage in a new tab.
+Use **MonMS Console** and **View site** in the PocketBase admin header (MonMS UI extension) to open the operator dashboard or public homepage.
 
 ## 2. Confirm Live Editor badge
 
