@@ -31,19 +31,28 @@ func tryRenderDocument(e *core.RequestEvent, siteAbs string, cache *templates.Te
 		htmlBody = template.HTML(template.HTMLEscapeString(rawBody))
 	}
 
+	sections, err := documents.SectionViews(rawBody)
+	if err != nil {
+		slog.Warn("document render: sections failed", "slug", slug, "error", err)
+		sections = nil
+	}
+
 	docData := map[string]any{
 		"Title":       match.Record.GetString("title"),
 		"Slug":        match.Record.GetString("slug"),
 		"Collection":  match.Collection,
 		"PublishedAt": match.Record.GetString("published_at"),
 		"HTMLBody":    htmlBody,
+		"Sections":    sections,
 	}
 
 	layoutPath := filepath.Join(siteAbs, "templates", "layouts", "base.gohtml")
 	docPath := filepath.Join(siteAbs, "templates", "doc.gohtml")
 
 	loader := func() (*template.Template, error) {
-		return template.ParseFiles(layoutPath, docPath)
+		return template.New("base").
+			Funcs(DocumentTemplateFuncs(e.App, siteAbs)).
+			ParseFiles(layoutPath, docPath)
 	}
 
 	cacheKey := "doc:" + slug

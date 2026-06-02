@@ -68,7 +68,9 @@ func SSRHandler(siteAbs string, cache *templates.TemplateCache, isDev bool) func
 		}
 
 		loader := func() (*template.Template, error) {
-			return template.ParseFiles(layoutPath, pagePath)
+			return template.New("base").
+				Funcs(DocumentTemplateFuncs(e.App, siteAbs)).
+				ParseFiles(layoutPath, pagePath)
 		}
 
 		tmpl, err := cache.Get(cacheKey, loader)
