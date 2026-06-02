@@ -20,6 +20,7 @@ const (
 type MonmsBinding struct {
 	Source   string            `json:"source"`
 	Root     string            `json:"root"`
+	Doctree  string            `json:"doctree"` // stub name for dt_* collections (e.g. guide)
 	SlugFrom string            `json:"slugFrom"`
 	IDFrom   string            `json:"idFrom"`
 	Fields   map[string]string `json:"fields"`
@@ -49,6 +50,11 @@ func (m CollectionMeta) IsMarkdownSource() bool {
 // IsPBNative reports whether the collection uses PocketBase as canonical store.
 func (m CollectionMeta) IsPBNative() bool {
 	return m.Editorial && !m.IsMarkdownSource()
+}
+
+// IsDoctreeCollection reports markdown collections managed under a doctree stub (dt_*).
+func IsDoctreeCollection(name string) bool {
+	return strings.HasPrefix(name, "dt_")
 }
 
 // schemaFileMeta is the JSON shape read from schema/*.json files.

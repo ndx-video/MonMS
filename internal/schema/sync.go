@@ -20,15 +20,8 @@ func RegisterBootstrapHook(app core.App, siteAbs string) {
 			return err
 		}
 
-		raw, err := loadSchemaJSONFiles(filepath.Join(siteAbs, "schema"))
-		if err != nil {
+		if err := ImportSiteCollections(e.App, siteAbs); err != nil {
 			return err
-		}
-		if len(raw) > 0 {
-			if err := e.App.ImportCollectionsByMarshaledJSON(raw, false); err != nil {
-				return err
-			}
-			logging.Schema("schema sync: imported collections from site/schema")
 		}
 
 		if err := seedHeroHomepage(e.App); err != nil {
@@ -36,6 +29,22 @@ func RegisterBootstrapHook(app core.App, siteAbs string) {
 		}
 		return nil
 	})
+}
+
+// ImportSiteCollections imports all schema JSON files from {siteAbs}/schema into PocketBase.
+func ImportSiteCollections(app core.App, siteAbs string) error {
+	raw, err := loadSchemaJSONFiles(filepath.Join(siteAbs, "schema"))
+	if err != nil {
+		return err
+	}
+	if len(raw) == 0 {
+		return nil
+	}
+	if err := app.ImportCollectionsByMarshaledJSON(raw, false); err != nil {
+		return err
+	}
+	logging.Schema("schema sync: imported collections from site/schema")
+	return nil
 }
 
 func loadSchemaJSONFiles(dir string) ([]byte, error) {
