@@ -12,6 +12,7 @@ import (
 
 	"github.com/monms/monms/internal/authbootstrap"
 	"github.com/monms/monms/internal/content"
+	"github.com/monms/monms/internal/documents"
 	"github.com/monms/monms/internal/monmsdash"
 	"github.com/monms/monms/internal/monmsroutes"
 	"github.com/monms/monms/internal/schema"
@@ -55,6 +56,7 @@ func startDashboardServer(t *testing.T, siteAbs, publishToken string, loadAuth f
 	})
 
 	authbootstrap.RegisterBootstrapHook(app)
+	documents.RegisterBootstrapHook(app, siteAbs)
 	schema.RegisterBootstrapHook(app, siteAbs)
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
@@ -374,5 +376,55 @@ func TestMCPSettingsForbiddenForNonSuperuser(t *testing.T) {
 	resp.Body.Close()
 	if resp.StatusCode != http.StatusForbidden {
 		t.Fatalf("status %d, want 403", resp.StatusCode)
+	}
+}
+
+func TestDocumentsPageListsMarkdownCollection(t *testing.T) {
+	ws := testutil.NewSite(t)
+	schemaJSON := `{
+  "name": "articles",
+  "type": "base",
+  "editorial": true,
+  "monms": { "source": "markdown", "root": "documents/articles" },
+  "fields": [
+    { "name": "id", "type": "text", "primaryKey": true, "required": true, "pattern": "^[a-z][a-z0-9_-]*$", "min": 1, "max": 120 },
+    { "name": "title", "type": "text" },
+    { "name": "slug", "type": "text" },
+    { "name": "path", "type": "text" },
+    { "name": "body", "type": "text" }
+  ]
+}`
+	testutil.WriteFile(t, filepath.Join(ws, "schema/articles.json"), schemaJSON)
+	testutil.WriteFile(t, filepath.Join(ws, "documents/articles/hello.md"), `---
+title: Hello Doc
+---
+Body
+`)
+
+	ts, app, cleanup := startDashboardServer(t, ws, testPublishToken, testLoadAuthFromCookie)
+	defer cleanup()
+
+	user := testutil.NewSuperuser(t, app, "reader@test.local")
+	client := testutil.AuthClient(t, app, user)
+
+	resp, err := client.Get(ts.URL + monmsroutes.DocumentsPath)
+	if err != nil {
+		t.Fatalf("GET documents: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		t.Fatalf("read body: %v", err)
+	}
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status %d, want 200; body: %.300s", resp.StatusCode, body)
+	}
+	text := string(body)
+	if !strings.Contains(text, "articles") {
+		t.Fatalf("missing collection name: %.400s", text)
+	}
+	if !strings.Contains(text, "Hello Doc") {
+		t.Fatalf("missing document title: %.400s", text)
 	}
 }

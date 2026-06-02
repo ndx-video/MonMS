@@ -19,6 +19,9 @@ const (
 	// PublishDiffPath returns JSON diff data for the publish console.
 	PublishDiffPath = "/_monms/publish/diff"
 
+	// DocumentsPath is the markdown document browser in the operator dashboard.
+	DocumentsPath = "/_monms/documents"
+
 	// AuthSyncPath bridges PocketBase admin localStorage auth to the monms_auth cookie.
 	AuthSyncPath = "/_monms/auth/sync"
 	// AuthLogoutPath clears the monms_auth session cookie.

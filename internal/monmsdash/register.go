@@ -21,6 +21,7 @@ func RegisterRoutes(se *core.ServeEvent, deps Deps) {
 	se.Router.GET(staticPrefix+"{path...}", staticHandler())
 
 	registerDashboardRoutes(se, deps, tmpl)
+	registerDocumentsRoutes(se, deps, tmpl)
 	registerPublishRoutes(se, deps, tmpl)
 	registerAPIKeysRoutes(se, deps, tmpl)
 	registerMCPSettingsRoutes(se, deps, tmpl)

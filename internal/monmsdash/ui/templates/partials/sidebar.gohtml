@@ -3,6 +3,7 @@
   <div id="app-sidebar-inner" class="flex flex-1 flex-col gap-1 overflow-y-auto p-0 min-h-0">
     {{template "partials/nav-item.gohtml" dict "Icon" "dashboard" "Label" "Dashboard" "Href" "/_monms/" "Active" (eq .ActivePage "home")}}
     {{template "partials/nav-item.gohtml" dict "Icon" "public" "Label" "View site" "Href" "/" "Active" false}}
+    {{template "partials/nav-item.gohtml" dict "Icon" "description" "Label" "Documents" "Href" "/_monms/documents" "Active" (eq .ActivePage "documents")}}
 
     {{if .IsPublisher}}
     <div class="my-3 border-t border-monms-border/70"></div>

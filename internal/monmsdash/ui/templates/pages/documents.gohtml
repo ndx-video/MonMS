@@ -1,0 +1,67 @@
+{{define "content"}}
+<div class="monms-page-hero">
+  <div class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Content rail</div>
+  <h1 class="text-2xl font-extrabold uppercase tracking-[0.12em] text-monms-accent">Documents</h1>
+  <p class="mt-2 max-w-2xl text-sm text-monms-muted">
+    Browse Git-synced markdown collections. Promote changes via Git tag and <code class="font-mono text-monms-accent">monms site sync</code> — not Publish to live.
+  </p>
+</div>
+
+<div class="p-4 md:p-6 space-y-6">
+  {{if .Forest.OrphanCount}}
+  <section class="monms-alert monms-alert-warning">
+    {{.Forest.OrphanCount}} PocketBase record(s) have no backing markdown file. Run <code class="font-mono text-monms-accent">monms documents diff</code> for details.
+  </section>
+  {{end}}
+
+  {{if not .Forest.Collections}}
+  <section class="monms-panel p-5">
+    <p class="text-sm text-monms-muted">No markdown collections configured. Add <code class="font-mono text-monms-accent">"monms": {"source":"markdown"}</code> to a schema file and sync documents.</p>
+  </section>
+  {{else}}
+  {{range .Forest.Collections}}
+  <section class="monms-panel p-5">
+    <div class="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+      <h2 class="text-lg font-bold uppercase tracking-[0.12em] text-monms-text">{{.Name}}</h2>
+      <code class="font-mono text-xs text-monms-muted">{{.Root}}</code>
+    </div>
+
+    {{if or .Orphans .Folders}}
+    <ul class="space-y-2 list-none p-0 m-0 text-sm">
+      {{range .Orphans}}
+      <li>
+        <a href="/{{.Slug}}" class="text-monms-accent hover:underline" target="_blank" rel="noopener">{{if .Title}}{{.Title}}{{else}}{{.Slug}}{{end}}</a>
+        <span class="text-monms-dim font-mono text-xs ml-2">/{{.Slug}}</span>
+      </li>
+      {{end}}
+      {{range .Folders}}
+      {{template "documents-folder" .}}
+      {{end}}
+    </ul>
+    {{else}}
+    <p class="text-sm text-monms-muted">No synced documents yet.</p>
+    {{end}}
+  </section>
+  {{end}}
+  {{end}}
+</div>
+{{end}}
+
+{{define "documents-folder"}}
+<li class="mt-2">
+  <details class="group" open>
+    <summary class="cursor-pointer font-bold text-monms-text uppercase tracking-[0.08em] text-xs">{{.Name}}/</summary>
+    <ul class="mt-2 ml-4 space-y-1 list-none p-0 border-l border-monms-border pl-3">
+      {{range .Docs}}
+      <li>
+        <a href="/{{.Slug}}" class="text-monms-accent hover:underline" target="_blank" rel="noopener">{{if .Title}}{{.Title}}{{else}}{{.Slug}}{{end}}</a>
+        <span class="text-monms-dim font-mono text-xs ml-2">/{{.Slug}}</span>
+      </li>
+      {{end}}
+      {{range .Children}}
+      {{template "documents-folder" .}}
+      {{end}}
+    </ul>
+  </details>
+</li>
+{{end}}
