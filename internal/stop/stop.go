@@ -14,6 +14,29 @@ import (
 
 const shutdownGrace = 2 * time.Second
 
+// Supported reports whether process lifecycle control is available on this OS.
+func Supported() (bool, error) {
+	exe, err := resolveExecutable()
+	if err != nil {
+		return false, err
+	}
+	if _, err := findMatchingPIDs(exe, os.Getpid()); err != nil {
+		return false, err
+	}
+	return true, nil
+}
+
+// ShutdownAll stops other monms instances, then signals the current process to exit.
+func ShutdownAll() error {
+	if _, err := StopAll(); err != nil {
+		return err
+	}
+	if err := syscall.Kill(os.Getpid(), syscall.SIGTERM); err != nil {
+		return fmt.Errorf("stop: sigterm self: %w", err)
+	}
+	return nil
+}
+
 // StopAll sends SIGTERM (then SIGKILL) to all monms processes using this binary,
 // excluding the current process. Returns stopped PIDs.
 func StopAll() ([]int, error) {

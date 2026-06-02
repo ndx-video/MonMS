@@ -65,6 +65,37 @@ func RunCLI(args []string) error {
 	return nil
 }
 
+// RestartDetached stops other instances, forks a detached serve child, then exits the current process.
+func RestartDetached(siteAbs string, serveArgs []string) error {
+	if _, err := stop.StopAll(); err != nil {
+		return fmt.Errorf("restart: %w", err)
+	}
+	time.Sleep(portReleaseWait)
+	childArgs := append([]string(nil), serveArgs...)
+	childArgs = cli.EnsureServeSubcommand(childArgs)
+	if err := daemon.Start(siteAbs, append(childArgs, "-d")); err != nil {
+		return err
+	}
+	time.Sleep(100 * time.Millisecond)
+	if err := syscall.Kill(os.Getpid(), syscall.SIGTERM); err != nil {
+		return fmt.Errorf("restart: exit current: %w", err)
+	}
+	return nil
+}
+
+// ShouldRestartDetached reports whether the running process was started as a daemon child.
+func ShouldRestartDetached(siteAbs string) bool {
+	if os.Getenv("MONMS_DAEMON") == "1" {
+		return true
+	}
+	pidPath := daemon.PIDFilePath(siteAbs)
+	pid, err := daemon.ReadPIDFile(pidPath)
+	if err != nil {
+		return false
+	}
+	return pid == os.Getpid()
+}
+
 // ExecCurrentProcess stops other monms instances and re-execs the current argv.
 func ExecCurrentProcess() error {
 	if _, err := stop.StopAll(); err != nil {
