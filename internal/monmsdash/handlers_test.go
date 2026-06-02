@@ -10,6 +10,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/monms/monms/internal/authbootstrap"
 	"github.com/monms/monms/internal/content"
 	"github.com/monms/monms/internal/monmsdash"
 	"github.com/monms/monms/internal/monmsroutes"
@@ -53,6 +54,7 @@ func startDashboardServer(t *testing.T, siteAbs, publishToken string, loadAuth f
 		HideStartBanner: true,
 	})
 
+	authbootstrap.RegisterBootstrapHook(app)
 	schema.RegisterBootstrapHook(app, siteAbs)
 
 	app.OnServe().BindFunc(func(se *core.ServeEvent) error {
@@ -312,5 +314,65 @@ func TestPublisherGate(t *testing.T) {
 	}
 	if state.Checksum == "" {
 		t.Fatal("publish-state checksum empty after successful publish")
+	}
+}
+
+func TestAPIKeysPageForSuperuser(t *testing.T) {
+	ws := testutil.NewSite(t)
+	ts, app, cleanup := startDashboardServer(t, ws, testPublishToken, testLoadAuthFromCookie)
+	defer cleanup()
+
+	user := testutil.NewSuperuser(t, app, "keys-ui@test.local")
+	token, err := user.NewAuthToken()
+	if err != nil {
+		t.Fatalf("token: %v", err)
+	}
+
+	req, _ := http.NewRequest(http.MethodGet, ts.URL+monmsroutes.APIKeysPath, nil)
+	req.AddCookie(&http.Cookie{Name: "monms_auth", Value: token})
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("GET api-keys: %v", err)
+	}
+	defer resp.Body.Close()
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status %d, want 200; body: %.200s", resp.StatusCode, body)
+	}
+	if !strings.Contains(string(body), "API Keys") {
+		t.Fatalf("missing page title")
+	}
+}
+
+func TestMCPSettingsForbiddenForNonSuperuser(t *testing.T) {
+	ws := testutil.NewSite(t)
+	ts, app, cleanup := startDashboardServer(t, ws, testPublishToken, testLoadAuthFromCookie)
+	defer cleanup()
+
+	usersCol, err := app.FindCollectionByNameOrId("users")
+	if err != nil {
+		t.Fatalf("users collection: %v", err)
+	}
+	regular := core.NewRecord(usersCol)
+	regular.Set("email", "regular@test.local")
+	regular.SetPassword("password123456")
+	regular.Set("verified", true)
+	if err := app.Save(regular); err != nil {
+		t.Fatalf("save user: %v", err)
+	}
+	token, err := regular.NewAuthToken()
+	if err != nil {
+		t.Fatalf("token: %v", err)
+	}
+
+	req, _ := http.NewRequest(http.MethodGet, ts.URL+monmsroutes.MCPSettingsPath, nil)
+	req.AddCookie(&http.Cookie{Name: "monms_auth", Value: token})
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("GET mcp: %v", err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("status %d, want 403", resp.StatusCode)
 	}
 }

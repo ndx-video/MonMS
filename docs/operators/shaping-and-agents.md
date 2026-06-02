@@ -44,6 +44,9 @@ Never hardcode tokens. See [Security](security.md).
 | `POCKETBASE_ADMIN_TOKEN` | Admin JWT for collection management |
 | `MONMS_BIN` | Path to `monms` binary (optional) |
 | `MONMS_PUBLISH_TOKEN` | Production import secret (consultant setup only) |
+| MonMS API key | MCP agentic access (`Authorization: Bearer monms_…`) — create at `/_monms/api-keys` |
+
+For MCP-driven shaping helpers (validate, schema list, editorial CRUD as the key owner), prefer an **API key** over long-lived superuser JWTs. Collection management during dual-write still uses `POCKETBASE_ADMIN_TOKEN`. See [MCP and API keys](mcp-and-api-keys.md).
 
 Use a dedicated SSH key scoped to the site directory. See [Security](security.md).
 

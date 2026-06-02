@@ -40,6 +40,22 @@ monms content publish --site ./site --to https://production.example.com
 
 Clients normally use `/_monms/publish` instead.
 
+## `monms documents`
+
+Markdown document rail (`monms.source=markdown` in schema JSON). Git-tracked files under `site/documents/` sync into PocketBase on bootstrap and via CLI.
+
+| Subcommand | Purpose |
+|------------|---------|
+| `sync` | Upsert markdown into `.pb_data/` |
+| `diff` | Orphan PB records without backing files |
+| `scan` / `plan` / `bind` | Legacy migration helpers |
+
+```bash
+monms documents sync --site ./site
+```
+
+See [Markdown document rail](../operators/markdown-content.md).
+
 ## `monms site sync`
 
 Fetch tags and checkout a shape ref in the site Git repo.
@@ -62,6 +78,8 @@ monms serve --http=127.0.0.1:8090
 Production binary: `go build -ldflags "-X main.buildMode=production" -o monms .`
 
 File logging defaults follow `buildMode` when `logging` is omitted from config — see [File logging](logging.md).
+
+When `mcp.enabled` is `true` in config, a separate MCP listener starts after serve (restart required after bind changes). See [MCP and API keys](../operators/mcp-and-api-keys.md).
 
 ## `monms restart`
 

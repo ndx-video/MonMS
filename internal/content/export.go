@@ -63,9 +63,9 @@ func ExportCollection(app core.App, name string) ([]map[string]any, error) {
 	return out, nil
 }
 
-// ExportAll writes site/content/{collection}.json for each editorial collection (PUB-02).
+// ExportAll writes site/content/{collection}.json for each PB-native editorial collection (PUB-02).
 func ExportAll(app core.App, siteAbs string) error {
-	names, err := LoadEditorialCollectionNames(siteAbs)
+	names, err := LoadPBNativeEditorialCollectionNames(siteAbs)
 	if err != nil {
 		return err
 	}
@@ -104,8 +104,9 @@ func ExportAll(app core.App, siteAbs string) error {
 }
 
 // ExportSnapshot builds in-memory editorial payloads for checksum/diff (sorted).
+// Markdown-backed collections are excluded — they promote via Git structure rail.
 func ExportSnapshot(app core.App, siteAbs string) ([]CollectionFile, error) {
-	names, err := LoadEditorialCollectionNames(siteAbs)
+	names, err := LoadPBNativeEditorialCollectionNames(siteAbs)
 	if err != nil {
 		return nil, err
 	}

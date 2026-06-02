@@ -61,6 +61,7 @@ type scaffoldFile struct {
 var scaffoldFiles = []scaffoldFile{
 	{"embed/base.gohtml", "templates/layouts/base.gohtml"},
 	{"embed/index.gohtml", "templates/index.gohtml"},
+	{"embed/doc.gohtml", "templates/doc.gohtml"},
 	{"embed/errors.gohtml", "templates/errors/errors.gohtml"},
 	{"embed/main.css", "assets/main.css"},
 	{"embed/hero_content.json", "schema/hero_content.json"},
@@ -78,6 +79,7 @@ var scaffoldDirs = []string{
 	"schema",
 	".monms",
 	"content",
+	"documents",
 }
 
 // Result lists artifacts created during InitAt.

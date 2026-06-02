@@ -9,12 +9,13 @@ import (
 
 // MonmsCommands are subcommands handled before PocketBase (serve, superuser, …).
 var MonmsCommands = map[string]bool{
-	"init":     true,
-	"validate": true,
-	"content":  true,
-	"site":     true,
-	"stop":     true,
-	"restart":  true,
+	"init":      true,
+	"validate":  true,
+	"content":   true,
+	"documents": true,
+	"site":      true,
+	"stop":      true,
+	"restart":   true,
 }
 
 // ParseHelpRequest reports whether args ask for help and which command's help to show.
@@ -57,6 +58,8 @@ func PrintHelp(command string) {
 		printValidateHelp(os.Stdout)
 	case "content":
 		printContentHelp(os.Stdout)
+	case "documents":
+		printDocumentsHelp(os.Stdout)
 	case "site":
 		printSiteHelp(os.Stdout)
 	case "stop":
@@ -88,6 +91,7 @@ MonMS commands:
   init       Scaffold a new site (templates, schema, assets, git hook)
   validate   Lint site templates (*.gohtml)
   content    Export, import, diff, or publish editorial content (JSON rail)
+  documents  Sync, migrate, or diff Git markdown documents
   site       Sync site Git shape (fetch + checkout ref)
   stop       Stop running monms serve processes for this binary
   restart    Stop running instances, then start serve again
@@ -158,7 +162,8 @@ func printContentHelp(w io.Writer) {
 	fmt.Fprintln(w, `Usage:
   monms content <export|import|diff|publish> [-s|--site PATH] [flags]
 
-Editorial content rail — sync PocketBase records marked editorial in schema JSON.
+PB-native editorial content rail — sync PocketBase records marked editorial in schema JSON
+without monms.source=markdown. Markdown collections promote via Git (see monms documents).
 
 Subcommands:
   export    Write site/content/{collection}.json from live records
@@ -175,6 +180,33 @@ Examples:
   monms content publish --site ./site --to https://production.example.com
 
 Clients normally publish via the web console at /_monms/publish.`)
+}
+
+func printDocumentsHelp(w io.Writer) {
+	fmt.Fprintln(w, `Usage:
+  monms documents <sync|diff|scan|plan|bind> [-s|--site PATH] [flags]
+
+Markdown document rail — Git-tracked .md files under documents/ sync into PocketBase
+for SSR. Collections declare monms.source=markdown in schema JSON.
+
+Subcommands:
+  sync      Upsert markdown files into .pb_data/ (also runs on serve bootstrap)
+  diff      List PB records with no backing markdown file; exit 1 if any
+  scan      Inventory a legacy markdown tree
+  plan      Propose collection bindings (--source DIR [--out plan.yaml])
+  bind      Apply plan: write schema, copy files, inject frontmatter (--config plan.yaml)
+
+Bind flags:
+  --config FILE  Plan YAML from documents plan (required)
+  --apply        Write schema and markdown files
+  --dry-run      Show planned actions without writing
+  --force        Overwrite existing frontmatter id values
+
+Examples:
+  monms documents sync --site ./site
+  monms documents scan --source ./legacy-docs
+  monms documents plan --source ./legacy-docs --out plan.yaml
+  monms documents bind --config plan.yaml --apply --site ./site`)
 }
 
 func printSiteHelp(w io.Writer) {
@@ -258,6 +290,24 @@ func SiteSubcommandHelp(sub string) (string, bool) {
 	switch strings.ToLower(sub) {
 	case "sync":
 		return "Usage: monms site sync [-s|--site PATH] --ref REF [--remote origin] [--force]\n\nFetch tags and checkout a site shape ref.\n", true
+	default:
+		return "", false
+	}
+}
+
+// DocumentsSubcommandHelp returns help text for a documents subcommand, or false.
+func DocumentsSubcommandHelp(sub string) (string, bool) {
+	switch strings.ToLower(sub) {
+	case "sync":
+		return "Usage: monms documents sync [-s|--site PATH]\n\nUpsert markdown files from documents/ into PocketBase.\n", true
+	case "diff":
+		return "Usage: monms documents diff [-s|--site PATH]\n\nList orphan PB records without backing markdown files.\n", true
+	case "scan":
+		return "Usage: monms documents scan --source DIR\n\nInventory markdown files in a legacy tree.\n", true
+	case "plan":
+		return "Usage: monms documents plan --source DIR [--out plan.yaml]\n\nPropose collection bindings for migration.\n", true
+	case "bind":
+		return "Usage: monms documents bind --config plan.yaml [--apply|--dry-run] [-s|--site PATH]\n\nApply migration plan: schema + frontmatter + file copy.\n", true
 	default:
 		return "", false
 	}

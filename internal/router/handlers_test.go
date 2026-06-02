@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/monms/monms/internal/documents"
 	"github.com/monms/monms/internal/schema"
 	"github.com/monms/monms/internal/templates"
 	"github.com/monms/monms/internal/testutil"
@@ -45,6 +46,7 @@ func startTestServerWithApp(t *testing.T, siteAbs string, opts testServerOpts) (
 		HideStartBanner: true,
 	})
 
+	documents.RegisterBootstrapHook(app, siteAbs)
 	schema.RegisterBootstrapHook(app, siteAbs)
 	RegisterAuthHooks(app)
 

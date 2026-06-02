@@ -23,7 +23,8 @@ Role-aware navigation:
 
 - **All signed-in superusers:** view site, PocketBase admin link
 - **`publisherEmails` allowlist:** publish console
-- **Consultants (superusers):** structure/admin tools section
+- **Consultants (superusers):** structure/admin tools, MCP settings
+- **`CanManageAPIKeys`:** API Keys nav (superusers, or `users` when `mcp.allowNonSuperuserKeys`)
 
 Unauthenticated requests redirect to PocketBase admin at `/_/` (`monmsroutes.AdminPath`).
 
@@ -93,8 +94,40 @@ Called automatically from the base layout script when a user visits `/` after lo
 
 Clears `monms_auth` cookie. Optional `?redirect=/`.
 
+## `GET|POST /_monms/api-keys`
+
+Operator **API key management** (dashboard HTML).
+
+**Auth:** PocketBase session (`monms_auth` cookie). Superusers always; `users` collection accounts only when `mcp.allowNonSuperuserKeys` is `true` in `site/.monms/config.json`.
+
+**POST** creates a key (form field `name`). The full secret is shown once in the page flash area.
+
+## `POST /_monms/api-keys/revoke`
+
+Revokes a key owned by the signed-in account. Form field `id` is the `monms_api_keys` record id.
+
+## `GET|POST /_monms/mcp`
+
+Superuser-only **MCP settings** form: enable listener, host, port, and `allowNonSuperuserKeys`. Persists to `site/.monms/config.json`. Restart `monms` after bind changes.
+
+## MCP HTTP server
+
+When `mcp.enabled` is `true`, MonMS listens separately from PocketBase `--http` (default `127.0.0.1:8091`).
+
+| Item | Value |
+|------|--------|
+| Endpoint | `http://<mcp.host>:<mcp.port>/mcp` (Streamable HTTP + SSE) |
+| Auth | `Authorization: Bearer <monms_api_key>` |
+| Key format | `monms_` + hex secret; only a prefix is stored in PocketBase |
+| Permissions | PocketBase rules and MonMS gates evaluated as the **key owner** (`_superusers` or `users` record) |
+
+**Tools (initial set):** `monms_list_collections`, `monms_schema_list`, `monms_list_records`, `monms_get_record`, `monms_update_record`, `monms_content_diff` (publisher/superuser owners), `monms_validate`.
+
+**Env:** `MONMS_API_KEY_PEPPER` optional; overrides site-derived hashing pepper.
+
 ## Related
 
+- [MCP and API keys](../operators/mcp-and-api-keys.md) — operator setup and security
 - [CLI reference](cli.md) — `monms content` subcommands
 - [Publish to live](../user-guide/publish-to-live.md)
 - [External dependencies](external-dependencies.md)

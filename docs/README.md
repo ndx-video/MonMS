@@ -29,6 +29,8 @@ MonMS is an agent-malleable, single-binary CMS. Consultants and agents **shape**
 | [Shaping and agents](operators/shaping-and-agents.md) | Schema dual-write, templates, validation, `agent:` commits |
 | [Templates and routing](operators/templates-and-routing.md) | Mirror+index slug rules, fragments, inline edit attrs |
 | [Security](operators/security.md) | SSH scope, tokens, git hygiene |
+| [MCP and API keys](operators/mcp-and-api-keys.md) | Agentic MCP listener, per-user API keys, config |
+| [Markdown document rail](operators/markdown-content.md) | Git-canonical `documents/` collections |
 | [Docker deploy](operators/deploy-docker.md) | Optional L1 image + L2/L3 volumes |
 | [Extensibility with Sentinel](operators/extensibility-with-sentinel.md) | Why MonMS has no plugins; Sentinel integration (forthcoming) |
 
@@ -51,5 +53,6 @@ MonMS is an agent-malleable, single-binary CMS. Consultants and agents **shape**
 | Publisher | [Publish to live](user-guide/publish-to-live.md) |
 | Consultant / agent | [Shaping and agents](operators/shaping-and-agents.md) |
 | Integrator | [MonMS HTTP API](reference/monms-api.md) |
+| MCP / agent client | [MCP and API keys](operators/mcp-and-api-keys.md) |
 
 Legacy product specs in [`specs/`](../specs/) are deprecated — prefer this tree and the live codebase.

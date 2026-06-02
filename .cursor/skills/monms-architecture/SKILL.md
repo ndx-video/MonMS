@@ -15,11 +15,11 @@ Load this skill first for any MonMS work. For full command lists and D-* decisio
 | Layer | Artifact | In Git? | Promoted how |
 |-------|----------|---------|--------------|
 | **L1** Engine | `monms` binary | No | Semver release |
-| **L2** Structure | Site directory: `templates/`, `schema/`, `assets` (Git-tracked) | Yes | Git tag → `monms site sync` |
-| **L3** Content | `.pb_data/` records | No | `/_monms/publish` → `POST /api/monms/content/import` |
+| **L2** Structure | Site directory: `templates/`, `schema/`, `assets`, `documents/` (markdown) | Yes | Git tag → `monms site sync` |
+| **L3** Content | `.pb_data/` records | No | PB-native: `/_monms/publish`; Markdown: Git structure rail |
 | **L4** Audience | Production URL | No | Read-only |
 
-**Structure rail** and **content rail** are independent. Git tags carry shape only — never editorial copy.
+**Structure rail** and **content rail** are independent for PB-native collections. Markdown collections (`monms.source=markdown` in schema JSON) are Git-canonical under `{siteDir}/documents/` and sync into `.pb_data/` on bootstrap — see [markdown-content.md](../../../docs/operators/markdown-content.md).
 
 ## Site directory (do not assume `./site`)
 
@@ -63,6 +63,8 @@ Canonical path constants: `internal/monmsroutes/routes.go`.
 | New page/route | `{siteDir}/templates/{slug}.gohtml` |
 | Global layout/HTMX | `{siteDir}/templates/layouts/base.gohtml` + `internal/scaffold/embed/base.gohtml` |
 | New collection | PocketBase API + `{siteDir}/schema/{name}.json` |
+| Markdown documents | `{siteDir}/documents/{type}/**/*.md` + `monms documents sync` — package `internal/documents/` |
+| Markdown page SSR | `{siteDir}/templates/doc.gohtml` + slug lookup in `internal/router/documents.go` |
 | SSR behavior | `internal/router/ssr.go` |
 | Cache/watcher | `internal/templates/` |
 | Validation rules | `internal/validate/validate.go` |
@@ -92,4 +94,4 @@ Canonical path constants: `internal/monmsroutes/routes.go`.
 
 - [PROJECT.md](../../../PROJECT.md) — cold-start index, commands, D-* table, pitfalls
 - [docs/operators/getting-started.md](../../../docs/operators/getting-started.md) — layers and rails in depth
-- [docs/operators/architecture-overview.md](../../../docs/operators/architecture-overview.md)
+- [docs/operators/markdown-content.md](../../../docs/operators/markdown-content.md) — dual-rail markdown CMS

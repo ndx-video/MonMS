@@ -13,6 +13,7 @@ import (
 	"github.com/monms/monms/internal/cli"
 	"github.com/monms/monms/internal/config"
 	"github.com/monms/monms/internal/logging"
+	"github.com/monms/monms/internal/authbootstrap"
 	"github.com/monms/monms/internal/schema"
 	"github.com/pocketbase/pocketbase"
 	"github.com/pocketbase/pocketbase/core"
@@ -59,6 +60,7 @@ func bootstrapApp(siteAbs string) (core.App, error) {
 		DefaultDev:      true,
 		HideStartBanner: true,
 	})
+	authbootstrap.RegisterBootstrapHook(app)
 	schema.RegisterBootstrapHook(app, siteAbs)
 	if err := app.Bootstrap(); err != nil {
 		return nil, fmt.Errorf("content bootstrap: %w", err)

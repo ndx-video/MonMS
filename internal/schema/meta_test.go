@@ -14,6 +14,12 @@ func TestLoadEditorialCollectionNames(t *testing.T) {
   "type": "base",
   "editorial": true
 }`)
+	writeSchemaFile(t, dir, "articles.json", `{
+  "name": "articles",
+  "type": "base",
+  "editorial": true,
+  "monms": { "source": "markdown", "root": "documents/articles" }
+}`)
 	writeSchemaFile(t, dir, "press_releases.json", `{
   "name": "press_releases",
   "type": "base"
@@ -28,8 +34,27 @@ func TestLoadEditorialCollectionNames(t *testing.T) {
 	if err != nil {
 		t.Fatalf("LoadEditorialCollectionNames() error = %v", err)
 	}
-	if len(names) != 1 || names[0] != "hero_content" {
-		t.Fatalf("LoadEditorialCollectionNames() = %v, want [hero_content]", names)
+	if len(names) != 2 {
+		t.Fatalf("LoadEditorialCollectionNames() = %v, want 2 editorial collections", names)
+	}
+
+	pbNames, err := LoadPBNativeEditorialCollectionNames(dir)
+	if err != nil {
+		t.Fatalf("LoadPBNativeEditorialCollectionNames() error = %v", err)
+	}
+	if len(pbNames) != 1 || pbNames[0] != "hero_content" {
+		t.Fatalf("LoadPBNativeEditorialCollectionNames() = %v, want [hero_content]", pbNames)
+	}
+
+	md, err := LoadMarkdownBindings(dir)
+	if err != nil {
+		t.Fatalf("LoadMarkdownBindings() error = %v", err)
+	}
+	if len(md) != 1 || md[0].Name != "articles" {
+		t.Fatalf("LoadMarkdownBindings() = %+v, want articles", md)
+	}
+	if md[0].Monms.Root != "documents/articles" {
+		t.Fatalf("articles root = %q", md[0].Monms.Root)
 	}
 }
 
@@ -59,6 +84,16 @@ func TestLoadEditorialCollectionNamesSkipsMalformed(t *testing.T) {
 	}
 	if len(names) != 1 || names[0] != "hero_content" {
 		t.Fatalf("LoadEditorialCollectionNames() = %v, want [hero_content]", names)
+	}
+}
+
+func TestCollectionMetaSourceDefaults(t *testing.T) {
+	meta := CollectionMeta{Editorial: true}
+	if meta.Source() != SourcePocketBase {
+		t.Fatalf("default source = %q, want pocketbase", meta.Source())
+	}
+	if !meta.IsPBNative() {
+		t.Fatal("expected PB-native by default")
 	}
 }
 

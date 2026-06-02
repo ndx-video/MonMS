@@ -84,7 +84,8 @@ Shared context in `handlers.go`:
 
 | Field | Use |
 |-------|-----|
-| `ActivePage` | Sidebar highlight (`"home"`, `"publish"`, …) |
+| `ActivePage` | Sidebar highlight (`"home"`, `"publish"`, `"apikeys"`, `"mcp"`, …) |
+| `CanManageAPIKeys` | Show API Keys nav when true |
 | `Title` | `<title>` suffix |
 | `UserEmail` | Sidebar footer |
 | `IsSuperuser` / `IsPublisher` | Nav sections and gates |
@@ -104,6 +105,8 @@ Embed extra fields on a page struct (see `publishPageData` in `publish.go`). `re
 4. **Nav** — add `partials/nav-item.gohtml` entry in `sidebar.gohtml` with role checks
 5. **Tailwind** — if new utility classes, ensure `@source` in `ui/static/src/input.css` includes `../../templates/**/*.gohtml`, then rebuild CSS (below)
 6. **Test** — extend `handlers_test.go` (auth redirect, 200 for role, flash attrs if applicable)
+
+**Access pages:** `/_monms/api-keys` (`apikeys.go`, gate `requireCanManageAPIKeys`), `/_monms/mcp` (`mcp_settings.go`, `requireSuperuser`). Engine collections: `internal/authbootstrap` (`users`, `monms_api_keys`), keys logic `internal/apikeys`, MCP server `internal/mcp`.
 
 Example handler pattern:
 
@@ -204,7 +207,7 @@ Or return a fragment that runs a small inline script calling `monms.msgOk` — p
 | Check | Mechanism |
 |-------|-----------|
 | Logged in | `e.Auth != nil` after `LoadAuthFromCookie` |
-| Superuser | `_superusers` record → `IsSuperuser` in `buildPageData` |
+| Superuser | `_superusers` collection on `e.Auth` → `IsSuperuser` in `buildPageData` |
 | Publisher | Email in `publisherEmails` → `IsPublisher` |
 | Publish POST | `requirePublisherFromSite` + token env |
 

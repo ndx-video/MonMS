@@ -12,6 +12,24 @@ import (
 	"github.com/pocketbase/pocketbase/core"
 )
 
+// MCPConfig controls the optional MonMS MCP HTTP listener and API key policy.
+type MCPConfig struct {
+	Enabled               bool   `json:"enabled"`
+	Host                  string `json:"host"`
+	Port                  string `json:"port"`
+	AllowNonSuperuserKeys bool   `json:"allowNonSuperuserKeys"`
+}
+
+// DefaultMCPConfig returns safe defaults for a new site.
+func DefaultMCPConfig() MCPConfig {
+	return MCPConfig{
+		Enabled:               false,
+		Host:                  "127.0.0.1",
+		Port:                  "8091",
+		AllowNonSuperuserKeys: false,
+	}
+}
+
 // MonmsConfig is staging site config (site/.monms/config.json).
 type MonmsConfig struct {
 	ProductionURL     string                   `json:"productionUrl"`
@@ -19,6 +37,7 @@ type MonmsConfig struct {
 	PublisherEmails   []string                 `json:"publisherEmails"`
 	AllowedHosts      []string                 `json:"allowedHosts"`
 	Bind              *BindConfig              `json:"bind,omitempty"`
+	MCP               MCPConfig                `json:"mcp"`
 	ShapeSync         *site.ShapeSyncConfig    `json:"shapeSync,omitempty"`
 	Logging           []string                 `json:"logging,omitempty"`
 	LoggingRotation   *LoggingRotationConfig   `json:"loggingRotation,omitempty"`
@@ -77,7 +96,55 @@ func LoadMonmsConfig(siteAbs string) (MonmsConfig, error) {
 	if err := json.Unmarshal(data, &cfg); err != nil {
 		return MonmsConfig{}, fmt.Errorf("monms config: parse: %w", err)
 	}
+	if cfg.MCP.Host == "" && cfg.MCP.Port == "" && !cfg.MCP.Enabled && !cfg.MCP.AllowNonSuperuserKeys {
+		cfg.MCP = DefaultMCPConfig()
+	} else {
+		if cfg.MCP.Host == "" {
+			cfg.MCP.Host = DefaultMCPConfig().Host
+		}
+		if cfg.MCP.Port == "" {
+			cfg.MCP.Port = DefaultMCPConfig().Port
+		}
+	}
 	return cfg, nil
+}
+
+// SaveMonmsMCPSettings updates the mcp block in site/.monms/config.json, preserving other keys.
+func SaveMonmsMCPSettings(siteAbs string, mcp MCPConfig) error {
+	path := filepath.Join(siteAbs, ".monms", "config.json")
+	if err := ensureUnderSite(siteAbs, path); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
+		return fmt.Errorf("monms config: create dir: %w", err)
+	}
+
+	doc := map[string]json.RawMessage{}
+	data, err := os.ReadFile(path)
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("monms config: read: %w", err)
+	}
+	if err == nil && len(data) > 0 {
+		if err := json.Unmarshal(data, &doc); err != nil {
+			return fmt.Errorf("monms config: parse: %w", err)
+		}
+	}
+
+	mcpJSON, err := json.Marshal(mcp)
+	if err != nil {
+		return fmt.Errorf("monms config: encode mcp: %w", err)
+	}
+	doc["mcp"] = mcpJSON
+
+	out, err := json.MarshalIndent(doc, "", "  ")
+	if err != nil {
+		return fmt.Errorf("monms config: encode: %w", err)
+	}
+	out = append(out, '\n')
+	if err := os.WriteFile(path, out, 0o644); err != nil {
+		return fmt.Errorf("monms config: write: %w", err)
+	}
+	return nil
 }
 
 // IsPublisher reports whether email is in the publisher allowlist (PUB-07).

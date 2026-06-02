@@ -1,0 +1,11 @@
+{{define "body"}}
+<article class="doc-page">
+  <header class="doc-page__header">
+    <h1 class="doc-page__title">{{.Doc.Title}}</h1>
+    {{if .Doc.PublishedAt}}<p class="doc-page__meta">Published {{.Doc.PublishedAt}}</p>{{end}}
+  </header>
+  <div class="doc-page__body prose">
+    {{.Doc.HTMLBody}}
+  </div>
+</article>
+{{end}}

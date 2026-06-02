@@ -8,8 +8,10 @@
     "bind": "Listen address for monms serve as --http when the CLI flag is omitted. CLI --http always wins. Example: { \"host\": \"0.0.0.0\", \"port\": \"8090\" }",
     "logging": "Optional. File log levels under .monms/logs/. Omit to use build-mode defaults (production binary: error, warn, schema; development binary: all levels). ERROR is always written. Values: error, warn, info, debug, schema.",
     "loggingRotation": "Optional lumberjack rotation for log files. Example: { \"maxSizeMB\": 10, \"maxBackups\": 5, \"maxAgeDays\": 30, \"compress\": true }",
-    "devLogging": "Not stored in config.json. Verbose PocketBase console/SQL logs: run monms serve --dev (CLI flag only)."
+    "devLogging": "Not stored in config.json. Verbose PocketBase console/SQL logs: run monms serve --dev (CLI flag only).",
+    "mcp": "Optional MCP HTTP listener for agentic access. Keys in monms_api_keys; restart monms after bind changes. Example: { \"enabled\": false, \"host\": \"127.0.0.1\", \"port\": \"8091\", \"allowNonSuperuserKeys\": false }"
   },
+  "mcp": { "enabled": false, "host": "127.0.0.1", "port": "8091", "allowNonSuperuserKeys": false },
   "siteUrl": "https://staging.example.com",
   "productionUrl": "https://production.example.com",
   "publisherEmails": ["publisher@client.com"],

@@ -23,4 +23,15 @@ const (
 	AuthSyncPath = "/_monms/auth/sync"
 	// AuthLogoutPath clears the monms_auth session cookie.
 	AuthLogoutPath = "/_monms/auth/logout"
+
+	// APIKeysPath is the operator API key management console.
+	APIKeysPath = "/_monms/api-keys"
+	// APIKeysRevokePath revokes an API key (POST).
+	APIKeysRevokePath = "/_monms/api-keys/revoke"
+
+	// MCPSettingsPath is the superuser MCP server settings console.
+	MCPSettingsPath = "/_monms/mcp"
+
+	// MCPHTTPPath is the Streamable HTTP endpoint path on the MCP listener (default for mcp-go).
+	MCPHTTPPath = "/mcp"
 )

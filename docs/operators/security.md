@@ -25,6 +25,17 @@ Obtained via `POST /api/collections/_superusers/auth-with-password`. Grants full
 - Rotate on suspected compromise (change admin password at `/_/`, re-fetch token).
 - Default token lifetime ~7 days — re-authenticate on `401`.
 
+## MonMS API keys (MCP)
+
+Per-user keys for the optional MCP HTTP listener and future machine surfaces.
+
+- Created at `/_monms/api-keys` (MonMS Console); full secret shown **once**.
+- Stored hashed in `monms_api_keys`; optional env `MONMS_API_KEY_PEPPER` — never commit.
+- Superusers always manage their own keys; `users` accounts only when `mcp.allowNonSuperuserKeys` is `true`.
+- Revoke promptly on compromise; keys inherit the owner's PocketBase permissions.
+
+See [MCP and API keys](mcp-and-api-keys.md).
+
 ## Publish token (`MONMS_PUBLISH_TOKEN`)
 
 - Same value on staging (outbound) and production (import gate).

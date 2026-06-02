@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/monms/monms/internal/apikeys"
 	"github.com/monms/monms/internal/content"
 	"github.com/monms/monms/internal/monmsroutes"
 	"github.com/pocketbase/pocketbase/core"
@@ -14,8 +15,9 @@ type PageData struct {
 	ActivePage   string
 	Title        string
 	UserEmail    string
-	IsSuperuser  bool
-	IsPublisher  bool
+	IsSuperuser      bool
+	IsPublisher      bool
+	CanManageAPIKeys bool
 	SiteURL      string
 	AdminURL     string
 	FlashMessage string
@@ -37,8 +39,9 @@ func buildPageData(e *core.RequestEvent, siteAbs, activePage, title string) (Pag
 
 	if e.Auth != nil {
 		data.UserEmail = e.Auth.GetString("email")
-		data.IsSuperuser = true
+		data.IsSuperuser = e.Auth.Collection().Name == core.CollectionNameSuperusers
 		data.IsPublisher = content.IsPublisher(data.UserEmail, cfg.PublisherEmails)
+		data.CanManageAPIKeys = apikeys.CanManageKeys(e.Auth, cfg)
 	}
 
 	if data.SiteURL == "" {
@@ -71,6 +74,15 @@ func requireAuthenticatedRedirect() func(*core.RequestEvent) error {
 	return func(e *core.RequestEvent) error {
 		if e.Auth == nil {
 			return e.Redirect(http.StatusSeeOther, monmsroutes.AdminPath)
+		}
+		return e.Next()
+	}
+}
+
+func requireSuperuser() func(*core.RequestEvent) error {
+	return func(e *core.RequestEvent) error {
+		if e.Auth == nil || e.Auth.Collection().Name != core.CollectionNameSuperusers {
+			return e.ForbiddenError("superuser required", nil)
 		}
 		return e.Next()
 	}

@@ -10,12 +10,15 @@ import (
 
 	"github.com/mattn/go-isatty"
 
+	"github.com/monms/monms/internal/authbootstrap"
 	"github.com/monms/monms/internal/cli"
 	"github.com/monms/monms/internal/cli/prompt"
 	"github.com/monms/monms/internal/config"
 	"github.com/monms/monms/internal/content"
 	"github.com/monms/monms/internal/daemon"
+	"github.com/monms/monms/internal/documents"
 	"github.com/monms/monms/internal/logging"
+	"github.com/monms/monms/internal/mcp"
 	"github.com/monms/monms/internal/monmsdash"
 	"github.com/monms/monms/internal/restart"
 	"github.com/monms/monms/internal/router"
@@ -44,6 +47,17 @@ func main() {
 				return
 			}
 			cli.PrintHelp("content")
+			return
+		}
+	}
+
+	if len(args) >= 2 && args[0] == "documents" {
+		if _, wantHelp := cli.ParseHelpRequest(args[1:]); wantHelp {
+			if text, ok := cli.DocumentsSubcommandHelp(args[1]); ok {
+				fmt.Print(text)
+				return
+			}
+			cli.PrintHelp("documents")
 			return
 		}
 	}
@@ -96,6 +110,12 @@ func main() {
 			return
 		case "content":
 			if err := content.RunCLI(args[1:]); err != nil {
+				fmt.Fprintln(os.Stderr, err)
+				os.Exit(1)
+			}
+			return
+		case "documents":
+			if err := documents.RunCLI(args[1:]); err != nil {
 				fmt.Fprintln(os.Stderr, err)
 				os.Exit(1)
 			}
@@ -238,6 +258,8 @@ func runServeAt(abs string) {
 		HideStartBanner: true,
 	})
 
+	authbootstrap.RegisterBootstrapHook(app)
+	documents.RegisterBootstrapHook(app, abs)
 	schema.RegisterBootstrapHook(app, abs)
 	logging.RegisterPocketBaseHook(app)
 	router.RegisterAuthHooks(app)
@@ -256,10 +278,25 @@ func runServeAt(abs string) {
 			Cache:   tplCache,
 			IsDev:   buildMode != "production",
 		})
+		if buildMode == "production" {
+			if err := documents.StartWatcher(context.Background(), abs, se.App); err != nil {
+				slog.Error("documents watcher failed to start", "err", err)
+			}
+		}
 		se.InstallerFunc = content.WrapInstallerFunc(se.InstallerFunc, abs, finalServeArgs)
 		if err := se.Next(); err != nil {
 			return err
 		}
+
+		cfg, cfgErr := content.LoadMonmsConfig(abs)
+		if cfgErr == nil {
+			mcp.Start(context.Background(), mcp.Deps{
+				App:     se.App,
+				SiteAbs: abs,
+				Config:  cfg,
+			})
+		}
+
 		if isatty.IsTerminal(os.Stdout.Fd()) {
 			if urls, err := content.ResolveServeURLs(abs, finalServeArgs); err == nil {
 				content.PrintServeBanner(urls, os.Stdout)

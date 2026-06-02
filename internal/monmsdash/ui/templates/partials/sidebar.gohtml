@@ -10,6 +10,17 @@
     {{template "partials/nav-item.gohtml" dict "Icon" "publish" "Label" "Publish" "Href" "/_monms/publish" "Active" (eq .ActivePage "publish")}}
     {{end}}
 
+    {{if or .CanManageAPIKeys .IsSuperuser}}
+    <div class="my-3 border-t border-monms-border/70"></div>
+    <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Access</div>
+    {{if .CanManageAPIKeys}}
+    {{template "partials/nav-item.gohtml" dict "Icon" "key" "Label" "API Keys" "Href" "/_monms/api-keys" "Active" (eq .ActivePage "apikeys")}}
+    {{end}}
+    {{if .IsSuperuser}}
+    {{template "partials/nav-item.gohtml" dict "Icon" "hub" "Label" "MCP" "Href" "/_monms/mcp" "Active" (eq .ActivePage "mcp")}}
+    {{end}}
+    {{end}}
+
     {{if .IsSuperuser}}
     <div class="my-3 border-t border-monms-border/70"></div>
     <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Consultant</div>

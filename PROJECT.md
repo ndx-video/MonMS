@@ -17,6 +17,7 @@ MonMS is an **agent-malleable monolithic CMS**: a single Go binary (PocketBase e
 - Roadmap: `.planning/ROADMAP.md`
 - Site mutations: `docs/operators/shaping-and-agents.md`
 - Security: `docs/operators/security.md`
+- MCP / API keys: `docs/operators/mcp-and-api-keys.md`
 - Extensibility (Sentinel): `docs/operators/extensibility-with-sentinel.md`
 - Legacy (deprecated): `specs/monms-prd.md`, `specs/staging.md`
 
@@ -26,9 +27,14 @@ MonMS is an **agent-malleable monolithic CMS**: a single Go binary (PocketBase e
 main.go                    # Entry: init | validate | serve
 internal/
   config/                  # --site flag, MONMS_SITE env
+  apikeys/                 # API key generate, resolve, revoke
+  authbootstrap/           # Engine users + monms_api_keys collections
   content/                 # Editorial export/import/diff/publish (v2)
+  documents/               # Markdown document sync CLI
+  mcp/                     # Optional MCP HTTP server + tools
+  monmsdash/               # Operator console /_monms/*
   router/                  # SSR, assets, fragments, auth cookie bridge
-  schema/                  # Bootstrap import from schema/*.json, seed, editorial flag
+  schema/                  # Bootstrap import from schema/*.json, seed, collection meta
   scaffold/                # monms init, embedded templates, pre-commit hook
   templates/               # TemplateCache, ResolveSlug, fsnotify watcher
   validate/                # monms validate CLI (dry-run + HTML lint)
@@ -101,9 +107,10 @@ Product *development* ≠ compile-time `buildMode=development`. See `docs/operat
 | Prefix | Purpose | Examples |
 |--------|---------|----------|
 | `/api/monms/*` | **JSON REST only** — machine clients, Bearer tokens | `POST /api/monms/content/import` |
-| `/_monms/*` | **Operator tools** — HTML pages and browser session helpers | `GET /_monms/publish`, `POST /_monms/auth/sync`, `GET /_monms/auth/logout` |
+| `/_monms/*` | **Operator tools** — HTML pages and browser session helpers | `GET /_monms/publish`, `/_monms/api-keys`, `/_monms/mcp`, `POST /_monms/auth/sync` |
+| MCP (optional) | **Agentic HTTP** — separate bind from `--http` | `http://127.0.0.1:8091/mcp` (configurable); Bearer MonMS API key |
 
-`site/.monms/config.json` fields: `siteUrl` (startup banner links for this instance), `productionUrl` (publish-to-live target only), `publisherEmails`, `allowedHosts` (injects `monms serve --origins` when CLI flag omitted; CLI wins if set), `bind` (injects `--http=host:port` when CLI `--http` omitted), `logging` / `loggingRotation` (file logs under `.monms/logs/` — see `docs/reference/logging.md`; omit `logging` for build-mode defaults: production → error/warn/schema, development → all levels), `shapeSync` (optional fetch + checkout at serve startup).
+`site/.monms/config.json` fields: `siteUrl`, `productionUrl`, `publisherEmails`, `allowedHosts`, `bind`, `logging` / `loggingRotation`, `shapeSync`, `mcp` (`enabled`, `host`, `port`, `allowNonSuperuserKeys` — see `docs/operators/mcp-and-api-keys.md`).
 | `/api/` (other) | PocketBase collection REST | `/api/collections/...` |
 | `/_/` | PocketBase admin SPA | Full management fallback |
 

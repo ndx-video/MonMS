@@ -48,6 +48,13 @@ func SSRHandler(siteAbs string, cache *templates.TemplateCache, isDev bool) func
 
 		pagePath, err := templates.ResolveSlug(siteAbs, slug)
 		if errors.Is(err, templates.ErrNotFound) {
+			rendered, docErr := tryRenderDocument(e, siteAbs, cache, slug, isDev)
+			if docErr != nil {
+				return renderErrorPage(e, siteAbs, cache, isDev, http.StatusInternalServerError, "", docErr)
+			}
+			if rendered {
+				return nil
+			}
 			return renderErrorPage(e, siteAbs, cache, isDev, http.StatusNotFound,
 				fmt.Sprintf("Page not found: %s", e.Request.URL.Path), nil)
 		}

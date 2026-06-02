@@ -22,6 +22,8 @@ func RegisterRoutes(se *core.ServeEvent, deps Deps) {
 
 	registerDashboardRoutes(se, deps, tmpl)
 	registerPublishRoutes(se, deps, tmpl)
+	registerAPIKeysRoutes(se, deps, tmpl)
+	registerMCPSettingsRoutes(se, deps, tmpl)
 }
 
 // PublishDeps exposes publish business logic to tests without rendering HTML.

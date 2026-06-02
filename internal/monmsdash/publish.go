@@ -12,15 +12,16 @@ import (
 
 type publishPageData struct {
 	PageData
-	LastPublished    string
-	HasChanges       bool
-	StatusLabel      string
-	Changes          []string
-	ChangeGroups     []publishChangeGroup
-	ProductionURLSet bool
-	SetupMode        bool
-	Message          string
-	MessageError     bool
+	LastPublished        string
+	HasChanges           bool
+	StatusLabel          string
+	Changes              []string
+	ChangeGroups         []publishChangeGroup
+	MarkdownCollections  []string
+	ProductionURLSet     bool
+	SetupMode            bool
+	Message              string
+	MessageError         bool
 }
 
 type publishChangeGroup struct {
@@ -153,6 +154,12 @@ func buildPublishPageData(e *core.RequestEvent, deps Deps, cfg content.MonmsConf
 	if !productionURLSet {
 		return data, nil
 	}
+
+	mdNames, err := content.LoadMarkdownCollectionNames(deps.SiteAbs)
+	if err != nil {
+		return publishPageData{}, err
+	}
+	data.MarkdownCollections = mdNames
 
 	state, err := content.ReadPublishState(deps.SiteAbs)
 	if err != nil {

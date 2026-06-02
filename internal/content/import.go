@@ -54,9 +54,9 @@ func UpsertRecord(app core.App, collectionName string, data map[string]any) erro
 	return nil
 }
 
-// ImportPayload upserts editorial collections from an in-memory payload (T-04-04).
+// ImportPayload upserts PB-native editorial collections from an in-memory payload (T-04-04).
 func ImportPayload(app core.App, siteAbs string, payloads []CollectionPayload) error {
-	allowed, err := LoadEditorialCollectionNames(siteAbs)
+	allowed, err := LoadPBNativeEditorialCollectionNames(siteAbs)
 	if err != nil {
 		return err
 	}

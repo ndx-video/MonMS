@@ -1,0 +1,42 @@
+{{define "content"}}
+<div class="monms-panel p-6 max-w-2xl">
+  <h1 class="text-lg font-bold uppercase tracking-[0.08em] text-monms-fg mb-2">MCP Settings</h1>
+  <p class="text-sm text-monms-muted mb-6">Configure the optional MCP HTTP listener for agentic clients. API keys authenticate as their owner.</p>
+
+  {{if .RestartRequired}}
+  <div class="monms-alert-warn mb-6 text-sm">
+    Restart <code class="font-mono">monms</code> after changing host or port so the MCP listener picks up the new bind address.
+  </div>
+  {{end}}
+
+  <form method="post" action="/_monms/mcp" class="space-y-5">
+    <label class="flex items-center gap-3 cursor-pointer">
+      <input type="checkbox" name="enabled" class="monms-checkbox" {{if .MCP.Enabled}}checked{{end}} />
+      <span class="text-sm">Enable MCP HTTP server</span>
+    </label>
+
+    <div>
+      <label class="block text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim mb-1" for="mcp-host">Host</label>
+      <input id="mcp-host" name="host" type="text" class="monms-input w-full max-w-md" value="{{.MCP.Host}}" placeholder="127.0.0.1" />
+      <p class="mt-1 text-xs text-monms-dim">Default loopback. Use Tailscale/Caddy deliberately if exposing remotely.</p>
+    </div>
+
+    <div>
+      <label class="block text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim mb-1" for="mcp-port">Port</label>
+      <input id="mcp-port" name="port" type="text" class="monms-input w-32" value="{{.MCP.Port}}" placeholder="8091" />
+    </div>
+
+    <label class="flex items-center gap-3 cursor-pointer">
+      <input type="checkbox" name="allowNonSuperuserKeys" class="monms-checkbox" {{if .MCP.AllowNonSuperuserKeys}}checked{{end}} />
+      <span class="text-sm">Allow non-superusers to generate their own API keys</span>
+    </label>
+
+    <button type="submit" class="monms-btn-primary">Save settings</button>
+  </form>
+
+  <div class="mt-8 border-t border-monms-border/70 pt-6 text-sm text-monms-muted">
+    <p>MCP endpoint: <code class="font-mono text-monms-fg">http://{{.MCP.Host}}:{{.MCP.Port}}/mcp</code></p>
+    <p class="mt-2">Authorization: <code class="font-mono text-monms-fg">Bearer &lt;monms_api_key&gt;</code></p>
+  </div>
+</div>
+{{end}}

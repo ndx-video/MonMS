@@ -1,0 +1,75 @@
+{{define "content"}}
+<div class="monms-panel p-6">
+  <h1 class="text-lg font-bold uppercase tracking-[0.08em] text-monms-fg mb-2">API Keys</h1>
+  <p class="text-sm text-monms-muted mb-6">Create keys for MCP and agentic access. Permissions follow the account the key is attached to.</p>
+
+  {{if .PolicyDisabled}}
+  <div class="monms-alert-warn mb-6 text-sm">
+    Non-superusers cannot create API keys on this instance. Ask a superuser to enable <code class="font-mono">allowNonSuperuserKeys</code> in MCP settings.
+  </div>
+  {{end}}
+
+  {{if .NewKeySecret}}
+  <div class="monms-panel border border-monms-accent/40 p-4 mb-6">
+    <div class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-accent mb-2">New key — copy now</div>
+    <code id="monms-new-key" class="block font-mono text-sm text-monms-fg break-all select-all">{{.NewKeySecret}}</code>
+    <button type="button" class="monms-btn-secondary mt-3 text-xs" onclick="navigator.clipboard.writeText(document.getElementById('monms-new-key').textContent); monms.msgOk('Copied to clipboard');">Copy key</button>
+  </div>
+  {{end}}
+
+  {{if .CanCreate}}
+  <form method="post" action="/_monms/api-keys" class="flex flex-wrap items-end gap-3 mb-8">
+    <div>
+      <label class="block text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim mb-1" for="key-name">Label</label>
+      <input id="key-name" name="name" type="text" required maxlength="120" class="monms-input min-w-[16rem]" placeholder="cursor-agent" />
+    </div>
+    <button type="submit" class="monms-btn-primary">Generate key</button>
+  </form>
+  {{end}}
+
+  <div class="overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead>
+        <tr class="border-b border-monms-border/70 text-left text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">
+          <th class="py-2 pr-4">Label</th>
+          <th class="py-2 pr-4">Prefix</th>
+          <th class="py-2 pr-4">Created</th>
+          <th class="py-2 pr-4">Last used</th>
+          <th class="py-2"></th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Keys}}
+        <tr class="border-b border-monms-border/40">
+          <td class="py-3 pr-4">{{.Name}}</td>
+          <td class="py-3 pr-4 font-mono text-xs text-monms-muted">{{.Prefix}}</td>
+          <td class="py-3 pr-4 font-mono text-xs text-monms-muted">{{.Created}}</td>
+          <td class="py-3 pr-4 font-mono text-xs text-monms-muted">{{if .LastUsedAt}}{{.LastUsedAt}}{{else}}—{{end}}</td>
+          <td class="py-3 text-right">
+            {{if $.CanCreate}}
+            <form method="post" action="/_monms/api-keys/revoke" class="inline" data-key-id="{{.ID}}">
+              <input type="hidden" name="id" value="{{.ID}}" />
+              <button type="submit" class="monms-btn-danger text-xs revoke-key-btn">Revoke</button>
+            </form>
+            {{end}}
+          </td>
+        </tr>
+        {{else}}
+        <tr>
+          <td colspan="5" class="py-6 text-monms-muted">No API keys yet.</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </div>
+</div>
+<script>
+document.querySelectorAll('.revoke-key-btn').forEach(function (btn) {
+  btn.closest('form').addEventListener('submit', function (ev) {
+    ev.preventDefault();
+    var form = ev.target;
+    monms.confirm('Revoke this API key?', function () { form.submit(); });
+  });
+});
+</script>
+{{end}}

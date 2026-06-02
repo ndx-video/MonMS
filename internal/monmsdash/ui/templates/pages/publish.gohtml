@@ -57,6 +57,18 @@
     Publish updates and adds editorial records on production. Deleting content on staging does <strong>not</strong> remove records from production.
   </section>
 
+  {{if .MarkdownCollections}}
+  <section class="monms-panel p-5">
+    <h2 class="text-lg font-bold uppercase tracking-[0.12em] text-monms-text mb-3">Markdown collections (Git rail)</h2>
+    <p class="text-sm text-monms-muted mb-2">These collections sync from Git-tracked markdown — promote via <code class="font-mono text-monms-accent">git tag</code> and <code class="font-mono text-monms-accent">monms site sync</code>, not this publish button.</p>
+    <ul class="list-disc pl-5 text-sm text-monms-muted">
+      {{range .MarkdownCollections}}
+      <li><code class="font-mono text-monms-accent">{{.}}</code></li>
+      {{end}}
+    </ul>
+  </section>
+  {{end}}
+
   <div class="flex flex-wrap items-center gap-4">
     <a href="/_monms/publish/diff" class="monms-btn-secondary">Preview diff (JSON)</a>
     <form method="post" action="/_monms/publish" class="inline">
