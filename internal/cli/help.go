@@ -86,6 +86,7 @@ func printRootHelp(w io.Writer) {
 Usage:
   monms [command] [flags]
   monms [flags]                 Start the web server (same as monms serve)
+  monms start [flags]           Synonym for monms serve
 
 MonMS commands:
   init       Scaffold a new site (templates, schema, assets, git hook)
@@ -98,6 +99,7 @@ MonMS commands:
 
 Server commands (PocketBase):
   serve      Start the HTTP/HTTPS server (default when no command is given)
+  start      Same as serve (not a PocketBase domain argument)
   superuser  Manage admin accounts
 
 Configuration:

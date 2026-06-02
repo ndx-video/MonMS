@@ -12,6 +12,8 @@ func TestEnsureServeSubcommand(t *testing.T) {
 		{"explicit serve", []string{"serve"}, []string{"serve"}},
 		{"daemon flag only", []string{"-d"}, []string{"serve", "-d"}},
 		{"dev flag", []string{"--dev"}, []string{"serve", "--dev"}},
+		{"start synonym", []string{"start"}, []string{"serve"}},
+		{"start with flags", []string{"start", "-d"}, []string{"serve", "-d"}},
 		{"init unchanged", []string{"init"}, []string{"init"}},
 	}
 	for _, tt := range tests {

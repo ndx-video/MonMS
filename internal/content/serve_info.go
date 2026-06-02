@@ -80,6 +80,29 @@ func displayHost(allowedHosts []string) string {
 	return "localhost"
 }
 
+// ResolveHTTPListenAddr returns the effective PocketBase --http listen address for display.
+func ResolveHTTPListenAddr(serveArgs []string, cfg MonmsConfig) string {
+	host, port, ok := parseHTTPFlag(serveArgs)
+	if ok {
+		if host == "" {
+			host = "127.0.0.1"
+		}
+		return net.JoinHostPort(host, port)
+	}
+	if cfg.Bind != nil {
+		h := strings.TrimSpace(cfg.Bind.Host)
+		p := strings.TrimSpace(cfg.Bind.Port)
+		if h == "" {
+			h = "127.0.0.1"
+		}
+		if p == "" {
+			p = "8090"
+		}
+		return net.JoinHostPort(h, p)
+	}
+	return "127.0.0.1:8090"
+}
+
 func serveHTTPPort(serveArgs []string, cfg MonmsConfig) string {
 	if host, port, ok := parseHTTPFlag(serveArgs); ok {
 		_ = host
