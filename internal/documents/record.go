@@ -87,6 +87,11 @@ func RecordFromDocument(binding schema.CollectionMeta, doc ParsedDocument, rootA
 	return record, nil
 }
 
+// StableRecordID builds a PocketBase-safe stable id from collection and path key.
+func StableRecordID(collection, pathKey string) string {
+	return recordID(collection, pathKey)
+}
+
 // recordID builds a PocketBase-safe stable id (slashes are not allowed in PB primary keys).
 func recordID(collection, pathKey string) string {
 	return collection + "--" + strings.ReplaceAll(pathKey, "/", "--")

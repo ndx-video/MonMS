@@ -51,6 +51,8 @@ func registerTools(s *server.MCPServer, deps Deps, pbBase string) {
 	s.AddTool(mcp.NewTool("monms_validate",
 		mcp.WithDescription("Validate all site .gohtml templates and HTML balance"),
 	), validateHandler(deps))
+
+	registerDoctreeTools(s, deps)
 }
 
 func listCollectionsHandler(deps Deps) server.ToolHandlerFunc {

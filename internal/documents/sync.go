@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"path/filepath"
 	"sort"
+	"strings"
 
 	"github.com/monms/monms/internal/schema"
 	"github.com/pocketbase/pocketbase/core"
@@ -36,6 +37,25 @@ func SyncAll(app core.App, siteAbs string) (SyncResult, error) {
 		result.Errors = append(result.Errors, errs...)
 	}
 	return result, nil
+}
+
+// SyncCollection upserts markdown files for one bound collection.
+func SyncCollection(app core.App, siteAbs, collectionName string) (int, error) {
+	bindings, err := schema.LoadMarkdownBindings(filepath.Join(siteAbs, "schema"))
+	if err != nil {
+		return 0, err
+	}
+	for _, binding := range bindings {
+		if binding.Name != collectionName {
+			continue
+		}
+		n, errs := syncCollection(app, siteAbs, binding)
+		if len(errs) > 0 {
+			return n, fmt.Errorf("%s", strings.Join(errs, "; "))
+		}
+		return n, nil
+	}
+	return 0, fmt.Errorf("documents: unknown markdown collection %q", collectionName)
 }
 
 func syncCollection(app core.App, siteAbs string, binding schema.CollectionMeta) (int, []string) {
