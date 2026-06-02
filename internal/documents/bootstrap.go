@@ -10,6 +10,8 @@ import (
 
 // RegisterBootstrapHook syncs markdown documents into PocketBase after schema bootstrap.
 func RegisterBootstrapHook(app core.App, siteAbs string) {
+	RegisterDoctreeRecordHooks(app, siteAbs)
+
 	app.OnBootstrap().BindFunc(func(e *core.BootstrapEvent) error {
 		if err := e.Next(); err != nil {
 			return err

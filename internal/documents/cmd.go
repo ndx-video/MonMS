@@ -126,11 +126,15 @@ func runScan(args []string) error {
 		return fmt.Errorf("documents scan: source path required")
 	}
 
-	entries, err := ScanTree(source)
+	abs, err := ResolveSourceRoot(source)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("found %d markdown file(s) under %s\n", len(entries), source)
+	entries, err := ScanTree(abs)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("found %d markdown file(s) under %s\n", len(entries), abs)
 	for _, e := range entries {
 		fm := "no"
 		if e.HasFrontmatter {
@@ -157,13 +161,12 @@ func runPlan(args []string) error {
 		return fmt.Errorf("documents plan: --source required")
 	}
 
-	entries, err := ScanTree(source)
+	plans, summary, err := PlanFromSource(source)
 	if err != nil {
 		return err
 	}
-	plans := DefaultPlanFromScan(source, entries)
 	if len(plans) == 0 {
-		fmt.Println("no markdown files found")
+		fmt.Printf("no markdown files found under %s\n", summary.SourceRoot)
 		return nil
 	}
 
@@ -210,36 +213,33 @@ func runBind(args []string, siteAbs string) error {
 		return fmt.Errorf("documents bind: specify --apply or --dry-run")
 	}
 
-	data, err := os.ReadFile(configPath)
+	planData, err := os.ReadFile(configPath)
 	if err != nil {
 		return err
 	}
-	var plans []BindPlan
-	if err := yaml.Unmarshal(data, &plans); err != nil {
+	plans, err := ParsePlansYAML(string(planData))
+	if err != nil {
 		return err
 	}
 
-	for _, plan := range plans {
-		if apply && !dryRun {
-			schemaPath := filepath.Join(siteAbs, "schema", plan.Collection+".json")
-			if _, err := os.Stat(schemaPath); os.IsNotExist(err) {
-				schemaJSON := DefaultArticlesSchema(plan.Collection, plan.DestRoot, plan.FieldMap)
-				if err := os.WriteFile(schemaPath, []byte(schemaJSON), 0o644); err != nil {
-					return err
-				}
-				fmt.Printf("wrote schema %s\n", schemaPath)
-			}
-		}
-
-		n, err := ApplyBind(siteAbs, plan, dryRun, force)
-		if err != nil {
-			return err
-		}
+	opts := ApplyOptions{
+		DryRun:      dryRun,
+		Force:       force,
+		WriteSchema: apply && !dryRun,
+	}
+	result, err := ApplyPlans(siteAbs, plans, opts)
+	if err != nil {
+		return err
+	}
+	for _, col := range result.Collections {
 		action := "would bind"
 		if apply && !dryRun {
 			action = "bound"
+			if col.SchemaWritten {
+				fmt.Printf("wrote schema %s\n", filepath.Join(siteAbs, "schema", col.Collection+".json"))
+			}
 		}
-		fmt.Printf("%s %d file(s) for collection %q -> %s\n", action, n, plan.Collection, plan.DestRoot)
+		fmt.Printf("%s %d file(s) for collection %q -> %s\n", action, col.Bound, col.Collection, col.DestRoot)
 	}
 
 	if apply && !dryRun {
@@ -247,11 +247,11 @@ func runBind(args []string, siteAbs string) error {
 		if err != nil {
 			return err
 		}
-		result, err := SyncAll(app, siteAbs)
+		syncResult, err := SyncAfterBind(app, siteAbs)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("documents sync: %d record(s) upserted\n", result.Upserted)
+		fmt.Printf("documents sync: %d record(s) upserted\n", syncResult.Upserted)
 	}
 	return nil
 }

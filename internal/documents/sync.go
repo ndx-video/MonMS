@@ -31,7 +31,10 @@ func SyncAll(app core.App, siteAbs string) (SyncResult, error) {
 
 	var result SyncResult
 	for _, binding := range bindings {
-		n, errs := syncCollection(app, siteAbs, binding)
+		n, errs, err := SyncBinding(app, siteAbs, binding)
+		if err != nil {
+			return result, err
+		}
 		result.Collections++
 		result.Upserted += n
 		result.Errors = append(result.Errors, errs...)
@@ -49,7 +52,10 @@ func SyncCollection(app core.App, siteAbs, collectionName string) (int, error) {
 		if binding.Name != collectionName {
 			continue
 		}
-		n, errs := syncCollection(app, siteAbs, binding)
+		n, errs, err := SyncBinding(app, siteAbs, binding)
+		if err != nil {
+			return 0, err
+		}
 		if len(errs) > 0 {
 			return n, fmt.Errorf("%s", strings.Join(errs, "; "))
 		}

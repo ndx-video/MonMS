@@ -158,20 +158,9 @@ func ApplyBind(siteAbs string, plan BindPlan, dryRun, force bool) (int, error) {
 	for _, entry := range entries {
 		destPath := filepath.Join(destRoot, entry.RelPath)
 		pathKey := strings.TrimSuffix(filepath.ToSlash(entry.RelPath), ".md")
-		recordID := recordID(plan.Collection, pathKey)
-
-		meta := map[string]any{}
-		for k, v := range entry.Meta {
-			meta[k] = v
-		}
-		if _, hasID := meta["id"]; !hasID || force {
-			meta["id"] = recordID
-		}
-		if _, hasTitle := meta["title"]; !hasTitle {
-			meta["title"] = entry.Title
-		}
 
 		if dryRun {
+			meta, _ := mergeFrontmatterMeta(entry.Meta, plan.Collection, pathKey, entry.Title, force)
 			fmt.Printf("  would bind %s -> %s (id=%s)\n", entry.RelPath, destPath, meta["id"])
 			bound++
 			continue
@@ -180,6 +169,14 @@ func ApplyBind(siteAbs string, plan BindPlan, dryRun, force bool) (int, error) {
 		doc, err := ParseFile(entry.Path)
 		if err != nil {
 			return bound, err
+		}
+		meta, changed := mergeFrontmatterMeta(doc.Meta, plan.Collection, pathKey, entry.Title, force)
+		if !changed && frontmatterEqual(doc.Meta, meta) {
+			if err := copyFile(entry.Path, destPath); err != nil {
+				return bound, err
+			}
+			bound++
+			continue
 		}
 		if err := WriteFile(destPath, meta, doc.Body); err != nil {
 			return bound, err
@@ -225,4 +222,62 @@ func DefaultArticlesSchema(name, root string, fieldMap map[string]string) string
   "viewRule": "",
   "fields": %s
 }`, name, root, fmMap, fields)
+}
+
+// DefaultDoctreeFieldMap returns frontmatter → PocketBase field mappings for dt_* collections.
+func DefaultDoctreeFieldMap() map[string]string {
+	return map[string]string{
+		"title":       "title",
+		"description": "description",
+		"ts_create":   "ts_create",
+		"ts_mod":      "ts_mod",
+		"date":        "published_at",
+	}
+}
+
+// DefaultDoctreeCollectionSchema returns schema JSON for a dt_* markdown leaf collection.
+func DefaultDoctreeCollectionSchema(name, root, doctreeID string, fieldMap map[string]string) string {
+	if fieldMap == nil {
+		fieldMap = DefaultDoctreeFieldMap()
+	}
+	fields := `[
+    { "name": "id", "type": "text", "required": true, "primaryKey": true, "pattern": "^[a-z][a-z0-9_-]*$", "min": 1, "max": 120 },
+    { "name": "title", "type": "text" },
+    { "name": "description", "type": "text" },
+    { "name": "slug", "type": "text" },
+    { "name": "path", "type": "text" },
+    { "name": "folder", "type": "text" },
+    { "name": "body", "type": "text" },
+    { "name": "doctree_id", "type": "text" },
+    { "name": "leaf_path", "type": "text" },
+    { "name": "monms_sync_at", "type": "text" },
+    { "name": "ts_create", "type": "text" },
+    { "name": "ts_mod", "type": "text" },
+    { "name": "status", "type": "select", "values": ["draft", "published"] },
+    { "name": "published_at", "type": "text" }
+  ]`
+	fmMap := ""
+	if len(fieldMap) > 0 {
+		parts := make([]string, 0, len(fieldMap))
+		for k, v := range fieldMap {
+			parts = append(parts, fmt.Sprintf("%q: %q", k, v))
+		}
+		sort.Strings(parts)
+		fmMap = ",\n    \"fields\": { " + strings.Join(parts, ", ") + " }"
+	}
+	return fmt.Sprintf(`{
+  "name": %q,
+  "type": "base",
+  "editorial": true,
+  "monms": {
+    "source": "markdown",
+    "root": %q,
+    "doctree": %q,
+    "slugFrom": "path",
+    "idFrom": "frontmatter.id"%s
+  },
+  "listRule": "",
+  "viewRule": "",
+  "fields": %s
+}`, name, root, doctreeID, fmMap, fields)
 }

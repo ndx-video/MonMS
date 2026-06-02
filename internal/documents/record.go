@@ -60,6 +60,21 @@ func RecordFromDocument(binding schema.CollectionMeta, doc ParsedDocument, rootA
 		"path": pathKey,
 		bodyField: doc.Body,
 	}
+	if t, ok := doc.Meta["title"].(string); ok && strings.TrimSpace(t) != "" {
+		record["title"] = strings.TrimSpace(t)
+	}
+
+	doctreeID := binding.Monms.Doctree
+	if doctreeID == "" && schema.IsDoctreeCollection(binding.Name) {
+		parts := strings.Split(filepath.ToSlash(binding.Monms.Root), "/")
+		if len(parts) > 0 {
+			doctreeID = parts[0]
+		}
+	}
+	if doctreeID != "" {
+		record["doctree_id"] = doctreeID
+		record["leaf_path"] = computeLeafPath(doctreeID, binding.Monms.Root, pathKey)
+	}
 
 	if pathKey != "" {
 		if i := strings.Index(pathKey, "/"); i >= 0 {
@@ -78,7 +93,8 @@ func RecordFromDocument(binding schema.CollectionMeta, doc ParsedDocument, rootA
 				pbField = mapped
 			}
 		}
-		if pbField == "id" || pbField == "slug" || pbField == "path" || pbField == "folder" {
+		if pbField == "id" || pbField == "slug" || pbField == "path" || pbField == "folder" ||
+			pbField == "doctree_id" || pbField == "leaf_path" || pbField == "monms_sync_at" {
 			continue
 		}
 		record[pbField] = normalizeFMValue(value)
@@ -99,6 +115,26 @@ func recordID(collection, pathKey string) string {
 
 func sanitizeRecordID(id string) string {
 	return strings.ReplaceAll(id, "/", "--")
+}
+
+// computeLeafPath returns the markdown path relative to {site}/{doctree_id}/.
+func computeLeafPath(doctreeID, monmsRoot, pathKey string) string {
+	root := filepath.ToSlash(monmsRoot)
+	if root == doctreeID {
+		return pathKey
+	}
+	prefix := doctreeID + "/"
+	if strings.HasPrefix(root, prefix) {
+		suffix := strings.TrimPrefix(root, prefix)
+		if pathKey == "" {
+			return suffix
+		}
+		if suffix == "" {
+			return pathKey
+		}
+		return suffix + "/" + pathKey
+	}
+	return pathKey
 }
 
 func normalizeFMValue(v any) any {
