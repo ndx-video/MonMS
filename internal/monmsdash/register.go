@@ -12,6 +12,8 @@ type Deps struct {
 	SiteAbs      string
 	PublishToken string
 	LoadAuth     func(*core.RequestEvent) error
+	BuildMode    string
+	ServeArgs    []string
 }
 
 // RegisterRoutes wires the /_monms/* dashboard (HTML, static assets, publish console).
@@ -21,10 +23,11 @@ func RegisterRoutes(se *core.ServeEvent, deps Deps) {
 	se.Router.GET(staticPrefix+"{path...}", staticHandler())
 
 	registerDashboardRoutes(se, deps, tmpl)
-	registerDocumentsRoutes(se, deps, tmpl)
+	registerDoctreesRoutes(se, deps, tmpl)
 	registerPublishRoutes(se, deps, tmpl)
 	registerAPIKeysRoutes(se, deps, tmpl)
 	registerMCPSettingsRoutes(se, deps, tmpl)
+	registerSystemRoutes(se, deps, tmpl)
 }
 
 // PublishDeps exposes publish business logic to tests without rendering HTML.

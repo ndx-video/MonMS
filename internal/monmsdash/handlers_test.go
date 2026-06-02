@@ -5,6 +5,8 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
+	"os"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -138,6 +140,7 @@ func TestDashboardStaticAssetsOffline(t *testing.T) {
 		"/_monms/static/alpine.min.js",
 		"/_monms/static/htmx.min.js",
 		"/_monms/static/js/messages.js",
+		"/_monms/static/js/system.js",
 		"/_monms/static/fonts/inter-latin.woff2",
 	} {
 		resp, err := http.Get(ts.URL + path)
@@ -379,7 +382,7 @@ func TestMCPSettingsForbiddenForNonSuperuser(t *testing.T) {
 	}
 }
 
-func TestDocumentsPageListsMarkdownCollection(t *testing.T) {
+func TestDoctreesPageListsMarkdownCollection(t *testing.T) {
 	ws := testutil.NewSite(t)
 	schemaJSON := `{
   "name": "articles",
@@ -407,9 +410,9 @@ Body
 	user := testutil.NewSuperuser(t, app, "reader@test.local")
 	client := testutil.AuthClient(t, app, user)
 
-	resp, err := client.Get(ts.URL + monmsroutes.DocumentsPath)
+	resp, err := client.Get(ts.URL + monmsroutes.DoctreesPath)
 	if err != nil {
-		t.Fatalf("GET documents: %v", err)
+		t.Fatalf("GET doctrees: %v", err)
 	}
 	defer resp.Body.Close()
 
@@ -421,10 +424,324 @@ Body
 		t.Fatalf("status %d, want 200; body: %.300s", resp.StatusCode, body)
 	}
 	text := string(body)
+	if !strings.Contains(text, "Doctrees") {
+		t.Fatalf("missing page title: %.400s", text)
+	}
 	if !strings.Contains(text, "articles") {
 		t.Fatalf("missing collection name: %.400s", text)
 	}
 	if !strings.Contains(text, "Hello Doc") {
 		t.Fatalf("missing document title: %.400s", text)
+	}
+}
+
+func TestDocumentsPathRedirectsToDoctrees(t *testing.T) {
+	ws := testutil.NewSite(t)
+	ts, app, cleanup := startDashboardServer(t, ws, testPublishToken, testLoadAuthFromCookie)
+	defer cleanup()
+
+	user := testutil.NewSuperuser(t, app, "reader@test.local")
+	client := testutil.AuthClient(t, app, user)
+
+	client.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+		return http.ErrUseLastResponse
+	}
+	resp, err := client.Get(ts.URL + monmsroutes.DocumentsPath)
+	if err != nil {
+		t.Fatalf("GET legacy documents path: %v", err)
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusMovedPermanently {
+		t.Fatalf("status %d, want 301", resp.StatusCode)
+	}
+	loc := resp.Header.Get("Location")
+	if !strings.HasSuffix(loc, monmsroutes.DoctreesPath) {
+		t.Fatalf("Location = %q, want suffix %q", loc, monmsroutes.DoctreesPath)
+	}
+}
+
+func TestDoctreesMigratePublisherGate(t *testing.T) {
+	ws := testutil.NewSite(t)
+	cfgPath := filepath.Join(ws, ".monms/config.json")
+	testutil.WriteFile(t, cfgPath, `{"publisherEmails":["publisher@test.local"]}`)
+
+	ts, app, cleanup := startDashboardServer(t, ws, testPublishToken, testLoadAuthFromCookie)
+	defer cleanup()
+
+	editor := testutil.NewSuperuser(t, app, "editor@test.local")
+	client := testutil.AuthClient(t, app, editor)
+
+	form := url.Values{"source_root": {t.TempDir()}, "doctree_stub": {"guide"}}
+	req, err := http.NewRequest(http.MethodPost, ts.URL+monmsroutes.DoctreesPath+"/migrate/copy", strings.NewReader(form.Encode()))
+	if err != nil {
+		t.Fatalf("new request: %v", err)
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	resp, err := client.Do(req)
+	if err != nil {
+		t.Fatalf("POST migrate preview: %v", err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("editor POST status %d, want 403", resp.StatusCode)
+	}
+}
+
+func TestDoctreesPageShowsAlignmentIssues(t *testing.T) {
+	site := testutil.NewSite(t)
+	testutil.WriteFile(t, filepath.Join(site, "guide", "tutorials", "page.md"), "# Page\n")
+	testutil.WriteFile(t, filepath.Join(site, "schema", "dt_tutorial.json"), `{
+  "name": "dt_tutorial",
+  "type": "base",
+  "editorial": true,
+  "monms": { "source": "markdown", "root": "guide/tutorials", "doctree": "guide" },
+  "fields": [{ "name": "id", "type": "text", "primaryKey": true, "required": true }]
+}`)
+
+	ts, app, cleanup := startDashboardServer(t, site, testPublishToken, testLoadAuthFromCookie)
+	defer cleanup()
+
+	user := testutil.NewSuperuser(t, app, "consultant@test.local")
+	client := testutil.AuthClient(t, app, user)
+
+	resp, err := client.Get(ts.URL + monmsroutes.DoctreesPath)
+	if err != nil {
+		t.Fatalf("GET doctrees: %v", err)
+	}
+	body, _ := io.ReadAll(resp.Body)
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status %d, want 200; body: %.400s", resp.StatusCode, body)
+	}
+	if !strings.Contains(string(body), "Doctree alignment needs resolution") {
+		t.Fatalf("expected alignment alert on doctrees page")
+	}
+	if !strings.Contains(string(body), "collection_rename") {
+		t.Fatalf("expected collection_rename in alignment table")
+	}
+}
+
+func TestDoctreesMigrateCopyConfirm(t *testing.T) {
+	legacy := t.TempDir()
+	testutil.WriteFile(t, filepath.Join(legacy, "welcome.md"), `---
+title: Welcome
+---
+Welcome body
+`)
+
+	ws := testutil.NewSite(t)
+	cfgPath := filepath.Join(ws, ".monms/config.json")
+	testutil.WriteFile(t, cfgPath, `{"publisherEmails":["publisher@test.local"]}`)
+
+	ts, app, cleanup := startDashboardServer(t, ws, testPublishToken, testLoadAuthFromCookie)
+	defer cleanup()
+
+	publisher := testutil.NewSuperuser(t, app, "publisher@test.local")
+	client := testutil.AuthClient(t, app, publisher)
+
+	copyForm := url.Values{"source_root": {legacy}, "doctree_stub": {"guide"}}
+	copyReq, err := http.NewRequest(http.MethodPost, ts.URL+monmsroutes.DoctreesPath+"/migrate/copy", strings.NewReader(copyForm.Encode()))
+	if err != nil {
+		t.Fatalf("copy request: %v", err)
+	}
+	copyReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	copyResp, err := client.Do(copyReq)
+	if err != nil {
+		t.Fatalf("POST copy: %v", err)
+	}
+	copyBody, err := io.ReadAll(copyResp.Body)
+	copyResp.Body.Close()
+	if err != nil {
+		t.Fatalf("read copy body: %v", err)
+	}
+	if copyResp.StatusCode != http.StatusOK {
+		t.Fatalf("copy status %d, want 200; body: %.400s", copyResp.StatusCode, copyBody)
+	}
+	if !strings.Contains(string(copyBody), "Confirm bindings") {
+		t.Fatalf("copy should show confirm step: %.300s", copyBody)
+	}
+
+	confirmForm := url.Values{"doctree_stub": {"guide"}}
+	confirmReq, err := http.NewRequest(http.MethodPost, ts.URL+monmsroutes.DoctreesPath+"/migrate/confirm", strings.NewReader(confirmForm.Encode()))
+	if err != nil {
+		t.Fatalf("confirm request: %v", err)
+	}
+	confirmReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	confirmResp, err := client.Do(confirmReq)
+	if err != nil {
+		t.Fatalf("POST confirm: %v", err)
+	}
+	confirmBody, err := io.ReadAll(confirmResp.Body)
+	confirmResp.Body.Close()
+	if err != nil {
+		t.Fatalf("read confirm body: %v", err)
+	}
+	if confirmResp.StatusCode != http.StatusOK {
+		t.Fatalf("confirm status %d, want 200; body: %.400s", confirmResp.StatusCode, confirmBody)
+	}
+	if !strings.Contains(string(confirmBody), `data-flash="Bindings confirmed`) {
+		t.Fatalf("confirm success should surface in navbar strip: %.400s", confirmBody)
+	}
+
+	migrated := filepath.Join(ws, "guide", "welcome.md")
+	if _, err := os.Stat(migrated); err != nil {
+		t.Fatalf("migrated file missing: %v", err)
+	}
+}
+
+func TestDoctreesMigratePruneRemovesStub(t *testing.T) {
+	legacy := t.TempDir()
+	testutil.WriteFile(t, filepath.Join(legacy, "a.md"), "# A\n")
+
+	ws := testutil.NewSite(t)
+	cfgPath := filepath.Join(ws, ".monms/config.json")
+	testutil.WriteFile(t, cfgPath, `{"publisherEmails":["publisher@test.local"]}`)
+
+	ts, app, cleanup := startDashboardServer(t, ws, testPublishToken, testLoadAuthFromCookie)
+	defer cleanup()
+
+	publisher := testutil.NewSuperuser(t, app, "publisher@test.local")
+	client := testutil.AuthClient(t, app, publisher)
+
+	copyForm := url.Values{"source_root": {legacy}, "doctree_stub": {"pruneguide"}}
+	copyReq, _ := http.NewRequest(http.MethodPost, ts.URL+monmsroutes.DoctreesPath+"/migrate/copy", strings.NewReader(copyForm.Encode()))
+	copyReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	copyResp, err := client.Do(copyReq)
+	if err != nil {
+		t.Fatalf("copy: %v", err)
+	}
+	copyResp.Body.Close()
+
+	pruneForm := url.Values{"doctree_stub": {"pruneguide"}}
+	pruneReq, _ := http.NewRequest(http.MethodPost, ts.URL+monmsroutes.DoctreesPath+"/migrate/prune", strings.NewReader(pruneForm.Encode()))
+	pruneReq.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	pruneResp, err := client.Do(pruneReq)
+	if err != nil {
+		t.Fatalf("prune: %v", err)
+	}
+	pruneResp.Body.Close()
+
+	if _, err := os.Stat(filepath.Join(ws, "pruneguide")); !os.IsNotExist(err) {
+		t.Fatal("pruneguide should be removed")
+	}
+}
+
+func TestSystemPageRedirectsWhenUnauthenticated(t *testing.T) {
+	ws := testutil.NewSite(t)
+	ts, _, cleanup := startDashboardServer(t, ws, testPublishToken, nil)
+	defer cleanup()
+
+	client := &http.Client{
+		Timeout: 10 * time.Second,
+		CheckRedirect: func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		},
+	}
+
+	resp, err := client.Get(ts.URL + monmsroutes.SystemPath)
+	if err != nil {
+		t.Fatalf("GET system: %v", err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusSeeOther {
+		t.Fatalf("status %d, want 303", resp.StatusCode)
+	}
+}
+
+func TestSystemPageForbiddenForNonSuperuser(t *testing.T) {
+	ws := testutil.NewSite(t)
+	ts, app, cleanup := startDashboardServer(t, ws, testPublishToken, testLoadAuthFromCookie)
+	defer cleanup()
+
+	usersCol, err := app.FindCollectionByNameOrId("users")
+	if err != nil {
+		t.Fatalf("users collection: %v", err)
+	}
+	regular := core.NewRecord(usersCol)
+	regular.Set("email", "regular-sys@test.local")
+	regular.SetPassword("password123456")
+	regular.Set("verified", true)
+	if err := app.Save(regular); err != nil {
+		t.Fatalf("save user: %v", err)
+	}
+	token, err := regular.NewAuthToken()
+	if err != nil {
+		t.Fatalf("token: %v", err)
+	}
+
+	req, _ := http.NewRequest(http.MethodGet, ts.URL+monmsroutes.SystemPath, nil)
+	req.AddCookie(&http.Cookie{Name: "monms_auth", Value: token})
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("GET system: %v", err)
+	}
+	resp.Body.Close()
+	if resp.StatusCode != http.StatusForbidden {
+		t.Fatalf("status %d, want 403", resp.StatusCode)
+	}
+}
+
+func TestSystemPageForSuperuser(t *testing.T) {
+	ws := testutil.NewSite(t)
+	ts, app, cleanup := startDashboardServer(t, ws, testPublishToken, testLoadAuthFromCookie)
+	defer cleanup()
+
+	user := testutil.NewSuperuser(t, app, "sys-ui@test.local")
+	token, err := user.NewAuthToken()
+	if err != nil {
+		t.Fatalf("token: %v", err)
+	}
+
+	req, _ := http.NewRequest(http.MethodGet, ts.URL+monmsroutes.SystemPath, nil)
+	req.AddCookie(&http.Cookie{Name: "monms_auth", Value: token})
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("GET system: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status %d, want 200; body: %.300s", resp.StatusCode, body)
+	}
+	text := string(body)
+	for _, want := range []string{"System", "Build mode", "Restart MonMS", "Shutdown MonMS", filepath.Base(ws)} {
+		if !strings.Contains(text, want) {
+			t.Fatalf("missing %q in body", want)
+		}
+	}
+}
+
+func TestSystemRestartPostSurfacesFlash(t *testing.T) {
+	ws := testutil.NewSite(t)
+	ts, app, cleanup := startDashboardServer(t, ws, testPublishToken, testLoadAuthFromCookie)
+	defer cleanup()
+
+	restore := monmsdash.SetLifecycleHooksForTest(
+		func(monmsdash.Deps) error { return nil },
+		func() error { return nil },
+	)
+	defer restore()
+
+	user := testutil.NewSuperuser(t, app, "sys-restart@test.local")
+	token, err := user.NewAuthToken()
+	if err != nil {
+		t.Fatalf("token: %v", err)
+	}
+
+	req, _ := http.NewRequest(http.MethodPost, ts.URL+monmsroutes.SystemRestartPath, nil)
+	req.AddCookie(&http.Cookie{Name: "monms_auth", Value: token})
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		t.Fatalf("POST restart: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, _ := io.ReadAll(resp.Body)
+	if resp.StatusCode != http.StatusOK {
+		t.Fatalf("status %d, want 200; body: %.200s", resp.StatusCode, body)
+	}
+	if !strings.Contains(string(body), `data-flash="Restarting MonMS…"`) {
+		t.Fatal("expected restart flash in navbar strip")
 	}
 }

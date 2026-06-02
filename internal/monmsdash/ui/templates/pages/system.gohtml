@@ -1,0 +1,147 @@
+{{define "content"}}
+<div class="monms-page-hero">
+  <div class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Consultant</div>
+  <h1 class="text-2xl font-extrabold uppercase tracking-[0.12em] text-monms-accent">System</h1>
+  <p class="mt-2 max-w-2xl text-sm text-monms-muted">
+    Runtime status for this MonMS instance.
+  </p>
+</div>
+
+<div class="p-4 md:p-6 space-y-6">
+
+
+  {{if not .Status.LifecycleSupported}}
+  <section class="monms-panel monms-alert-warning p-5" role="status">
+    <h2 class="text-lg font-bold uppercase tracking-[0.12em] text-monms-text mb-2">Lifecycle unavailable</h2>
+    <p class="text-sm text-monms-muted">{{.Status.LifecycleNote}}</p>
+    <p class="text-sm text-monms-dim mt-2">Use <code class="font-mono text-monms-accent">monms restart</code> or <code class="font-mono text-monms-accent">monms stop</code> from the shell instead.</p>
+  </section>
+  {{end}}
+
+  <section class="monms-panel p-5">
+    <h2 class="text-lg font-bold uppercase tracking-[0.12em] text-monms-text mb-4">Runtime</h2>
+    <dl class="grid gap-3 text-sm sm:grid-cols-2">
+      <div>
+        <dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Site directory</dt>
+        <dd class="mt-1 font-mono text-xs text-monms-muted break-all">{{.Status.SiteAbs}}</dd>
+      </div>
+      <div>
+        <dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Build mode</dt>
+        <dd class="mt-1 text-monms-text">{{.Status.BuildMode}}</dd>
+      </div>
+      <div>
+        <dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Template cache</dt>
+        <dd class="mt-1 text-monms-text">{{.Status.TemplateMode}}</dd>
+      </div>
+      <div>
+        <dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Process ID</dt>
+        <dd class="mt-1 font-mono text-monms-text">{{.Status.PID}}{{if .Status.DaemonChild}} <span class="text-monms-dim">(daemon child)</span>{{end}}</dd>
+      </div>
+      {{if .Status.PIDFile}}
+      <div>
+        <dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">PID file</dt>
+        <dd class="mt-1 font-mono text-monms-text">{{.Status.PIDFile}}{{if .Status.PIDFileMatches}} <span class="monms-status-pill monms-status-ready">matches</span>{{end}}</dd>
+      </div>
+      {{end}}
+      <div>
+        <dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">HTTP listen</dt>
+        <dd class="mt-1 font-mono text-monms-text">{{.Status.HTTPListen}}</dd>
+      </div>
+      <div>
+        <dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Health</dt>
+        <dd class="mt-1 flex items-center gap-2">
+          <span class="monms-status-pill {{if .Status.HealthOK}}monms-status-ready{{else}}monms-status-warning{{end}}">{{.Status.HealthDetail}}</span>
+        </dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="monms-panel p-5">
+    <h2 class="text-lg font-bold uppercase tracking-[0.12em] text-monms-text mb-4">URLs</h2>
+    <dl class="grid gap-3 text-sm">
+      <div><dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Site</dt><dd class="mt-1"><a href="{{.Status.URLs.SiteURL}}" class="font-mono text-xs text-monms-accent hover:underline break-all">{{.Status.URLs.SiteURL}}</a></dd></div>
+      <div><dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Dashboard</dt><dd class="mt-1"><a href="{{.Status.URLs.DashboardURL}}" class="font-mono text-xs text-monms-accent hover:underline break-all">{{.Status.URLs.DashboardURL}}</a></dd></div>
+      <div><dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Admin</dt><dd class="mt-1"><a href="{{.Status.URLs.AdminURL}}" class="font-mono text-xs text-monms-accent hover:underline break-all">{{.Status.URLs.AdminURL}}</a></dd></div>
+      <div><dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Publish</dt><dd class="mt-1"><a href="{{.Status.URLs.PublishURL}}" class="font-mono text-xs text-monms-accent hover:underline break-all">{{.Status.URLs.PublishURL}}</a></dd></div>
+      <div><dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Config</dt><dd class="mt-1 font-mono text-xs text-monms-muted break-all">{{.Status.URLs.ConfigPath}}</dd></div>
+      <div><dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Logs</dt><dd class="mt-1 font-mono text-xs text-monms-muted break-all">{{.Status.URLs.LogsDir}}</dd></div>
+    </dl>
+  </section>
+
+  <section class="monms-panel p-5">
+    <h2 class="text-lg font-bold uppercase tracking-[0.12em] text-monms-text mb-4">MCP listener</h2>
+    <p class="text-sm text-monms-muted mb-3">Runs in-process with serve; bind changes require restart.</p>
+    <dl class="grid gap-3 text-sm sm:grid-cols-2">
+      <div>
+        <dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Enabled</dt>
+        <dd class="mt-1"><span class="monms-status-pill {{if .Status.MCP.Enabled}}monms-status-ready{{else}}monms-status-warning{{end}}">{{if .Status.MCP.Enabled}}Yes{{else}}No{{end}}</span></dd>
+      </div>
+      {{if .Status.MCP.Enabled}}
+      <div>
+        <dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Listen</dt>
+        <dd class="mt-1 font-mono text-monms-text">{{.Status.MCPListen}} /mcp</dd>
+      </div>
+      {{end}}
+    </dl>
+    <p class="mt-4 text-sm text-monms-dim"><a href="/_monms/mcp" class="text-monms-accent hover:underline">Edit MCP settings</a></p>
+  </section>
+
+  <section class="monms-panel p-5">
+    <h2 class="text-lg font-bold uppercase tracking-[0.12em] text-monms-text mb-4">Editorial</h2>
+    <dl class="grid gap-3 text-sm sm:grid-cols-2">
+      <div>
+        <dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Production URL</dt>
+        <dd class="mt-1"><span class="monms-status-pill {{if .Status.ProductionURLSet}}monms-status-ready{{else}}monms-status-warning{{end}}">{{if .Status.ProductionURLSet}}Configured{{else}}Not set{{end}}</span></dd>
+      </div>
+      <div>
+        <dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Publish token</dt>
+        <dd class="mt-1"><span class="monms-status-pill {{if .Status.PublishTokenSet}}monms-status-ready{{else}}monms-status-warning{{end}}">{{if .Status.PublishTokenSet}}Set{{else}}Unset{{end}}</span></dd>
+      </div>
+      <div>
+        <dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Publishers</dt>
+        <dd class="mt-1 text-monms-text">{{.Status.PublisherCount}} in allowlist</dd>
+      </div>
+    </dl>
+  </section>
+
+  <section class="monms-panel p-5">
+    <h2 class="text-lg font-bold uppercase tracking-[0.12em] text-monms-text mb-4">Logging</h2>
+    <dl class="grid gap-3 text-sm">
+      <div>
+        <dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Levels</dt>
+        <dd class="mt-1 text-monms-muted">{{.Status.LoggingLevels}}</dd>
+      </div>
+      <div>
+        <dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Rotation</dt>
+        <dd class="mt-1 text-monms-muted">{{.Status.LoggingRotation}}</dd>
+      </div>
+      <div>
+        <dt class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Directory</dt>
+        <dd class="mt-1 font-mono text-xs text-monms-muted break-all">{{.Status.LogsDir}}</dd>
+      </div>
+    </dl>
+  </section>
+  
+  <section class="monms-alert monms-alert-warning" role="status">
+    <p class="text-sm text-monms-muted">
+      <strong class="text-monms-text">Lifecycle actions are binary-wide.</strong>
+      They stop or restart all <code class="font-mono text-monms-accent">monms</code> processes launched from the same binary, including other site directories.
+    </p>
+  </section>
+
+  <section class="monms-panel p-5">
+    <h2 class="text-lg font-bold uppercase tracking-[0.12em] text-monms-text mb-4">Lifecycle</h2>
+    <p class="text-sm text-monms-muted mb-4">Stops or restarts PocketBase, MCP, and background watchers together.</p>
+    <div class="flex flex-wrap gap-4">
+      <form method="post" action="/_monms/system/restart" class="inline" id="monms-system-restart-form">
+        <button type="submit" class="monms-btn-secondary" {{if not .Status.LifecycleSupported}}disabled{{end}}>Restart MonMS</button>
+      </form>
+      <form method="post" action="/_monms/system/shutdown" class="inline" id="monms-system-shutdown-form">
+        <button type="submit" class="monms-btn-danger" {{if not .Status.LifecycleSupported}}disabled{{end}}>Shutdown MonMS</button>
+      </form>
+    </div>
+  </section>
+</div>
+
+<script src="/_monms/static/js/system.js"></script>
+{{end}}

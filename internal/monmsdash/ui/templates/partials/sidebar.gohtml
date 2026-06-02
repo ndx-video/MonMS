@@ -3,7 +3,7 @@
   <div id="app-sidebar-inner" class="flex flex-1 flex-col gap-1 overflow-y-auto p-0 min-h-0">
     {{template "partials/nav-item.gohtml" dict "Icon" "dashboard" "Label" "Dashboard" "Href" "/_monms/" "Active" (eq .ActivePage "home")}}
     {{template "partials/nav-item.gohtml" dict "Icon" "public" "Label" "View site" "Href" "/" "Active" false}}
-    {{template "partials/nav-item.gohtml" dict "Icon" "description" "Label" "Documents" "Href" "/_monms/documents" "Active" (eq .ActivePage "documents")}}
+    {{template "partials/nav-item.gohtml" dict "Icon" "description" "Label" "Doctrees" "Href" "/_monms/doctrees" "Active" (eq .ActivePage "doctrees")}}
 
     {{if .IsPublisher}}
     <div class="my-3 border-t border-monms-border/70"></div>
@@ -25,6 +25,7 @@
     {{if .IsSuperuser}}
     <div class="my-3 border-t border-monms-border/70"></div>
     <div class="px-3 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Consultant</div>
+    {{template "partials/nav-item.gohtml" dict "Icon" "settings" "Label" "System" "Href" "/_monms/system" "Active" (eq .ActivePage "system")}}
     {{template "partials/nav-item.gohtml" dict "Icon" "admin_panel_settings" "Label" "PocketBase admin" "Href" "/_/" "Active" false}}
     {{end}}
 

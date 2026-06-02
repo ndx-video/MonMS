@@ -1,0 +1,207 @@
+{{define "content"}}
+<div class="monms-page-hero">
+  <div class="text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">Content rail</div>
+  <h1 class="text-2xl font-extrabold uppercase tracking-[0.12em] text-monms-accent">Doctrees</h1>
+  <p class="mt-2 max-w-2xl text-sm text-monms-muted">
+    Browse Git-synced markdown doctrees. Promote changes via Git tag and <code class="font-mono text-monms-accent">monms site sync</code> — not Publish to live.
+  </p>
+</div>
+
+<div class="p-4 md:p-6 space-y-6">
+  {{if .AlignmentIssues}}
+  <section class="monms-alert monms-alert-warning p-4">
+    <p class="font-bold text-monms-text mb-2">Doctree alignment needs resolution</p>
+    <p class="text-sm text-monms-dim mb-3">Filesystem, schema, and PocketBase bindings are out of sync. Re-scan the affected stub and confirm bindings, or retire obsolete schema and collections manually.</p>
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-monms-border/70 text-left text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">
+            <th class="py-2 pr-3">Stub</th>
+            <th class="py-2 pr-3">Issue</th>
+            <th class="py-2 pr-3">Root</th>
+            <th class="py-2 pr-3">Expected</th>
+            <th class="py-2 pr-3">Actual</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .AlignmentIssues}}
+          <tr class="border-b border-monms-border/40">
+            <td class="py-2 pr-3 font-mono text-xs">{{.Stub}}</td>
+            <td class="py-2 pr-3 text-xs">{{.Kind}}</td>
+            <td class="py-2 pr-3 font-mono text-xs text-monms-muted">{{.DestRoot}}</td>
+            <td class="py-2 pr-3 font-mono text-xs">{{.ExpectedCollection}}</td>
+            <td class="py-2 pr-3 font-mono text-xs">{{.ActualCollection}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+  </section>
+  {{end}}
+
+  <section class="monms-panel p-5">
+    <h2 class="text-lg font-bold uppercase tracking-[0.12em] text-monms-text mb-2">Migrate legacy tree</h2>
+    <p class="text-sm text-monms-muted mb-4">
+      Copy a markdown tree into <code class="font-mono text-monms-accent">{site}/{stub}/</code>, then confirm PocketBase bindings.
+      Each leaf folder becomes a <code class="font-mono text-monms-accent">dt_*</code> collection (visible in PocketBase admin; names are engine-managed).
+      Source files are never modified. Re-scan when folders change.
+    </p>
+
+    {{if not .CanMigrate}}
+    <p class="text-sm text-monms-dim">
+      Migration requires your account in <code class="font-mono text-monms-accent">publisherEmails</code> in site config.
+    </p>
+    {{else if eq .MigrateStep "confirm"}}
+    <div class="mb-4 text-sm text-monms-muted space-y-1">
+      <p>Doctree stub: <code class="font-mono text-monms-accent">{{.DoctreeStub}}</code></p>
+      {{if .SourceRoot}}<p>Source: <code class="font-mono text-xs">{{.SourceRoot}}</code></p>{{end}}
+      {{if .FilesCopied}}<p>Files copied this session: <strong class="text-monms-text">{{.FilesCopied}}</strong></p>{{end}}
+    </div>
+
+    {{if .StaleBindings}}
+    <div class="monms-alert monms-alert-warning p-3 mb-4 text-sm">
+      <p class="font-bold text-monms-text mb-1">Previously bound roots no longer discovered</p>
+      <p class="text-monms-dim">Schema/PocketBase records are not auto-removed:</p>
+      <ul class="mt-1 ml-4 list-disc font-mono text-xs">
+        {{range .StaleBindings}}<li>{{.}}</li>{{end}}
+      </ul>
+    </div>
+    {{end}}
+
+    {{if .BindingCandidates}}
+    <div class="overflow-x-auto mb-4">
+      <table class="w-full text-sm">
+        <thead>
+          <tr class="border-b border-monms-border/70 text-left text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim">
+            <th class="py-2 pr-4">Collection</th>
+            <th class="py-2 pr-4">monms.root</th>
+            <th class="py-2 pr-4">Status</th>
+            <th class="py-2 pr-4">Markdown files</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .BindingCandidates}}
+          <tr class="border-b border-monms-border/40">
+            <td class="py-3 pr-4 font-mono text-xs">{{.Collection}}</td>
+            <td class="py-3 pr-4 font-mono text-xs text-monms-muted">{{.DestRoot}}</td>
+            <td class="py-3 pr-4 text-xs uppercase">{{.Status}}</td>
+            <td class="py-3 pr-4 text-monms-muted">{{.FileCount}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+    </div>
+    {{end}}
+
+    <form method="post" action="/_monms/doctrees/migrate/confirm" class="space-y-4 mb-4">
+      <input type="hidden" name="doctree_stub" value="{{.DoctreeStub}}" />
+      <label class="flex items-center gap-2 text-sm text-monms-muted">
+        <input type="checkbox" name="force" value="on" class="monms-checkbox" {{if .Force}}checked{{end}} />
+        Force overwrite frontmatter id
+      </label>
+      <button type="submit" class="monms-btn-primary">Confirm bindings</button>
+    </form>
+
+    <div class="flex flex-wrap gap-3">
+      <form method="post" action="/_monms/doctrees/migrate/cancel">
+        <input type="hidden" name="doctree_stub" value="{{.DoctreeStub}}" />
+        <button type="submit" class="monms-btn-secondary">Cancel (keep files)</button>
+      </form>
+      <form method="post" action="/_monms/doctrees/migrate/prune" id="doctree-prune-form">
+        <input type="hidden" name="doctree_stub" value="{{.DoctreeStub}}" />
+        <button type="submit" class="monms-btn-danger text-xs doctree-prune-btn">Cancel and prune</button>
+      </form>
+    </div>
+    {{else}}
+    <form method="post" action="/_monms/doctrees/migrate/copy" class="space-y-4 mb-4">
+      <div>
+        <label class="block text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim mb-1" for="source-root">Legacy source root</label>
+        <input id="source-root" name="source_root" type="text" class="monms-input w-full max-w-2xl font-mono text-xs" placeholder="/path/to/legacy-docs" value="{{.SourceRoot}}" />
+        <p class="mt-1 text-xs text-monms-dim">Absolute path on this server. Required for Migrate.</p>
+      </div>
+      <div>
+        <label class="block text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim mb-1" for="doctree-stub">Doctree stub</label>
+        <input id="doctree-stub" name="doctree_stub" type="text" class="monms-input w-full max-w-md font-mono text-xs" placeholder="guide" value="{{.DoctreeStub}}" required pattern="[a-z][a-z0-9_-]*" />
+        <p class="mt-1 text-xs text-monms-dim">Top-level folder under the site repo, e.g. <code class="font-mono">guide</code> → <code class="font-mono">site/guide/</code></p>
+      </div>
+      <button type="submit" class="monms-btn-primary">Migrate</button>
+    </form>
+
+    <form method="post" action="/_monms/doctrees/migrate/rescan" class="space-y-4 border-t border-monms-border pt-4">
+      <p class="text-xs text-monms-dim mb-2">Re-scan an existing doctree after adding or renaming folders (no copy).</p>
+      <div>
+        <label class="block text-[10px] font-bold uppercase tracking-[0.12em] text-monms-dim mb-1" for="rescan-stub">Doctree stub</label>
+        <input id="rescan-stub" name="doctree_stub" type="text" class="monms-input w-full max-w-md font-mono text-xs" placeholder="guide" value="{{.DoctreeStub}}" required pattern="[a-z][a-z0-9_-]*" />
+      </div>
+      <input type="hidden" name="source_root" value="{{.SourceRoot}}" />
+      <button type="submit" class="monms-btn-secondary">Re-scan bindings</button>
+    </form>
+    {{end}}
+  </section>
+
+  {{if .Forest.OrphanCount}}
+  <section class="monms-alert monms-alert-warning">
+    {{.Forest.OrphanCount}} PocketBase record(s) have no backing markdown file. Run <code class="font-mono text-monms-accent">monms documents diff</code> for details.
+  </section>
+  {{end}}
+
+  {{if not .Forest.Collections}}
+  <section class="monms-panel p-5">
+    <p class="text-sm text-monms-muted">No markdown collections configured. Confirm a doctree migration or add <code class="font-mono text-monms-accent">"monms": {"source":"markdown"}</code> to schema.</p>
+  </section>
+  {{else}}
+  {{range .Forest.Collections}}
+  <section class="monms-panel p-5">
+    <div class="flex flex-wrap items-baseline justify-between gap-2 mb-4">
+      <h2 class="text-lg font-bold uppercase tracking-[0.12em] text-monms-text">{{.Name}}</h2>
+      <code class="font-mono text-xs text-monms-muted">{{.Root}}</code>
+    </div>
+
+    {{if or .Orphans .Folders}}
+    <ul class="space-y-2 list-none p-0 m-0 text-sm">
+      {{range .Orphans}}
+      <li>
+        <a href="/{{.Slug}}" class="text-monms-accent hover:underline" target="_blank" rel="noopener">{{if .Title}}{{.Title}}{{else}}{{.Slug}}{{end}}</a>
+        <span class="text-monms-dim font-mono text-xs ml-2">/{{.Slug}}</span>
+      </li>
+      {{end}}
+      {{range .Folders}}
+      {{template "doctrees-folder" .}}
+      {{end}}
+    </ul>
+    {{else}}
+    <p class="text-sm text-monms-muted">No synced documents yet.</p>
+    {{end}}
+  </section>
+  {{end}}
+  {{end}}
+</div>
+<script>
+document.querySelectorAll('.doctree-prune-btn').forEach(function (btn) {
+  btn.addEventListener('click', function (ev) {
+    ev.preventDefault();
+    var form = document.getElementById('doctree-prune-form');
+    monms.confirm('Delete the copied doctree from the site?', function () { form.submit(); });
+  });
+});
+</script>
+{{end}}
+
+{{define "doctrees-folder"}}
+<li class="mt-2">
+  <details class="group" open>
+    <summary class="cursor-pointer font-bold text-monms-text uppercase tracking-[0.08em] text-xs">{{.Name}}/</summary>
+    <ul class="mt-2 ml-4 space-y-1 list-none p-0 border-l border-monms-border pl-3">
+      {{range .Docs}}
+      <li>
+        <a href="/{{.Slug}}" class="text-monms-accent hover:underline" target="_blank" rel="noopener">{{if .Title}}{{.Title}}{{else}}{{.Slug}}{{end}}</a>
+        <span class="text-monms-dim font-mono text-xs ml-2">/{{.Slug}}</span>
+      </li>
+      {{end}}
+      {{range .Children}}
+      {{template "doctrees-folder" .}}
+      {{end}}
+    </ul>
+  </details>
+</li>
+{{end}}

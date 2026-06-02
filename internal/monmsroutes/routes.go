@@ -19,7 +19,10 @@ const (
 	// PublishDiffPath returns JSON diff data for the publish console.
 	PublishDiffPath = "/_monms/publish/diff"
 
-	// DocumentsPath is the markdown document browser in the operator dashboard.
+	// DoctreesPath is the markdown doctree browser and migration console.
+	DoctreesPath = "/_monms/doctrees"
+
+	// DocumentsPath is a legacy alias; redirects to DoctreesPath.
 	DocumentsPath = "/_monms/documents"
 
 	// AuthSyncPath bridges PocketBase admin localStorage auth to the monms_auth cookie.
@@ -34,6 +37,13 @@ const (
 
 	// MCPSettingsPath is the superuser MCP server settings console.
 	MCPSettingsPath = "/_monms/mcp"
+
+	// SystemPath is the superuser runtime status and lifecycle console.
+	SystemPath = "/_monms/system"
+	// SystemRestartPath restarts all monms processes for this binary.
+	SystemRestartPath = "/_monms/system/restart"
+	// SystemShutdownPath shuts down all monms processes for this binary.
+	SystemShutdownPath = "/_monms/system/shutdown"
 
 	// MCPHTTPPath is the Streamable HTTP endpoint path on the MCP listener (default for mcp-go).
 	MCPHTTPPath = "/mcp"

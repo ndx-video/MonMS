@@ -270,6 +270,8 @@ func runServeAt(abs string) {
 			SiteAbs:      abs,
 			PublishToken: os.Getenv("MONMS_PUBLISH_TOKEN"),
 			LoadAuth:     router.LoadAuthFromCookie,
+			BuildMode:    buildMode,
+			ServeArgs:    finalServeArgs,
 		}
 		monmsdash.RegisterRoutes(se, dashDeps)
 		content.RegisterRoutes(se, monmsdash.PublishDeps(dashDeps))
