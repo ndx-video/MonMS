@@ -54,14 +54,22 @@ func RecordFromDocument(binding schema.CollectionMeta, doc ParsedDocument, rootA
 		bodyField = defaultBodyField
 	}
 
+	fieldMap := binding.Monms.Fields
+	titleField := "title"
+	if fieldMap != nil {
+		if mapped, ok := fieldMap["title"]; ok {
+			titleField = mapped
+		}
+	}
+
 	record := map[string]any{
-		"id":   id,
-		"slug": slug,
-		"path": pathKey,
+		"id":      id,
+		"slug":    slug,
+		"path":    pathKey,
 		bodyField: doc.Body,
 	}
-	if t, ok := doc.Meta["title"].(string); ok && strings.TrimSpace(t) != "" {
-		record["title"] = strings.TrimSpace(t)
+	if t := recordTitle(binding, doc, pathKey); t != "" {
+		record[titleField] = t
 	}
 
 	doctreeID := binding.Monms.Doctree
@@ -82,9 +90,8 @@ func RecordFromDocument(binding schema.CollectionMeta, doc ParsedDocument, rootA
 		}
 	}
 
-	fieldMap := binding.Monms.Fields
 	for fmKey, value := range doc.Meta {
-		if fmKey == "id" || fmKey == "slug" {
+		if fmKey == "id" || fmKey == "slug" || fmKey == "title" || fmKey == bodyField {
 			continue
 		}
 		pbField := fmKey
@@ -94,6 +101,7 @@ func RecordFromDocument(binding schema.CollectionMeta, doc ParsedDocument, rootA
 			}
 		}
 		if pbField == "id" || pbField == "slug" || pbField == "path" || pbField == "folder" ||
+			pbField == titleField || pbField == bodyField ||
 			pbField == "doctree_id" || pbField == "leaf_path" || pbField == "monms_sync_at" {
 			continue
 		}
@@ -115,6 +123,17 @@ func recordID(collection, pathKey string) string {
 
 func sanitizeRecordID(id string) string {
 	return strings.ReplaceAll(id, "/", "--")
+}
+
+// recordTitle returns title from frontmatter, or inferred H1/basename for dt_* collections.
+func recordTitle(binding schema.CollectionMeta, doc ParsedDocument, pathKey string) string {
+	if t, ok := doc.Meta["title"].(string); ok && strings.TrimSpace(t) != "" {
+		return strings.TrimSpace(t)
+	}
+	if schema.IsDoctreeCollection(binding.Name) {
+		return inferDoctreeTitle(doc, pathKey+".md")
+	}
+	return ""
 }
 
 // computeLeafPath returns the markdown path relative to {site}/{doctree_id}/.

@@ -58,6 +58,53 @@ func TestRecordFromDocumentDoctreeFields(t *testing.T) {
 	}
 }
 
+func TestRecordFromDocumentDoctreeTitleFromFrontmatter(t *testing.T) {
+	binding := schema.CollectionMeta{
+		Name: "dt_guide",
+		Monms: schema.MonmsBinding{
+			Source:  schema.SourceMarkdown,
+			Root:    "guide",
+			Doctree: "guide",
+			Fields:  DefaultDoctreeFieldMap(),
+		},
+	}
+	doc := ParsedDocument{
+		FilePath: filepath.Join("guide", "page.md"),
+		Meta:     map[string]any{"title": "From FM"},
+		Body:     "# Heading\n",
+	}
+	record, err := RecordFromDocument(binding, doc, "guide")
+	if err != nil {
+		t.Fatalf("record: %v", err)
+	}
+	if record["title"] != "From FM" {
+		t.Fatalf("title = %v, want From FM", record["title"])
+	}
+}
+
+func TestRecordFromDocumentDoctreeTitleFromH1(t *testing.T) {
+	binding := schema.CollectionMeta{
+		Name: "dt_guide",
+		Monms: schema.MonmsBinding{
+			Source:  schema.SourceMarkdown,
+			Root:    "guide",
+			Doctree: "guide",
+		},
+	}
+	doc := ParsedDocument{
+		FilePath: filepath.Join("guide", "intro.md"),
+		Meta:     map[string]any{},
+		Body:     "# My Doc\n\nBody.\n",
+	}
+	record, err := RecordFromDocument(binding, doc, "guide")
+	if err != nil {
+		t.Fatalf("record: %v", err)
+	}
+	if record["title"] != "My Doc" {
+		t.Fatalf("title = %v, want My Doc", record["title"])
+	}
+}
+
 func TestDtFileSyncCreatesRecordAndFile(t *testing.T) {
 	site := testutil.NewSite(t)
 	root := filepath.Join(site, "guide")
