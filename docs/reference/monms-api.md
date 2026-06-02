@@ -110,6 +110,26 @@ Revokes a key owned by the signed-in account. Form field `id` is the `monms_api_
 
 Superuser-only **MCP settings** form: enable listener, host, port, and `allowNonSuperuserKeys`. Persists to `site/.monms/config.json`. Restart `monms` after bind changes.
 
+## `GET /_monms/system`
+
+Superuser-only **System** console: runtime status (build mode, listen address, URLs, MCP, editorial flags, logging) and lifecycle actions.
+
+**Auth:** PocketBase superuser session (`monms_auth` cookie). Non-superusers receive `403`; unauthenticated requests redirect to `/_/`.
+
+## `POST /_monms/system/restart`
+
+Superuser-only. Stops other `monms` processes sharing this executable, then restarts (re-exec current argv, or fork detached when the running instance is a daemon child). Matches `monms restart` scope — **binary-wide**, not site-scoped.
+
+Returns HTML with navbar flash `Restarting MonMS…`. The connection may drop when the process restarts.
+
+## `POST /_monms/system/shutdown`
+
+Superuser-only. Stops other instances, then sends SIGTERM to the current process. Matches `monms stop` plus self-termination from the dashboard. **Binary-wide.**
+
+Returns HTML with navbar flash `Shutting down MonMS…`.
+
+Lifecycle buttons are disabled on platforms where process enumeration is unsupported (same limitation as `monms stop` on non-Linux).
+
 ## MCP HTTP server
 
 When `mcp.enabled` is `true`, MonMS listens separately from PocketBase `--http` (default `127.0.0.1:8091`).

@@ -28,6 +28,8 @@ monms validate -s "$SITE"
 
 When `cd` into the site directory for Git commits, use that same `$SITE` path.
 
+**Doctree folders** (`{site}/{stub}/` markdown trees): renaming or moving leaf folders changes the engine-managed `dt_*` collection name. After filesystem edits, use `/_monms/doctrees` alignment panel → re-scan → confirm; see [monms-doctree](../monms-doctree/SKILL.md). Do not edit `schema/dt_*.json` names by hand without matching `DoctreeCollectionName`.
+
 ## Prerequisites
 
 | Variable | Purpose |

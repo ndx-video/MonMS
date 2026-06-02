@@ -42,7 +42,7 @@ Clients normally use `/_monms/publish` instead.
 
 ## `monms documents`
 
-Markdown document rail (`monms.source=markdown` in schema JSON). Git-tracked files under `site/documents/` sync into PocketBase on bootstrap and via CLI.
+Markdown document rail (`monms.source=markdown` in schema JSON). Git-tracked files under `site/documents/` (legacy) or `site/{stub}/` (doctree migrations, `dt_*` collections) sync into PocketBase on bootstrap and via CLI. See [Markdown content](../operators/markdown-content.md) for path-driven `dt_*` naming and `/_monms/doctrees` alignment.
 
 | Subcommand | Purpose |
 |------------|---------|
@@ -69,7 +69,7 @@ Optional startup: `shapeSync` in `.monms/config.json`.
 
 ## `monms serve` (default)
 
-Start PocketBase + MonMS routes. On a TTY, prints site/admin/publish URLs after startup. When `siteUrl` is set in config, the banner and PocketBase superuser installer link use that origin (no port); otherwise they use the first `allowedHosts` entry (or `localhost`) with the listen port. `productionUrl` is for publish-to-live only.
+Start PocketBase + MonMS routes. `monms start` is a synonym (same flags); do not pass `start` as a PocketBase domain — that enables HTTPS on port 443 by default. On a TTY, prints site/admin/publish URLs after startup. When `siteUrl` is set in config, the banner and PocketBase superuser installer link use that origin (no port); otherwise they use the first `allowedHosts` entry (or `localhost`) with the listen port. `productionUrl` is for publish-to-live only.
 
 ```bash
 monms serve --http=127.0.0.1:8090
