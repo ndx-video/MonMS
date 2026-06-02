@@ -65,6 +65,7 @@ Canonical path constants: `internal/monmsroutes/routes.go`.
 | New collection | PocketBase API + `{siteDir}/schema/{name}.json` |
 | Markdown documents | `{siteDir}/documents/{type}/**/*.md` + `monms documents sync` — package `internal/documents/` |
 | Markdown page SSR | `{siteDir}/templates/doc.gohtml` + slug lookup in `internal/router/documents.go` |
+| Doctree agents (MCP, sections, bindings) | [monms-doctree](../monms-doctree/SKILL.md) |
 | SSR behavior | `internal/router/ssr.go` |
 | Cache/watcher | `internal/templates/` |
 | Validation rules | `internal/validate/validate.go` |
@@ -77,6 +78,7 @@ Canonical path constants: `internal/monmsroutes/routes.go`.
 | Task | Load skill |
 |------|------------|
 | Any MonMS task (start here) | `monms-architecture` |
+| Markdown documents, bindings, sections, doctree MCP | [monms-doctree](../monms-doctree/SKILL.md) |
 | Edit L2 templates, schema, or assets in the configured site directory | [monms-site-shaping](../monms-site-shaping/SKILL.md) |
 | Edit `internal/*`, `main.go`, tests, CLI | [monms-engine-development](../monms-engine-development/SKILL.md) |
 | Docker, `site sync`, `.monms/config.json`, logging | [monms-operators-deploy](../monms-operators-deploy/SKILL.md) |

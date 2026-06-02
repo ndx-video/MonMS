@@ -77,6 +77,31 @@ Markdown collections are **excluded** from `monms content export/publish` and gr
 
 When no `.gohtml` template matches a URL slug, MonMS looks up a markdown-backed record by `slug` and renders `templates/doc.gohtml` through the base layout. **Templates win** over markdown routes (same precedence as flat-file-over-index for templates).
 
+### Section selection in `.gohtml`
+
+Public templates can pull heading-bounded slices from any synced markdown document by **level** (1–6) and **per-level index** (0-based):
+
+```gohtml
+<h2>{{ docHeading "guides/setup" 2 0 }}</h2>
+<div class="prose">{{ docSection "guides/setup" 2 0 }}</div>
+```
+
+| Func | Args | Returns |
+|------|------|---------|
+| `docSection` | slug, level, index | Rendered HTML for section body |
+| `docHeading` | slug, level, index | Heading title string |
+| `docSections` | slug | All sections (for `range`) |
+
+On markdown doc pages, `.Doc.Sections` provides the same data (with pre-rendered `.HTML`) for use in `doc.gohtml`.
+
+## Operator dashboard
+
+Authenticated users can browse synced document trees at **`/_monms/documents`** — one panel per markdown collection, folder hierarchy, links to public slugs. Promote via Git, not Publish to live.
+
+## Agent access (MCP)
+
+When MCP is enabled, doctree tools read/write Git-canonical files and sync the PocketBase index — see [MCP and API keys](mcp-and-api-keys.md). Prefer `monms_doctree_write` over `monms_update_record` for markdown collections.
+
 ## Legacy migration
 
 Four-step workflow:

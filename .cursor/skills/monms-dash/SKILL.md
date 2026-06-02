@@ -84,7 +84,7 @@ Shared context in `handlers.go`:
 
 | Field | Use |
 |-------|-----|
-| `ActivePage` | Sidebar highlight (`"home"`, `"publish"`, `"apikeys"`, `"mcp"`, …) |
+| `ActivePage` | Sidebar highlight (`"home"`, `"documents"`, `"publish"`, `"apikeys"`, `"mcp"`, …) |
 | `CanManageAPIKeys` | Show API Keys nav when true |
 | `Title` | `<title>` suffix |
 | `UserEmail` | Sidebar footer |
@@ -106,7 +106,7 @@ Embed extra fields on a page struct (see `publishPageData` in `publish.go`). `re
 5. **Tailwind** — if new utility classes, ensure `@source` in `ui/static/src/input.css` includes `../../templates/**/*.gohtml`, then rebuild CSS (below)
 6. **Test** — extend `handlers_test.go` (auth redirect, 200 for role, flash attrs if applicable)
 
-**Access pages:** `/_monms/api-keys` (`apikeys.go`, gate `requireCanManageAPIKeys`), `/_monms/mcp` (`mcp_settings.go`, `requireSuperuser`). Engine collections: `internal/authbootstrap` (`users`, `monms_api_keys`), keys logic `internal/apikeys`, MCP server `internal/mcp`.
+**Access pages:** `/_monms/documents` (`documents.go`, all authenticated — markdown tree browser), `/_monms/api-keys` (`apikeys.go`, gate `requireCanManageAPIKeys`), `/_monms/mcp` (`mcp_settings.go`, `requireSuperuser`). Engine collections: `internal/authbootstrap` (`users`, `monms_api_keys`), keys logic `internal/apikeys`, MCP server `internal/mcp`. Document trees: `internal/documents/tree.go` (`BuildForest`).
 
 Example handler pattern:
 

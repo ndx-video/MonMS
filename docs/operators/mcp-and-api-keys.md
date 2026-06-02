@@ -90,6 +90,22 @@ Permissions follow the **key owner**: PocketBase collection rules run as that us
 | `monms_content_diff` | Pending publish diff (publisher or superuser owner) |
 | `monms_validate` | Validate all site `.gohtml` templates |
 
+### Doctree tools (markdown rail)
+
+| Tool | Purpose |
+|------|---------|
+| `monms_doctree_bindings` | Markdown collection bindings (`monms.root`, field map) |
+| `monms_doctree_forest` | Nested folder trees from synced PB index |
+| `monms_doctree_list` | List `.md` files on disk for one collection |
+| `monms_doctree_get` | Read document by slug or collection+path |
+| `monms_doctree_write` | Create/update `.md` and sync to PocketBase |
+| `monms_doctree_delete` | Delete `.md` and sync index |
+| `monms_doctree_sync` | Sync markdown → PocketBase (all or one collection) |
+| `monms_doctree_diff` | Orphan PB records without backing files |
+| `monms_doctree_sections` | Parse heading sections for template wiring |
+
+See [Markdown content](markdown-content.md) and skill `monms-doctree` for agent workflows.
+
 Content **import** and production publish still use `MONMS_PUBLISH_TOKEN` on `POST /api/monms/content/import` — not MCP keys in v1.
 
 ## Agents vs superuser JWT

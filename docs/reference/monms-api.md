@@ -121,7 +121,7 @@ When `mcp.enabled` is `true`, MonMS listens separately from PocketBase `--http` 
 | Key format | `monms_` + hex secret; only a prefix is stored in PocketBase |
 | Permissions | PocketBase rules and MonMS gates evaluated as the **key owner** (`_superusers` or `users` record) |
 
-**Tools (initial set):** `monms_list_collections`, `monms_schema_list`, `monms_list_records`, `monms_get_record`, `monms_update_record`, `monms_content_diff` (publisher/superuser owners), `monms_validate`.
+**Tools:** Editorial — `monms_list_collections`, `monms_schema_list`, `monms_list_records`, `monms_get_record`, `monms_update_record`, `monms_content_diff` (publisher/superuser), `monms_validate`. **Doctree (markdown rail)** — `monms_doctree_bindings`, `monms_doctree_forest`, `monms_doctree_list`, `monms_doctree_get`, `monms_doctree_write`, `monms_doctree_delete`, `monms_doctree_sync`, `monms_doctree_diff`, `monms_doctree_sections`.
 
 **Env:** `MONMS_API_KEY_PEPPER` optional; overrides site-derived hashing pepper.
 
